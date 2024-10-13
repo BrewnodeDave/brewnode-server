@@ -1,0 +1,73 @@
+const valves = require('../equipmentDrivers/valve/valve.js');
+const flow = require('../equipmentDrivers/flow/flow.js');
+const pump = require('../equipmentDrivers/pump/pump.js');
+const brewlog = require('../../common/brewlog.js');
+const phase = require('./phase.js');
+
+const startCond = v => v > 0;
+const stopCond = v => v == 0;
+
+let interval;
+let timeout;
+//modulate valves so that only one is open at a time.
+function modulateStart() {
+	const SLICE = 10 * 1000;
+	interval = setInterval(() => {
+		valves.open("ValveFermentIn");
+		valves.open("ValveChillWortIn");
+		pump.kettleOffSync();
+		timeout = setTimeout(() => {
+			valves.close("ValveFermentIn");
+			valves.open("ValveChillWortIn");
+			pump.kettleOnSync();
+		}, (SLICE / 2) - 500);
+	}, SLICE);
+}
+function modulateStop() {
+	clearInterval(interval);
+	clearTimeout(timeout);
+	valves.close("ValveChillWortIn");
+	valves.close("ValveFermentIn");
+}
+
+module.exports = {
+	transfer(opt) {
+		return new Promise((resolve, reject) => {
+			let timeoutSecs = opt.flowTimeoutSecs;
+
+			console.log("k2f transfer")
+
+			valves.open("ValveChillWortIn");
+			valves.open("ValveFermentIn");
+
+			pump.kettleOnSync()
+
+			flow.wait("FlowKettleOut", startCond, timeoutSecs)
+				.then(() => {
+					//flow.wait("FlowFermentIn",	stopCond, timeoutSecs), 
+					return flow.wait("FlowKettleOut", stopCond, timeoutSecs);
+				})
+				.then(() => {
+					pump.kettleOffSync();
+					valves.close("ValveChillWortIn");
+					valves.close("ValveFermentIn");
+					brewlog.info("... k2f end");
+					phase.end("K2F");
+					resolve(opt);
+				}).catch(err => {
+					console.log("oops", err)
+				});
+		});
+	},
+
+	// stop() {
+	// 	return new Promise((resolve, reject) => {
+	// 		console.log("k2f stop");
+	// 		/*flow.stop()
+	// 		.then(pump.stop)
+	// 		*/
+	// 		pump.stop()
+	// 			.then(resolve);
+	// 	});
+	// }
+}

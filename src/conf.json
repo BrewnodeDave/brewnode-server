@@ -1,0 +1,21 @@
+{
+    "tags": {
+        "allowUnknownTags": true,
+        "dictionaries": ["jsdoc","closure"]
+    },
+    "source": {
+	"include": [ "sim", "common", "brewstack", "./brewnode.js"],
+	"exclude": [ ],
+        "includePattern": ".+\\.js(doc|x)?$",
+        "excludePattern": "(^|\\/|\\\\)_"
+    },
+    "plugins": [],
+    "templates": {
+        "cleverLinks": false,
+        "monospaceLinks": false
+    },
+	"opts": {
+		"destination": "./pi-docs/",          
+		"recurse": true                  
+	}
+}
