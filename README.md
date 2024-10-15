@@ -27,4 +27,4 @@ Open browser at
 ```
 http://localhost:8080/docs/
 ```
-Add Brefather username and password by pressing the "Authorize" button. 
+Add Brewfather username and password by pressing the "Authorize" button. 
