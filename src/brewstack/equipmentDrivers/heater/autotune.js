@@ -1,10 +1,18 @@
 /*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
+/*
 P=1.0182279397020955,I=0.00045118640040693034,D=34.853968400048515
 P=1.3483022155116995,I=0.00014885381847995558,D=34.96771268895914
 P=1.6179477601615893,I=0.000191795570253339,D=36.218287237945255
 P=1.9221754894851337,I=0.0001914925561287659,D=36.21912325683197
 */
-const brewDefs = require('../../../common/brewdefs.js');
+const brewDefs = require('../../../brewdefs.js');
 const I2c = require('../../nodeDrivers/i2c/i2c_mraa.js');
 const pwm = require('./pwm.js');
 

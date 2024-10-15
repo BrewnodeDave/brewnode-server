@@ -1,3 +1,11 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 /**
  * Pump Module.
  * @module pump
@@ -9,9 +17,9 @@
  * @requires promise
  * @desc There are two pumps in the system. This module is used to switch them on and off. An event is emitted when the state of the pump changes.
  */
-const brewdefs = require('../../../common/brewdefs.js');
-const brewlog  = require('../../../common/brewlog.js');
-const broker = require('../../../common/broker.js');
+const brewdefs = require('../../../brewdefs.js');
+const brewlog  = require('../../../brewlog.js');
+const broker = require('../../../broker.js');
 // const i2c = require('../../nodeDrivers/i2c/i2c_mraa.js');
 const i2c = require('../../nodeDrivers/i2c/i2c_raspi.js');
 

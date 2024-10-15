@@ -1,3 +1,11 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 const { isRaspPi } = require("./brewdefs.js");
 
 let axios;
@@ -12,7 +20,7 @@ dotenv.config();//Adds contents of .env to environ vars e.g. process.env.DB_PASS
 
 const http = require("http");
 const brewlog = require("./brewlog.js");
-const therm = require("../brewstack/nodeDrivers/therm/temp.js");
+const therm = require("./brewstack/nodeDrivers/therm/temp.js");
 
 let timer = null;
 

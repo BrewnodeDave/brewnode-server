@@ -1,3 +1,11 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 /**
  * Vessel Module.
  * @module vessel
@@ -10,7 +18,7 @@
  * @desc A Vessel has flow values on the input and output. It also has
  * an temperatur probe.
  */
-const broker = require('../../common/broker.js');
+const broker = require('../../broker.js');
 const flow = require('./flow/flow.js');
 
 const fs = require('fs');

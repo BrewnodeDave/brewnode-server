@@ -2,7 +2,7 @@
 
 ### Pre-requisite
 
-Create a **.env** file in your home folder that contains the following variables:
+Create a **.env** file in the root folder that contains the following variables:
 
 ```
     BREWFATHER_USERNAME
@@ -12,14 +12,9 @@ Create a **.env** file in your home folder that contains the following variables
     BREWFATHER_ID
 ```
 
-
-### Install
-```
-npm install
-```
-
 ### Start
 ```
-node index.js
+npm run start
 ```
 
+### 

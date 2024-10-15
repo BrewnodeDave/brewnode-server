@@ -1,3 +1,11 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 /**
  * Temperature Sensor Driver.
  * @module temp
@@ -12,8 +20,8 @@
 */
  
 let ds18x20;
-const brewlog = require("../../../common/brewlog.js");
-const broker = require("../../../common/broker.js");
+const brewlog = require("../../../brewlog.js");
+const broker = require("../../../broker.js");
 let PROBES = require('./probes.js');
 
 let sampleInterval = null;

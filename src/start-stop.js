@@ -1,22 +1,22 @@
-const i2c 		= require('../brewstack/nodeDrivers/i2c/i2c_raspi.js');
-const pump 		= require('../brewstack/equipmentDrivers/pump/pump.js');
-const flow 		= require('../brewstack/equipmentDrivers/flow/flow.js');
-const fan 		= require('../brewstack/equipmentDrivers/fan/fan.js');
-const valves 	= require('../brewstack/equipmentDrivers/valve/valve.js');
-const wdog 		= require('../brewstack/equipmentDrivers/watchdog/wdog.js');
-const temp 		= require('../brewstack/nodeDrivers/therm/temp.js');
-const kettle 	= require('../brewstack/equipmentDrivers/kettle/kettle.js');
-const mashtun 	= require('../brewstack/equipmentDrivers/mashtun/mashtun.js');
-const glycolHeater = require('../brewstack/equipmentDrivers/glycol/glycol-heater.js');
-const glycolChill 	= require('../brewstack/brewingAlgorithms/glycol-chill.js');
-const fill 				= require('../brewstack/brewingAlgorithms/fill.js');
-const tempController 	= require('../brewstack/processControl/tempController.js');
-const glycolFerment 	= require('../brewstack/brewingAlgorithms/glycol-ferment.js');
+const i2c 		= require('./brewstack/nodeDrivers/i2c/i2c_raspi.js');
+const pump 		= require('./brewstack/equipmentDrivers/pump/pump.js');
+const flow 		= require('./brewstack/equipmentDrivers/flow/flow.js');
+const fan 		= require('./brewstack/equipmentDrivers/fan/fan.js');
+const valves 	= require('./brewstack/equipmentDrivers/valve/valve.js');
+const wdog 		= require('./brewstack/equipmentDrivers/watchdog/wdog.js');
+const temp 		= require('./brewstack/nodeDrivers/therm/temp.js');
+const kettle 	= require('./brewstack/equipmentDrivers/kettle/kettle.js');
+const mashtun 	= require('./brewstack/equipmentDrivers/mashtun/mashtun.js');
+const glycolHeater = require('./brewstack/equipmentDrivers/glycol/glycol-heater.js');
+const glycolChill 	= require('./brewstack/brewingAlgorithms/glycol-chill.js');
+const fill 				= require('./brewstack/brewingAlgorithms/fill.js');
+const tempController 	= require('./brewstack/processControl/tempController.js');
+const glycolFerment 	= require('./brewstack/brewingAlgorithms/glycol-ferment.js');
 const brewfather 	= require('./brewfather.js');
 
 // const brewmon = require('./brewmon.js');
 
-const sim 		= require('../sim/sim.js');
+const sim 		= require('./sim/sim.js');
 const brewlog 	= require('./brewlog.js');
 
 const broker 	= require('./broker.js');

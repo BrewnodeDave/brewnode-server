@@ -1,3 +1,11 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 /**
  * PID Temperature Controller
  * @module tempcontroller
@@ -21,13 +29,13 @@ cause the system to be highly sensitive to noise.
 
 */
 
-const broker = require('../../common/broker.js');
+const broker = require('../../broker.js');
 const therm = require('../nodeDrivers/therm/temp.js');
 const kettle = require('../equipmentDrivers/kettle/kettle.js');
 const phase = require('../brewingAlgorithms/phase.js');
 
 const NanoTimer = require('nanotimer');
-const brewlog = require('../../common/brewlog.js');
+const brewlog = require('../../brewlog.js');
 const mashTimer = new NanoTimer();
 
 //Periodically re-examine temp

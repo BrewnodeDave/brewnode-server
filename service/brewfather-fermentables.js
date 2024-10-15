@@ -1,32 +1,14 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 'use strict';
 
-const axios = require("axios");
-const {auth, root} = require('./BrewfatherCommon.js');
-
-
-/**
- * @param {string} endpoint
- * @param {{ include: any; complete?: any; status?: any; limit?: any; start_after?: any; order_by?: any; order_by_direction?: any; id?: any; }} params
- */
-async function get(endpoint, params){
-  try {
-      const config = { params, auth }
-      const response = await axios.get(`${root}/${endpoint}`, config);
-      return response.data;
-  } catch (error) {
-      console.error(error);
-  }
-}
-
-async function patch(endpoint, params){
-  try {
-      const config = { params, auth }
-      const response = await axios.patch(`${root}/${endpoint}`, config);
-      return response.data;
-  } catch (error) {
-      console.error(error);
-  }
-}
+const {get, patch} = require('./common.js');
 
 /**
  * Get Fermentables
@@ -42,19 +24,19 @@ async function patch(endpoint, params){
  * order_by_direction String Direction to order result (optional)
  * no response value expected for this operation
  **/
-exports.getFermentables = async (inventory_negative,include,complete,inventory_exists,limit,start_after,order_by,order_by_direction) => {
+exports.getFermentables = async (req, inventory_negative,include,complete,inventory_exists,limit,start_after,order_by,order_by_direction) => {
   const params = {inventory_negative,include,complete,inventory_exists,limit,start_after,order_by,order_by_direction};
-  return await get(`inventory/fermentables`, params);
+  return await get(req, `inventory/fermentables`, params);
 }
 
-exports.getFermentable = async (include, id) => {
+exports.getFermentable = async (req, include, id) => {
   const params = {include};
-  return await get(`inventory/fermentables/${id}`, params);
+  return await get(req, `inventory/fermentables/${id}`, params);
 }
 
-exports.updateFermentable = async (inventory_adjust, inventory, id) => {
+exports.updateFermentable = async (req, inventory_adjust, inventory, id) => {
   const params = {inventory_adjust, inventory, id};
-  return await patch(`inventory/fermentables/${id}`, params);
+  return await patch(req, `inventory/fermentables/${id}`, params);
 }
 
 

@@ -1,8 +1,16 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 const fs = require('fs');
 const brewdefs= require('./brewdefs.js');
 const brewlog = require('./brewlog.js');
 const brewfather = require('./brewfather.js');
-const temp = require('../brewstack/nodeDrivers/therm/temp.js');
+const temp = require('./brewstack/nodeDrivers/therm/temp.js');
 
 const FLOW_TIMEOUT_SECS = 2;
 /**

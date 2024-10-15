@@ -1,3 +1,11 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 //import { hostname } from 'os';
 
 /**
@@ -19,16 +27,16 @@
 const path = require('path');
 const logDir = path.join(__dirname, "../brewstack/equipmentDrivers");
 
-const broker = require('../common/broker.js');
+const broker = require('../broker.js');
 const pump = require('../brewstack/equipmentDrivers/pump/pump.js');
 const valve = require('../brewstack/equipmentDrivers/valve/valve.js');
 const ds18x20 = require('./ds18x20.js');
 const flow = require('../brewstack/equipmentDrivers/flow/flow.js');
-const brewdefs = require('../common/brewdefs.js');
+const brewdefs = require('../brewdefs.js');
 const kettle = require('../brewstack/equipmentDrivers/kettle/kettle.js');
 const mashTun = require('../brewstack/equipmentDrivers/mashtun/mashtun.js');
 const temp = require('../brewstack/nodeDrivers/therm/temp.js');
-const brewlog = require('../common/brewlog.js');
+const brewlog = require('../brewlog.js');
 
 const CHILLER_OUTPUT_TEMP = 20;
 const FLOW_RATE = 200;

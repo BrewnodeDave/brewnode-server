@@ -1,5 +1,13 @@
-const brewlog = require('../../common/brewlog.js');
-const broker = require('../../common/broker.js');
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
+const brewlog = require('../../brewlog.js');
+const broker = require('../../broker.js');
 
 function findPhase(name){
     let result = {

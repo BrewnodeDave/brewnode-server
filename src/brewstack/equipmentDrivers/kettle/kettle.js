@@ -1,10 +1,18 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 /**
  * Kettle Module.
  * @module kettle
  * @desc Kettle is an instance of a Vessel aggregrated with a heater and temperature sensor
  */
 
-const brewlog = require('../../../common/brewlog.js');
+const brewlog = require('../../../brewlog.js');
 const heater = require('../heater/heater.js');
 const Vessel = require('../vessel.js');
 const options = {

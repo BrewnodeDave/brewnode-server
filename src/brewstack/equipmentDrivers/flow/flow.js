@@ -1,3 +1,12 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
+
 /**
  * Flow Sensor Driver
  * @module flow
@@ -7,9 +16,9 @@
  */
 // @ts-ignore
 const i2c = require('../../nodeDrivers/i2c/i2c_raspi.js');
-const brewdefs = require('../../../common/brewdefs.js');
-const brewlog = require("../../../common/brewlog.js");
-const broker = require("../../../common/broker.js");
+const brewdefs = require('../../../brewdefs.js');
+const brewlog = require("../../../brewlog.js");
+const broker = require("../../../broker.js");
 
 /*
 Pulses/Sec = mL/Sec / mL/Puls_
@@ -42,8 +51,16 @@ let timeoutSecs = null;
 const ID_FLOW_KETTLE_OUT = 0;
 const ID_FLOW_MASH_OUT = 1;
 const ID_FLOW_FERMENT_IN = 2;
+const ID_FLOW_KETTLE_IN = 3;//????????
+
 const FLOW_DEFS = [
 	{
+		id: ID_FLOW_KETTLE_IN,
+		name:"FlowKettleIn",
+		i2cPin:brewdefs.I2C_FLOW_KETTLE_IN,
+		mLPerPulse:1.5807,
+		k: undefined 	
+	},	{
 		//when k2m 208mL/s
 		id: ID_FLOW_KETTLE_OUT,
 		name:"FlowKettleOut",
@@ -222,6 +239,11 @@ function Flow(opt){
 }//flow
 
 module.exports = {
+	ID_FLOW_KETTLE_OUT,
+	ID_FLOW_MASH_OUT,
+	ID_FLOW_FERMENT_IN,
+	ID_FLOW_KETTLE_IN,//????????
+
 	start(opt) { 
 		return new Promise((resolve, reject) => {
 			samplePeriodTooSmall = 0;
@@ -261,7 +283,7 @@ module.exports = {
 						flows[ID_FLOW_KETTLE_OUT].bitCount	((word & I2C_FLOW_KETTLE_OUT_MASK)	>> brewdefs.I2C_FLOW_KETTLE_OUT);
 						flows[ID_FLOW_MASH_OUT].bitCount	((word & I2C_FLOW_MASH_OUT_MASK)	>> brewdefs.I2C_FLOW_MASH_OUT); 
 						flows[ID_FLOW_FERMENT_IN].bitCount	((word & I2C_FLOW_FERMENT_IN_MASK)	>> brewdefs.I2C_FLOW_FERMENT); 
-						// flows[ID_FLOW_KETTLE_IN].bitCount	((word & I2C_FLOW_KETTLE_IN_MASK) 	>> brewdefs.I2C_FLOW_KETTLE_IN);
+						flows[ID_FLOW_KETTLE_IN].bitCount	((word & I2C_FLOW_KETTLE_IN_MASK) 	>> brewdefs.I2C_FLOW_KETTLE_IN);
 						active = false;
 					}else {
 						//DONT LOG - takes too long

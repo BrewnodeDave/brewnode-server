@@ -1,11 +1,19 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 /**
  * Fermenter Module.
  * @module fermenter
  * @desc Fermenter is a Vessel
  */
  
-const brewlog = require("../../../common/brewlog.js");
-const broker = require("../../../common/broker.js");
+const brewlog = require("../../../brewlog.js");
+const broker = require("../../../broker.js");
 //const weigh = require('../../equipmentDrivers/weight/weigh.js');
 const Vessel = require('../vessel.js');
 

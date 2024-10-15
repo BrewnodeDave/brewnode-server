@@ -1,3 +1,11 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 /**
  * Valve Module.
  * @module valve
@@ -8,9 +16,9 @@
  * After each open or close command, the state of the valve is verified by waiting upon the valve to indicate that it is open or closed.
  */
 
-const brewdefs = require('../../../common/brewdefs.js');
-const brewlog  = require('../../../common/brewlog.js');
-const broker   = require('../../../common/broker.js');
+const brewdefs = require('../../../brewdefs.js');
+const brewlog  = require('../../../brewlog.js');
+const broker   = require('../../../broker.js');
 
 // @ts-ignore
 let i2c = require('../../nodeDrivers/i2c/i2c_raspi.js');

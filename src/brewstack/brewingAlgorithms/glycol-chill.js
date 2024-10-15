@@ -1,9 +1,17 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 const pump = require('../equipmentDrivers/pump/pump.js');
-const brewlog = require('../../common/brewlog.js');
-const broker = require('../../common/broker.js');
+const brewlog = require('../../brewlog.js');
+const broker = require('../../broker.js');
 const therm = require('../nodeDrivers/therm/temp.js');
 
-const {promiseSerial} = require('../../common/brew-pub.js');
+const {promiseSerial} = require('../../brew-pub.js');
 
 const GLYCOL_TEMPNAME = "TempGlycol";
 const FERMENT_TEMPNAME = "TempFermenter";

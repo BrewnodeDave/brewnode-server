@@ -1,7 +1,13 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 /* This sends all hardware events to a websocket
 */
-
-const endpoints = require('./endpoints.js');
 
 const port = 8080;
 const http = require('http');
@@ -44,29 +50,6 @@ function initialiseClient(serverSocket) {
 	broker.setEmitFn(serverSocket.emit);
 }
 
-/**
- * @param {{ url: string; }} request
- * @param {{ setHeader: (arg0: string, arg1: string) => void; end: (arg0: string) => void; }} response
- */
-function serverHandler(request, response) {
-	const urlParams = decodeURI(request.url).split('/');		
-	const action = urlParams[1];
-	const params = urlParams[2];
-	
-	response.setHeader("Access-Control-Allow-Origin", "*");
-	response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-
-    const endpoint = endpoints.default.get(action);
-
-	if (endpoint){
-		brewlog.info("serverHandler", `/${action}`)
-        endpoint(params)
-		.then(end(response));
-	}else{
-		brewlog.error("serverHandler", JSON.stringify(request));
-		response.end(``);
-	}
-}
 
 /**
  * @param {{}} options
@@ -96,7 +79,6 @@ function stop() {
 }
 
 module.exports = { 
-	getStatus: endpoints.default.get('status'),
 	server: _httpServer,
 	start,
 	stop

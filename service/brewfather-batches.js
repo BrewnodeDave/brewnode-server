@@ -1,31 +1,14 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 'use strict';
 
-const axios = require("axios");
-const {auth, root} = require('./BrewfatherCommon.js');
-
-/**
- * @param {string} endpoint
- * @param {{ include: any; complete?: any; status?: any; limit?: any; start_after?: any; order_by?: any; order_by_direction?: any; id?: any; }} params
- */
-async function get(endpoint, params){
-  try {
-      const config = { params, auth }
-      const response = await axios.get(`${root}/${endpoint}`, config);
-      return response.data;
-  } catch (error) {
-      console.error(error);
-  }
-}
-
-async function patch(endpoint, params){
-  try {
-      const config = { params, auth }
-      const response = await axios.patch(`${root}/${endpoint}`, config);
-      return response.data;
-  } catch (error) {
-      console.error(error);
-  }
-}
+const {get, patch} = require('./common.js');
 
 /**
  * Get batch readings
@@ -40,9 +23,9 @@ async function patch(endpoint, params){
  * order_by_direction String Direction to order result (optional)
  * no response value expected for this operation
  **/
-exports.batches = async(include, complete, status, limit, start_after, order_by, order_by_direction) => {
+exports.batches = async(req, include, complete, status, limit, start_after, order_by, order_by_direction) => {
     const params = {include, complete, status, limit, start_after, order_by, order_by_direction};
-    return await get("batches", params);
+    return await get(req, "batches", params);
 }
 
 /**
@@ -53,12 +36,10 @@ exports.batches = async(include, complete, status, limit, start_after, order_by,
  * include List Array of additional fields to include when complete is false. Example 'recipe.fermentation,recipe.mash' to include the fermentation and mash profile. (optional)
  * no response value expected for this operation
  **/
-exports.batch = async(include, id) => {
+exports.batch = async(req, include, id) => {
   const params = {id, include};
-  return await get(`batches/${id}`, params);
+  return await get(req, `batches/${id}`, params);
 }
-
-
 
 
 /**
@@ -81,9 +62,9 @@ exports.batch = async(include, id) => {
  * carbonationTemp BigDecimal  (optional)
  * no response value expected for this operation
  **/
-exports.updateBatch = async (status,measuredMashPh,measuredBoilSize,measuredFirstWortGravity,measuredPreBoilGravity,measuredPostBoilGravity,measuredKettleSize,measuredOg,measuredFermenterTopUp,measuredBatchSize,measuredFg,measuredBottlingSize,carbonationTemp, id) => {
+exports.updateBatch = async (req, status,measuredMashPh,measuredBoilSize,measuredFirstWortGravity,measuredPreBoilGravity,measuredPostBoilGravity,measuredKettleSize,measuredOg,measuredFermenterTopUp,measuredBatchSize,measuredFg,measuredBottlingSize,carbonationTemp, id) => {
   const params = {id,status,measuredMashPh,measuredBoilSize,measuredFirstWortGravity,measuredPreBoilGravity,measuredPostBoilGravity,measuredKettleSize,measuredOg,measuredFermenterTopUp,measuredBatchSize,measuredFg,measuredBottlingSize,carbonationTemp};
-  return await patch(`batches/${id}`, params);
+  return await patch(req, `batches/${id}`, params);
 }
 
 
@@ -94,14 +75,14 @@ exports.updateBatch = async (status,measuredMashPh,measuredBoilSize,measuredFirs
  * id String 
  * no response value expected for this operation
  **/
-exports.getLastBatchReading = async (id) =>{
-  return await get(`batches/${id}/readings/last`, undefined);
+exports.getLastBatchReading = async (req, id) =>{
+  return await get(req, `batches/${id}/readings/last`, undefined);
 }
 
-exports.getAllBatchReadings = async (id) =>{
-  return await get(`batches/${id}/readings`, undefined);
+exports.getAllBatchReadings = async (req, id) =>{
+  return await get(req, `batches/${id}/readings`, undefined);
 }
 
-exports.getBatchBrewTracker = async (id) =>{
-  return await get(`batches/${id}/brewtracker`, undefined);
+exports.getBatchBrewTracker = async (req, id) =>{
+  return await get(req, `batches/${id}/brewtracker`, undefined);
 }

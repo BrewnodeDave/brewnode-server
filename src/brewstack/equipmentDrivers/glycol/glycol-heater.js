@@ -1,13 +1,22 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
+
 /**
  * Extractor Fan Driver
  * @module fan
  * @desc Simple on/off control of the extractor fan. Every time the state changes (on/off) an event is emitted to all listeners.
  */
 
-const brewdefs  = require('../../../common/brewdefs.js');
-const brewlog   = require('../../../common/brewlog.js');
+const brewdefs  = require('../../../brewdefs.js');
+const brewlog   = require('../../../brewlog.js');
 const i2c       = require('../../nodeDrivers/i2c/i2c_raspi.js');
-const broker 	= require('../../../common/broker.js');
+const broker 	= require('../../../broker.js');
 
 /** 
  @const {number} 

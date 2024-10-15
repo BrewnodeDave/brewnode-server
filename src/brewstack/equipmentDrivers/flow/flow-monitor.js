@@ -1,4 +1,12 @@
 /*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
+/*
 
 
 E.g. Switch on watchdog led  =>  
@@ -48,7 +56,7 @@ with m2k gives 5,F,7,D => 0101 1111 0111 1101 => bit29 & bit31
 
 
 const i2c = require('../../nodeDrivers/i2c/i2c_raspi.js');
-const brewlog = require("../../../common/brewlog.js");
+const brewlog = require("../../../brewlog.js");
 
 const flow = require('./flow.js');
 

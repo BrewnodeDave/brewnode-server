@@ -1,3 +1,11 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 /**
  * I2C Driver.
  * @module i2c
@@ -69,8 +77,8 @@ Relay ?		0x20	0x12	0x2	1	Out
 Relay ?		0x20	0x12	0x1	0	Out	
  */
 
-const brewlog = require('../../../common/brewlog.js');
-const brewdefs = require('../../../common/brewdefs.js');
+const brewlog = require('../../../brewlog.js');
+const brewdefs = require('../../../brewdefs.js');
 let mraa;
 let i2c;
 

@@ -1,3 +1,11 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
 /**
  * Watchdog Driver.
  * @module wdog
@@ -12,11 +20,11 @@
  * Manually stop the Pi to avoid corruption before powering off.
  */
 
-const brewDefs = require('../../../common/brewdefs.js');
+const brewDefs = require('../../../brewdefs.js');
 const exec = require('child_process').exec;	
 const i2c = require('../../nodeDrivers/i2c/i2c_raspi.js');
-const brewlog = require('../../../common/brewlog.js');
-const broker = require('../../../common/broker.js');
+const brewlog = require('../../../brewlog.js');
+const broker = require('../../../broker.js');
 
 /**
  * @const {integer} Watchdog interval

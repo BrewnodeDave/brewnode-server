@@ -1,1089 +1,8 @@
 openapi: 3.0.1
 info:
   title: Brewnode
-  version: 1.0.0
-servers:
-- url: /
+  version: 2.0.0
 paths:
-  /inventory/yeasts/{id}:
-    get:
-      tags:
-      - Brewfather Yeasts
-      summary: Get Yeast
-      description: This endpoint allows you to fetch a specific item.
-      operationId: getYeast
-      parameters:
-      - name: include
-        in: query
-        description: Array of fields to include. When omitted all fields are included.
-          Default fields are included in addition to the requested fields.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Brewfather JSON
-      security:
-      - ApiKeyAuth: []
-      x-swagger-router-controller: BrewfatherYeasts
-    patch:
-      tags:
-      - Brewfather Yeasts
-      summary: Update Yeast
-      description: This endpoint allows you to update specific fields of a specific
-        item.
-      operationId: updateYeast
-      parameters:
-      - name: inventory_adjust
-        in: query
-        description: Adjust the existing inventory amount by the given amount.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: inventory
-        in: query
-        description: Set the inventory amount to the given value. (inventory_adjust
-          is ignored if you send in a inventory value)
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-      x-swagger-router-controller: BrewfatherYeasts
-  /inventory/yeasts:
-    get:
-      tags:
-      - Brewfather Yeasts
-      summary: Get Yeasts
-      description: "This endpoint allows you to list your inventory items. It will\
-        \ only list items you have added manually or edited the default values for,\
-        \ or added an inventory amount on."
-      operationId: getYeasts
-      parameters:
-      - name: include
-        in: query
-        description: "Array of additional fields to include when complete is false.\
-          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: complete
-        in: query
-        description: "Valid values \"True\" or \"False\". Includes all the data in\
-          \ the result if True. Defaults to \"False\". If False only Name, Author,\
-          \ Style Name, Type is returned."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          default: false
-          enum:
-          - true
-          - false
-      - name: inventory_exists
-        in: query
-        description: "Valid values \"True\" or \"False\". If true, only include items\
-          \ with inventory > 0. Results will be ordered by inventory amount instead\
-          \ of _id."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          default: false
-          enum:
-          - true
-          - false
-      - name: limit
-        in: query
-        description: Amount of documents to fetch.
-        required: false
-        style: form
-        explode: true
-        schema:
-          maximum: 50
-          type: integer
-          default: 10
-      - name: start_after
-        in: query
-        description: _id of the last item in the previous request
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by
-        in: query
-        description: "The field to order by, defaults to \"_id\""
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by_direction
-        in: query
-        description: Direction to order result
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-          default: asc
-          enum:
-          - asc
-          - desc
-      responses:
-        "200":
-          description: Array of Brewfather JSON
-      x-swagger-router-controller: BrewfatherYeasts
-  /inventory/miscs/{id}:
-    get:
-      tags:
-      - Brewfather Miscs
-      summary: Get Misc
-      description: This endpoint allows you to fetch a specific item.
-      operationId: getMisc
-      parameters:
-      - name: include
-        in: query
-        description: Array of fields to include. When omitted all fields are included.
-          Default fields are included in addition to the requested fields.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Brewfather JSON
-      x-swagger-router-controller: BrewfatherMiscs
-    patch:
-      tags:
-      - Brewfather Miscs
-      summary: Update Misc
-      description: This endpoint allows you to update specific fields of a specific
-        item.
-      operationId: updateMisc
-      parameters:
-      - name: inventory_adjust
-        in: query
-        description: Adjust the existing inventory amount by the given amount.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: inventory
-        in: query
-        description: Set the inventory amount to the given value. (inventory_adjust
-          is ignored if you send in a inventory value)
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-      x-swagger-router-controller: BrewfatherMiscs
-  /inventory/miscs:
-    get:
-      tags:
-      - Brewfather Inventory
-      summary: Get Miscs
-      description: "This endpoint allows you to list your inventory items. It will\
-        \ only list items you have added manually or edited the default values for,\
-        \ or added an inventory amount on."
-      operationId: getMiscs
-      parameters:
-      - name: include
-        in: query
-        description: "Array of additional fields to include when complete is false.\
-          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: complete
-        in: query
-        description: "Valid values \"True\" or \"False\". Includes all the data in\
-          \ the result if True. Defaults to \"False\". If False only Name, Author,\
-          \ Style Name, Type is returned."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          default: false
-          enum:
-          - true
-          - false
-      - name: inventory_exists
-        in: query
-        description: "Valid values \"True\" or \"False\". If true, only include items\
-          \ with inventory > 0. Results will be ordered by inventory amount instead\
-          \ of _id."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          default: false
-          enum:
-          - true
-          - false
-      - name: limit
-        in: query
-        description: Amount of documents to fetch.
-        required: false
-        style: form
-        explode: true
-        schema:
-          maximum: 50
-          type: integer
-          default: 10
-      - name: start_after
-        in: query
-        description: _id of the last item in the previous request
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by
-        in: query
-        description: "The field to order by, defaults to \"_id\""
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by_direction
-        in: query
-        description: Direction to order result
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-          default: asc
-          enum:
-          - asc
-          - desc
-      responses:
-        "200":
-          description: Array of Brewfather JSON
-      x-swagger-router-controller: BrewfatherInventory
-  /inventory/hops/{id}:
-    get:
-      tags:
-      - Brewfather Hops
-      summary: Get Hop
-      description: This endpoint allows you to fetch a specific item.
-      operationId: getHop
-      parameters:
-      - name: include
-        in: query
-        description: Array of fields to include. When omitted all fields are included.
-          Default fields are included in addition to the requested fields.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Brewfather JSON
-      x-swagger-router-controller: BrewfatherHops
-    patch:
-      tags:
-      - Brewfather Hops
-      summary: Update Hop
-      description: This endpoint allows you to update specific fields of a specific
-        item.
-      operationId: updateHop
-      parameters:
-      - name: inventory_adjust
-        in: query
-        description: Adjust the existing inventory amount by the given amount.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: inventory
-        in: query
-        description: Set the inventory amount to the given value. (inventory_adjust
-          is ignored if you send in a inventory value)
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-      x-swagger-router-controller: BrewfatherHops
-  /inventory/hops:
-    get:
-      tags:
-      - Brewfather Inventory
-      summary: Get Hops
-      description: "This endpoint allows you to list your inventory items. It will\
-        \ only list items you have added manually or edited the default values for,\
-        \ or added an inventory amount on."
-      operationId: getHops
-      parameters:
-      - name: include
-        in: query
-        description: "Array of additional fields to include when complete is false.\
-          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: complete
-        in: query
-        description: "Valid values \"True\" or \"False\". Includes all the data in\
-          \ the result if True. Defaults to \"False\". If False only Name, Author,\
-          \ Style Name, Type is returned."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          default: false
-          enum:
-          - true
-          - false
-      - name: inventory_exists
-        in: query
-        description: "Valid values \"True\" or \"False\". If true, only include items\
-          \ with inventory > 0. Results will be ordered by inventory amount instead\
-          \ of _id."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          default: false
-          enum:
-          - true
-          - false
-      - name: limit
-        in: query
-        description: Amount of documents to fetch.
-        required: false
-        style: form
-        explode: true
-        schema:
-          maximum: 50
-          type: integer
-          default: 10
-      - name: start_after
-        in: query
-        description: _id of the last item in the previous request
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by
-        in: query
-        description: "The field to order by, defaults to \"_id\""
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by_direction
-        in: query
-        description: Direction to order result
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-          default: asc
-          enum:
-          - asc
-          - desc
-      responses:
-        "200":
-          description: Array of Brewfather JSON
-      x-swagger-router-controller: BrewfatherInventory
-  /inventory/fermentables/{id}:
-    get:
-      tags:
-      - Brewfather Fermentables
-      summary: Get Fermentable
-      description: This endpoint allows you to fetch a specific item.
-      operationId: getFermentable
-      parameters:
-      - name: include
-        in: query
-        description: Array of fields to include. When omitted all fields are included.
-          Default fields are included in addition to the requested fields.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Brewfather JSON
-      x-swagger-router-controller: BrewfatherFermentables
-    patch:
-      tags:
-      - Brewfather Fermentables
-      summary: Update Fermentable
-      description: This endpoint allows you to update specific fields of a specific
-        item.
-      operationId: updateFermentable
-      parameters:
-      - name: inventory_adjust
-        in: query
-        description: Adjust the existing inventory amount by the given amount.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: inventory
-        in: query
-        description: Set the inventory amount to the given value. (inventory_adjust
-          is ignored if you send in a inventory value)
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: OK
-      x-swagger-router-controller: BrewfatherFermentables
-  /inventory/fermentables:
-    get:
-      tags:
-      - Brewfather Inventory
-      summary: Get Fermentables
-      description: "This endpoint allows you to list your inventory items. It will\
-        \ only list items you have added manually or edited the default values for,\
-        \ or added an inventory amount on."
-      operationId: getFermentables
-      parameters:
-      - name: inventory_negative
-        in: query
-        description: "If true, only include items with inventory < 0"
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          enum:
-          - true
-          - false
-      - name: include
-        in: query
-        description: "Array of additional fields to include when complete is false.\
-          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: complete
-        in: query
-        description: "Valid values \"True\" or \"False\". Includes all the data in\
-          \ the result if True. Defaults to \"False\". If False only Name, Author,\
-          \ Style Name, Type is returned."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          default: false
-          enum:
-          - true
-          - false
-      - name: inventory_exists
-        in: query
-        description: "Valid values \"True\" or \"False\". If true, only include items\
-          \ with inventory > 0. Results will be ordered by inventory amount instead\
-          \ of _id."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          default: false
-          enum:
-          - true
-          - false
-      - name: limit
-        in: query
-        description: Amount of documents to fetch.
-        required: false
-        style: form
-        explode: true
-        schema:
-          maximum: 50
-          type: integer
-          default: 10
-      - name: start_after
-        in: query
-        description: _id of the last item in the previous request
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by
-        in: query
-        description: "The field to order by, defaults to \"_id\""
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by_direction
-        in: query
-        description: Direction to order result
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-          default: asc
-          enum:
-          - asc
-          - desc
-      responses:
-        "200":
-          description: Array of Brewfather JSON
-      x-swagger-router-controller: BrewfatherInventory
-  /recipes/{id}:
-    get:
-      tags:
-      - Brewfather Recipes
-      summary: Get Recipe
-      description: This endpoint allows you to fetch a specific recipe.
-      operationId: getRecipe
-      parameters:
-      - name: include
-        in: query
-        description: "Array of additional fields to include when complete is false.\
-          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Brewfather RECIPE JSON
-      x-swagger-router-controller: BrewfatherRecipes
-  /batches/recipes:
-    get:
-      tags:
-      - Brewfather Recipes
-      summary: Get Recipes
-      description: This endpoint allows you to list your recipes.
-      operationId: getRecipes
-      parameters:
-      - name: include
-        in: query
-        description: "Array of additional fields to include when complete is false.\
-          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: complete
-        in: query
-        description: "Valid values \"True\" or \"False\". Includes all the data in\
-          \ the result if True. Defaults to \"False\". If False only Name, Author,\
-          \ Style Name, Type is returned."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          enum:
-          - true
-          - false
-      - name: limit
-        in: query
-        description: Amount of documents to fetch.
-        required: false
-        style: form
-        explode: true
-        schema:
-          maximum: 50
-          type: integer
-          default: 10
-      - name: start_after
-        in: query
-        description: _id of the last item in the previous request
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by
-        in: query
-        description: "The field to order by, defaults to \"_id\""
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by_direction
-        in: query
-        description: Direction to order result
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-          default: asc
-          enum:
-          - asc
-          - desc
-      responses:
-        "200":
-          description: array of Brewfather RECIPE JSON
-      x-swagger-router-controller: BrewfatherRecipes
-  /batches/{id}/brewtracker:
-    get:
-      tags:
-      - Brewfather Batches
-      summary: Get Batch Brew Tracker
-      description: "This endpoint allows you to fetch the latest stored status of\
-        \ the brewtracker. Brew tracker does not get updated every second, position\
-        \ is calculated from start time of the stage. Brewfather triggers an update/save\
-        \ at certain events."
-      operationId: getBatchBrewTracker
-      parameters:
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: brew tracker object
-      x-swagger-router-controller: BrewfatherBatches
-  /batches/{id}/readings:
-    get:
-      tags:
-      - Brewfather Batches
-      summary: Get All Batch Readings
-      description: This endpoint allows you to fetch all readings stored in a batch.
-      operationId: getAllBatchReadings
-      parameters:
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: JSON reading
-      x-swagger-router-controller: BrewfatherBatches
-  /batches/{id}/readings/last:
-    get:
-      tags:
-      - Brewfather Batches
-      summary: Get Batch Last Reading
-      description: This endpoint allows you to fetch the latest reading recieved
-      operationId: getLastBatchReading
-      parameters:
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: JSON reading
-      x-swagger-router-controller: BrewfatherBatches
-  /batches:
-    get:
-      tags:
-      - Brewfather Batches
-      summary: Get batch readings
-      description: This endpoint allows you to list your batches. By default it returns
-        batches with all statuses. Use the query parameter "status" to query for a
-        given status.
-      operationId: batches
-      parameters:
-      - name: include
-        in: query
-        description: "Array of additional fields to include when complete is false.\
-          \ Example 'recipe.fermentation,recipe.mash' to include the fermentation\
-          \ and mash profile."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: array
-          items:
-            type: string
-      - name: complete
-        in: query
-        description: "Includes all the data in the result if True. If False only Name,\
-          \ Batch Number, Status, Brewer, Brew Date, Recipe Name is returned."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: boolean
-          default: false
-          enum:
-          - true
-          - false
-      - name: status
-        in: query
-        description: Current batch status
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-          enum:
-          - Planning
-          - Brewing
-          - Fermenting
-          - Conditioning
-          - Completed
-          - Archived
-      - name: limit
-        in: query
-        description: Amount of documents to fetch.
-        required: false
-        style: form
-        explode: true
-        schema:
-          maximum: 50
-          type: integer
-          default: 10
-      - name: start_after
-        in: query
-        description: _id of the last item in the previous request
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by
-        in: query
-        description: "The field to order by, defaults to \"_id\""
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: order_by_direction
-        in: query
-        description: Direction to order result
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-          default: desc
-          enum:
-          - asc
-          - desc
-      responses:
-        "200":
-          description: array of Brewfather BATCH JSON
-      x-swagger-router-controller: BrewfatherBatches
-  /batches/{id}:
-    get:
-      tags:
-      - Brewfather Batches
-      summary: Get batch
-      description: This endpoint allows you to fetch a specific batch.
-      operationId: batch
-      parameters:
-      - name: include
-        in: query
-        description: "Array of additional fields to include when complete is false.\
-          \ Example 'recipe.fermentation,recipe.mash' to include the fermentation\
-          \ and mash profile."
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: array
-          items:
-            type: string
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Brewfather BATCH JSON
-      x-swagger-router-controller: BrewfatherBatches
-    patch:
-      tags:
-      - Brewfather Batches
-      summary: Update batch
-      description: This endpoint allows you to update specific fields of a specific
-        batch. Currently support setting the status and measured values.
-      operationId: updateBatch
-      parameters:
-      - name: status
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-          enum:
-          - Planning
-          - Brewing
-          - Fermenting
-          - Conditioning
-          - Completed
-          - Archived
-      - name: measuredMashPh
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          maximum: 14
-          minimum: 0
-          type: integer
-      - name: measuredBoilSize
-        in: query
-        description: Pre-Boil Volume. Value in Litres
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: measuredFirstWortGravity
-        in: query
-        description: Pre-Sparge Gravity. Value in SG.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: measuredPreBoilGravity
-        in: query
-        description: Pre-Boil Gravity. Value in SG.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: measuredPostBoilGravity
-        in: query
-        description: Post-Boil Gravity. Value in SG.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: measuredKettleSize
-        in: query
-        description: Post-Boil Volume. Value in Littes
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: integer
-      - name: measuredOg
-        in: query
-        description: Original Gravity. Value in SG
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: measuredFermenterTopUp
-        in: query
-        description: Fermenter Top-Up. Value in Litres
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: measuredBatchSize
-        in: query
-        description: Fermenter Volume. Value in Litres
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: measuredFg
-        in: query
-        description: Final Gravity. Value in SG
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: measuredBottlingSize
-        in: query
-        description: Final Bottling/Kegging Volume. Value in Litres
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-      - name: carbonationTemp
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          maximum: 100
-          minimum: -50
-          type: number
-          description: Value in Celcius (°C)
-      - name: id
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Ok.
-      x-swagger-router-controller: BrewfatherBatches
-  /readings:
-    get:
-      tags:
-      - Brewnode
-      summary: Get batch readings
-      operationId: getReadings
-      parameters:
-      - name: batchId
-        in: query
-        description: Batch Id
-        required: true
-        style: form
-        explode: true
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Success
-      x-swagger-router-controller: Brewnode
-  /brewname:
-    get:
-      tags:
-      - Brewnode
-      summary: Get current brewname
-      operationId: getBrewname
-      responses:
-        "200":
-          description: Success
-      x-swagger-router-controller: Brewnode
-  /inventory:
-    get:
-      tags:
-      - Brewnode
-      summary: "Get inventory, malt, hops, yeast etc"
-      operationId: getInventory
-      responses:
-        "200":
-          description: Success
-      x-swagger-router-controller: Brewnode
   /status:
     get:
       tags:
@@ -1122,6 +41,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       x-swagger-router-controller: Brewnode
+
+  /mash:
+    put:
+      tags:
+      - Brewnode
+      summary: Mash
+      operationId: mash
+      parameters:
+      - name: steps
+        in: query
+        description: Mash Steps
+        schema:
+          $ref: '#/components/schemas/TemperatureProfile'
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: Brewnode
+
   /restart:
     put:
       tags:
@@ -1285,14 +223,1092 @@ paths:
         "200":
           description: Success
       x-swagger-router-controller: Brewnode
+
+  /inventory/yeasts/{id}:
+    get:
+      tags:
+      - Brewfather Yeasts
+      summary: Get Yeast
+      description: This endpoint allows you to fetch a specific item.
+      operationId: getYeast
+      parameters:
+      - name: include
+        in: query
+        description: Array of fields to include. When omitted all fields are included.
+          Default fields are included in addition to the requested fields.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Brewfather JSON
+      x-swagger-router-controller: BrewfatherYeasts
+    patch:
+      tags:
+      - Brewfather Yeasts
+      summary: Update Yeast
+      description: This endpoint allows you to update specific fields of a specific
+        item.
+      operationId: updateYeast
+      parameters:
+      - name: inventory_adjust
+        in: query
+        description: Adjust the existing inventory amount by the given amount.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: inventory
+        in: query
+        description: Set the inventory amount to the given value. (inventory_adjust
+          is ignored if you send in a inventory value)
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+      x-swagger-router-controller: BrewfatherYeasts
+
+  /inventory/yeasts:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Yeasts
+      summary: Get Yeasts
+      description: "This endpoint allows you to list your inventory items. It will\
+        \ only list items you have added manually or edited the default values for,\
+        \ or added an inventory amount on."
+      operationId: getYeasts
+      parameters:
+      - name: include
+        in: query
+        description: "Array of additional fields to include when complete is false.\
+          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: complete
+        in: query
+        description: "Valid values \"True\" or \"False\". Includes all the data in\
+          \ the result if True. Defaults to \"False\". If False only Name, Author,\
+          \ Style Name, Type is returned."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
+          enum:
+          - true
+          - false
+      - name: inventory_exists
+        in: query
+        description: "Valid values \"True\" or \"False\". If true, only include items\
+          \ with inventory > 0. Results will be ordered by inventory amount instead\
+          \ of _id."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
+          enum:
+          - true
+          - false
+      - name: limit
+        in: query
+        description: Amount of documents to fetch.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 50
+          type: integer
+          default: 10
+      - name: start_after
+        in: query
+        description: _id of the last item in the previous request
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by
+        in: query
+        description: "The field to order by, defaults to \"_id\""
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by_direction
+        in: query
+        description: Direction to order result
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: asc
+          enum:
+          - asc
+          - desc
+      responses:
+        "200":
+          description: Array of Brewfather JSON
+      x-swagger-router-controller: BrewfatherYeasts
+      
+  /inventory/miscs:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Miscs
+      summary: Get Miscs
+      description: "This endpoint allows you to list your inventory items. It will\
+        \ only list items you have added manually or edited the default values for,\
+        \ or added an inventory amount on."
+      operationId: getMiscs
+      parameters:
+      - name: include
+        in: query
+        description: "Array of additional fields to include when complete is false.\
+          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: complete
+        in: query
+        description: "Valid values \"True\" or \"False\". Includes all the data in\
+          \ the result if True. Defaults to \"False\". If False only Name, Author,\
+          \ Style Name, Type is returned."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
+          enum:
+          - true
+          - false
+      - name: inventory_exists
+        in: query
+        description: "Valid values \"True\" or \"False\". If true, only include items\
+          \ with inventory > 0. Results will be ordered by inventory amount instead\
+          \ of _id."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
+          enum:
+          - true
+          - false
+      - name: limit
+        in: query
+        description: Amount of documents to fetch.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 50
+          type: integer
+          default: 10
+      - name: start_after
+        in: query
+        description: _id of the last item in the previous request
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by
+        in: query
+        description: "The field to order by, defaults to \"_id\""
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by_direction
+        in: query
+        description: Direction to order result
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: asc
+          enum:
+          - asc
+          - desc
+      responses:
+        "200":
+          description: Array of Brewfather JSON
+      x-swagger-router-controller: BrewfatherMiscs
+  /inventory/miscs/{id}:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Miscs
+      summary: Get Misc
+      description: This endpoint allows you to fetch a specific item.
+      operationId: getMisc
+      parameters:
+      - name: include
+        in: query
+        description: Array of fields to include. When omitted all fields are included.
+          Default fields are included in addition to the requested fields.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Brewfather JSON
+      x-swagger-router-controller: BrewfatherMiscs
+    patch:
+      tags:
+      - Brewfather Miscs
+      summary: Update Misc
+      description: This endpoint allows you to update specific fields of a specific
+        item.
+      operationId: updateMisc
+      parameters:
+      - name: inventory_adjust
+        in: query
+        description: Adjust the existing inventory amount by the given amount.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: inventory
+        in: query
+        description: Set the inventory amount to the given value. (inventory_adjust
+          is ignored if you send in a inventory value)
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+      x-swagger-router-controller: BrewfatherMiscs
+  
+  /inventory/hops:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Hops
+      summary: Get Hops
+      description: "This endpoint allows you to list your inventory items. It will\
+        \ only list items you have added manually or edited the default values for,\
+        \ or added an inventory amount on."
+      operationId: getHops
+      parameters:
+      - name: include
+        in: query
+        description: "Array of additional fields to include when complete is false.\
+          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: complete
+        in: query
+        description: "Valid values \"True\" or \"False\". Includes all the data in\
+          \ the result if True. Defaults to \"False\". If False only Name, Author,\
+          \ Style Name, Type is returned."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
+          enum:
+          - true
+          - false
+      - name: inventory_exists
+        in: query
+        description: "Valid values \"True\" or \"False\". If true, only include items\
+          \ with inventory > 0. Results will be ordered by inventory amount instead\
+          \ of _id."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
+          enum:
+          - true
+          - false
+      - name: limit
+        in: query
+        description: Amount of documents to fetch.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 50
+          type: integer
+          default: 10
+      - name: start_after
+        in: query
+        description: _id of the last item in the previous request
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by
+        in: query
+        description: "The field to order by, defaults to \"_id\""
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by_direction
+        in: query
+        description: Direction to order result
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: asc
+          enum:
+          - asc
+          - desc
+      responses:
+        "200":
+          description: Array of Brewfather JSON
+      x-swagger-router-controller: BrewfatherHops
+
+  /inventory/hops/{id}:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Hops
+      summary: Get Hop
+      description: This endpoint allows you to fetch a specific item.
+      operationId: getHop
+      parameters:
+      - name: include
+        in: query
+        description: Array of fields to include. When omitted all fields are included.
+          Default fields are included in addition to the requested fields.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Brewfather JSON
+      x-swagger-router-controller: BrewfatherHops
+    patch:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Hops
+      summary: Update Hop
+      description: This endpoint allows you to update specific fields of a specific
+        item.
+      operationId: updateHop
+      parameters:
+      - name: inventory_adjust
+        in: query
+        description: Adjust the existing inventory amount by the given amount.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: inventory
+        in: query
+        description: Set the inventory amount to the given value. (inventory_adjust
+          is ignored if you send in a inventory value)
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+      x-swagger-router-controller: BrewfatherHops
+
+  /inventory/fermentables:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Fermentables
+      summary: Get Fermentables
+      description: "This endpoint allows you to list your inventory items. It will\
+        \ only list items you have added manually or edited the default values for,\
+        \ or added an inventory amount on."
+      operationId: getFermentables
+      parameters:
+      - name: inventory_negative
+        in: query
+        description: "If true, only include items with inventory < 0"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          enum:
+          - true
+          - false
+      - name: include
+        in: query
+        description: "Array of additional fields to include when complete is false.\
+          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: complete
+        in: query
+        description: "Valid values \"True\" or \"False\". Includes all the data in\
+          \ the result if True. Defaults to \"False\". If False only Name, Author,\
+          \ Style Name, Type is returned."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
+          enum:
+          - true
+          - false
+      - name: inventory_exists
+        in: query
+        description: "Valid values \"True\" or \"False\". If true, only include items\
+          \ with inventory > 0. Results will be ordered by inventory amount instead\
+          \ of _id."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
+          enum:
+          - true
+          - false
+      - name: limit
+        in: query
+        description: Amount of documents to fetch.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 50
+          type: integer
+          default: 10
+      - name: start_after
+        in: query
+        description: _id of the last item in the previous request
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by
+        in: query
+        description: "The field to order by, defaults to \"_id\""
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by_direction
+        in: query
+        description: Direction to order result
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: asc
+          enum:
+          - asc
+          - desc
+      responses:
+        "200":
+          description: Array of Brewfather JSON
+      x-swagger-router-controller: BrewfatherFermentables
+      
+  /inventory/fermentables/{id}:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Fermentables
+      summary: Get Fermentable
+      description: This endpoint allows you to fetch a specific item.
+      operationId: getFermentable
+      parameters:
+      - name: include
+        in: query
+        description: Array of fields to include. When omitted all fields are included.
+          Default fields are included in addition to the requested fields.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Brewfather JSON
+      x-swagger-router-controller: BrewfatherFermentables
+    patch:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Fermentables
+      summary: Update Fermentable
+      description: This endpoint allows you to update specific fields of a specific
+        item.
+      operationId: updateFermentable
+      parameters:
+      - name: inventory_adjust
+        in: query
+        description: Adjust the existing inventory amount by the given amount.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: inventory
+        in: query
+        description: Set the inventory amount to the given value. (inventory_adjust
+          is ignored if you send in a inventory value)
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+      x-swagger-router-controller: BrewfatherFermentables
+  /recipes/{id}:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Recipes
+      summary: Get Recipe
+      description: This endpoint allows you to fetch a specific recipe.
+      operationId: getRecipe
+      parameters:
+      - name: include
+        in: query
+        description: "Array of additional fields to include when complete is false.\
+          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Brewfather RECIPE JSON
+      x-swagger-router-controller: BrewfatherRecipes
+  /batches/recipes:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Recipes
+      summary: Get Recipes
+      description: This endpoint allows you to list your recipes.
+      operationId: getRecipes
+      parameters:
+      - name: include
+        in: query
+        description: "Array of additional fields to include when complete is false.\
+          \ Example \"fermentation,mash\" to include the fermentation and mash profile."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: complete
+        in: query
+        description: "Valid values \"True\" or \"False\". Includes all the data in\
+          \ the result if True. Defaults to \"False\". If False only Name, Author,\
+          \ Style Name, Type is returned."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          enum:
+          - true
+          - false
+      - name: limit
+        in: query
+        description: Amount of documents to fetch.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 50
+          type: integer
+          default: 10
+      - name: start_after
+        in: query
+        description: _id of the last item in the previous request
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by
+        in: query
+        description: "The field to order by, defaults to \"_id\""
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by_direction
+        in: query
+        description: Direction to order result
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: asc
+          enum:
+          - asc
+          - desc
+      responses:
+        "200":
+          description: array of Brewfather RECIPE JSON
+      x-swagger-router-controller: BrewfatherRecipes
+  /batches/{id}/brewtracker:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Batches
+      summary: Get Batch Brew Tracker
+      description: "This endpoint allows you to fetch the latest stored status of\
+        \ the brewtracker. Brew tracker does not get updated every second, position\
+        \ is calculated from start time of the stage. Brewfather triggers an update/save\
+        \ at certain events."
+      operationId: getBatchBrewTracker
+      parameters:
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: brew tracker object
+      x-swagger-router-controller: BrewfatherBatches
+  /batches/{id}/readings:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Batches
+      summary: Get All Batch Readings
+      description: This endpoint allows you to fetch all readings stored in a batch.
+      operationId: getAllBatchReadings
+      parameters:
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: JSON reading
+      x-swagger-router-controller: BrewfatherBatches
+  /batches/{id}/readings/last:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Batches
+      summary: Get Batch Last Reading
+      description: This endpoint allows you to fetch the latest reading recieved
+      operationId: getLastBatchReading
+      parameters:
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: JSON reading
+      x-swagger-router-controller: BrewfatherBatches
+  /batches:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Batches
+      summary: Get batch readings
+      description: This endpoint allows you to list your batches. By default it returns
+        batches with all statuses. Use the query parameter "status" to query for a
+        given status.
+      operationId: batches
+      parameters:
+      - name: include
+        in: query
+        description: "Array of additional fields to include when complete is false.\
+          \ Example 'recipe.fermentation,recipe.mash' to include the fermentation\
+          \ and mash profile."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: complete
+        in: query
+        description: "Includes all the data in the result if True. If False only Name,\
+          \ Batch Number, Status, Brewer, Brew Date, Recipe Name is returned."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
+          enum:
+          - true
+          - false
+      - name: status
+        in: query
+        description: Current batch status
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          enum:
+          - Planning
+          - Brewing
+          - Fermenting
+          - Conditioning
+          - Completed
+          - Archived
+      - name: limit
+        in: query
+        description: Amount of documents to fetch.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 50
+          type: integer
+          default: 10
+      - name: start_after
+        in: query
+        description: _id of the last item in the previous request
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by
+        in: query
+        description: "The field to order by, defaults to \"_id\""
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: order_by_direction
+        in: query
+        description: Direction to order result
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: desc
+          enum:
+          - asc
+          - desc
+      responses:
+        "200":
+          description: array of Brewfather BATCH JSON
+      x-swagger-router-controller: BrewfatherBatches
+  /batches/{id}:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Batches
+      summary: Get batch
+      description: This endpoint allows you to fetch a specific batch.
+      operationId: batch
+      parameters:
+      - name: include
+        in: query
+        description: "Array of additional fields to include when complete is false.\
+          \ Example 'recipe.fermentation,recipe.mash' to include the fermentation\
+          \ and mash profile."
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Brewfather BATCH JSON
+      x-swagger-router-controller: BrewfatherBatches
+    patch:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewfather Batches
+      summary: Update batch
+      description: This endpoint allows you to update specific fields of a specific
+        batch. Currently support setting the status and measured values.
+      operationId: updateBatch
+      parameters:
+      - name: status
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          enum:
+          - Planning
+          - Brewing
+          - Fermenting
+          - Conditioning
+          - Completed
+          - Archived
+      - name: measuredMashPh
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 14
+          minimum: 0
+          type: integer
+      - name: measuredBoilSize
+        in: query
+        description: Pre-Boil Volume. Value in Litres
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: measuredFirstWortGravity
+        in: query
+        description: Pre-Sparge Gravity. Value in SG.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: measuredPreBoilGravity
+        in: query
+        description: Pre-Boil Gravity. Value in SG.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: measuredPostBoilGravity
+        in: query
+        description: Post-Boil Gravity. Value in SG.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: measuredKettleSize
+        in: query
+        description: Post-Boil Volume. Value in Littes
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+      - name: measuredOg
+        in: query
+        description: Original Gravity. Value in SG
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: measuredFermenterTopUp
+        in: query
+        description: Fermenter Top-Up. Value in Litres
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: measuredBatchSize
+        in: query
+        description: Fermenter Volume. Value in Litres
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: measuredFg
+        in: query
+        description: Final Gravity. Value in SG
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: measuredBottlingSize
+        in: query
+        description: Final Bottling/Kegging Volume. Value in Litres
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+      - name: carbonationTemp
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          maximum: 100
+          minimum: -50
+          type: number
+          description: Value in Celcius (°C)
+      - name: id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok.
+      x-swagger-router-controller: BrewfatherBatches
+
 components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
   schemas:
-    Id:
-      type: integer
-      description: Resource ID
-      format: int64
-      readOnly: true
-      example: 1
     ProfileStep:
       properties:
         stepTemp:
@@ -1307,33 +1323,14 @@ components:
           type: integer
           description: Duration in minutes
           example: 10
+      required:
+        - mins
+        - tempC
     TemperatureProfile:
       type: array
       items:
         $ref: '#/components/schemas/ProfileStep'
-    Error:
-      required:
-      - code
-      - message
-      properties:
-        code:
-          type: string
-          example: illegal_input
-      description: |
-        <table>
-          <tr>
-            <th>Code</th>
-            <th>Description</th>
-          </tr>
-          <tr>
-            <td>illegal_input</td>
-            <td>The input is invalid.</td>
-          </tr>
-          <tr>
-            <td>not_found</td>
-            <td>The resource is not found.</td>
-          </tr>
-        </table>
+    
   responses:
     NotFound:
       description: The resource is not found.
@@ -1341,22 +1338,8 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    IllegalInput:
-      description: The input is invalid.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+
   parameters:
-    Id:
-      name: id
-      in: path
-      description: Resource ID
-      required: true
-      style: simple
-      explode: false
-      schema:
-        $ref: '#/components/schemas/Id'
     Limit:
       name: limit
       in: query

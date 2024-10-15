@@ -1,8 +1,16 @@
-const delay = require('../../common/delay.js');
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
+
+const delay = require('../../delay.js');
 const valves = require('../equipmentDrivers/valve/valve.js');
 const flow = require('../equipmentDrivers/flow/flow.js');
 const kettle = require('../equipmentDrivers/kettle/kettle.js');
-const brewlog = require('../../common/brewlog.js')
+const brewlog = require('../../brewlog.js')
 
 const INTERVAL_SECS = 10;
 

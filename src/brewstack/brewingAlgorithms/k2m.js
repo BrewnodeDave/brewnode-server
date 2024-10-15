@@ -1,5 +1,13 @@
+/*
+ * Beerware License
+ * ----------------
+ * As long as you retain this notice, you can do whatever you want with 
+ * this stuff. If we meet someday, and you think this stuff is worth it, 
+ * you can buy me a beer in return.
+ */
 
-const brewlog	= require('../../common/brewlog.js');
+
+const brewlog	= require('../../brewlog.js');
 const flow = require('../equipmentDrivers/flow/flow.js');
 const valves 	= require('../equipmentDrivers/valve/valve.js');
 const pump = require('../equipmentDrivers/pump/pump.js');
