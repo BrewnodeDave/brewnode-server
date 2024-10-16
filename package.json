@@ -7,7 +7,7 @@
     "prestart": "npm install",
     "start": "node index.js",
     "prepare": "husky install",
-    "test": "echo \"No test specified\""
+    "test": "echo \"N o test specified\""
   },
   "keywords": [
     "swagger"
