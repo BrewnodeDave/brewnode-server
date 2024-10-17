@@ -7,9 +7,9 @@
  */
 
 const delay = require('../../delay.js');
-const valves = require('../equipmentDrivers/valve/valve.js');
-const flow = require('../equipmentDrivers/flow/flow.js');
-const kettle = require('../equipmentDrivers/kettle/kettle.js');
+const valves = require('../equipmentDrivers/valve/valve-service.js');
+const flow = require('../equipmentDrivers/flow/flow-service.js');
+const kettle = require('../equipmentDrivers/kettle/kettle-service.js');
 const brewlog = require('../../brewlog.js')
 
 const INTERVAL_SECS = 10;

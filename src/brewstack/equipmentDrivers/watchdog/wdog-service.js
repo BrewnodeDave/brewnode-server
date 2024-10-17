@@ -22,7 +22,7 @@
 
 const brewDefs = require('../../../brewdefs.js');
 const exec = require('child_process').exec;	
-const i2c = require('../../nodeDrivers/i2c/i2c_raspi.js');
+const i2c = require('../../nodeDrivers/i2c/i2c_raspi-service.js');
 const brewlog = require('../../../brewlog.js');
 const broker = require('../../../broker.js');
 

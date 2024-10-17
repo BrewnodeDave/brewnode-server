@@ -1,18 +1,18 @@
-const i2c 		= require('./brewstack/nodeDrivers/i2c/i2c_raspi.js');
-const pump 		= require('./brewstack/equipmentDrivers/pump/pump.js');
-const flow 		= require('./brewstack/equipmentDrivers/flow/flow.js');
-const fan 		= require('./brewstack/equipmentDrivers/fan/fan.js');
-const valves 	= require('./brewstack/equipmentDrivers/valve/valve.js');
-const wdog 		= require('./brewstack/equipmentDrivers/watchdog/wdog.js');
-const temp 		= require('./brewstack/nodeDrivers/therm/temp.js');
-const kettle 	= require('./brewstack/equipmentDrivers/kettle/kettle.js');
-const mashtun 	= require('./brewstack/equipmentDrivers/mashtun/mashtun.js');
-const glycolHeater = require('./brewstack/equipmentDrivers/glycol/glycol-heater.js');
-const glycolChill 	= require('./brewstack/brewingAlgorithms/glycol-chill.js');
-const fill 				= require('./brewstack/brewingAlgorithms/fill.js');
-const tempController 	= require('./brewstack/processControl/tempController.js');
-const glycolFerment 	= require('./brewstack/brewingAlgorithms/glycol-ferment.js');
-const brewfather 	= require('./brewfather.js');
+const i2c 		= require('./brewstack/nodeDrivers/i2c/i2c_raspi-service.js');
+const pump 		= require('./brewstack/equipmentDrivers/pump/pump-service.js');
+const flow 		= require('./brewstack/equipmentDrivers/flow/flow-service.js');
+const fan 		= require('./brewstack/equipmentDrivers/fan/fan-service.js');
+const valves 	= require('./brewstack/equipmentDrivers/valve/valve-service.js');
+const wdog 		= require('./brewstack/equipmentDrivers/watchdog/wdog-service.js');
+const temp 		= require('./brewstack/nodeDrivers/therm/temp-service.js');
+const kettle 	= require('./brewstack/equipmentDrivers/kettle/kettle-service.js');
+const mashtun 	= require('./brewstack/equipmentDrivers/mashtun/mashtun-service.js');
+const glycolHeater = require('./brewstack/equipmentDrivers/glycol/glycol-heater-service.js');
+const glycolChill 	= require('./brewstack/brewingAlgorithms/glycol-chill-service.js');
+const fill 				= require('./brewstack/brewingAlgorithms/fillService.js');
+const tempController 	= require('./brewstack/processControl/temp-controller-service.js');
+const glycolFerment 	= require('./brewstack/brewingAlgorithms/glycol-ferment-service.js');
+const brewfather 	= require('./xxxxbrewfather.js');
 
 // const brewmon = require('./brewmon.js');
 

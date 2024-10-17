@@ -1,8 +1,34 @@
 openapi: 3.0.1
 info:
-  title: Brewnode
+  title: brewnode
   version: 2.0.0
 paths:
+  /brewname:
+    get:
+      security:
+      - basicAuth: []
+      tags:
+      - Brewnode
+      summary: Get current brewname
+      operationId: getBrewname
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /inventory:
+    get:
+      security:
+      - basicAuth: []
+      summary: Get my malt, hops, yeast etc
+      operationId: getInventory
+      tags:
+      - Brewnode
+      responses:
+        '200':
+          description: Success
+      x-swagger-router-controller: brewnode
+
   /status:
     get:
       tags:
@@ -12,7 +38,7 @@ paths:
       responses:
         "200":
           description: Success
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
   /fill:
     put:
       tags:
@@ -32,15 +58,11 @@ paths:
           type: integer
           example: 10
       responses:
-        "200":
+        200:
           description: Success
-        "404":
+        404:
           description: The resource is not found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
 
   /mash:
     put:
@@ -58,7 +80,28 @@ paths:
       responses:
         "200":
           description: Success
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
+
+  /heat:
+    put:
+      tags:
+      - Brewnode
+      summary: Turn on or off heater
+      operationId: heat
+      parameters:
+      - name: onOff
+        in: query
+        description: Heater state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
 
   /restart:
     put:
@@ -69,7 +112,7 @@ paths:
       responses:
         "200":
           description: Success
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
   /kettleTemp:
     put:
       tags:
@@ -102,7 +145,7 @@ paths:
       responses:
         "200":
           description: Success
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
   /k2m:
     put:
       tags:
@@ -122,7 +165,7 @@ paths:
       responses:
         "200":
           description: Success
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
   /m2k:
     put:
       tags:
@@ -142,7 +185,7 @@ paths:
       responses:
         "200":
           description: Success
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
   /k2f:
     put:
       tags:
@@ -162,7 +205,7 @@ paths:
       responses:
         "200":
           description: Success
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
   /boil:
     put:
       tags:
@@ -184,7 +227,7 @@ paths:
       responses:
         "200":
           description: Success
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
   /ferment:
     put:
       tags:
@@ -203,7 +246,7 @@ paths:
       responses:
         "200":
           description: Success
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
   /chill:
     put:
       tags:
@@ -222,7 +265,7 @@ paths:
       responses:
         "200":
           description: Success
-      x-swagger-router-controller: Brewnode
+      x-swagger-router-controller: brewnode
 
   /inventory/yeasts/{id}:
     get:
@@ -251,7 +294,7 @@ paths:
       responses:
         "200":
           description: Brewfather JSON
-      x-swagger-router-controller: BrewfatherYeasts
+      x-swagger-router-controller: brewfather-yeasts
     patch:
       tags:
       - Brewfather Yeasts
@@ -287,7 +330,7 @@ paths:
       responses:
         "200":
           description: OK
-      x-swagger-router-controller: BrewfatherYeasts
+      x-swagger-router-controller: brewfather-yeasts
 
   /inventory/yeasts:
     get:
@@ -379,7 +422,7 @@ paths:
       responses:
         "200":
           description: Array of Brewfather JSON
-      x-swagger-router-controller: BrewfatherYeasts
+      x-swagger-router-controller: brewfather-yeasts
       
   /inventory/miscs:
     get:
@@ -471,7 +514,7 @@ paths:
       responses:
         "200":
           description: Array of Brewfather JSON
-      x-swagger-router-controller: BrewfatherMiscs
+      x-swagger-router-controller: brewfather-miscs
   /inventory/miscs/{id}:
     get:
       security:
@@ -501,7 +544,7 @@ paths:
       responses:
         "200":
           description: Brewfather JSON
-      x-swagger-router-controller: BrewfatherMiscs
+      x-swagger-router-controller: brewfather-miscs
     patch:
       tags:
       - Brewfather Miscs
@@ -537,7 +580,7 @@ paths:
       responses:
         "200":
           description: OK
-      x-swagger-router-controller: BrewfatherMiscs
+      x-swagger-router-controller: brewfather-miscs
   
   /inventory/hops:
     get:
@@ -629,7 +672,7 @@ paths:
       responses:
         "200":
           description: Array of Brewfather JSON
-      x-swagger-router-controller: BrewfatherHops
+      x-swagger-router-controller: brewfather-hops
 
   /inventory/hops/{id}:
     get:
@@ -660,7 +703,7 @@ paths:
       responses:
         "200":
           description: Brewfather JSON
-      x-swagger-router-controller: BrewfatherHops
+      x-swagger-router-controller: brewfather-hops
     patch:
       security:
       - basicAuth: []
@@ -698,7 +741,7 @@ paths:
       responses:
         "200":
           description: OK
-      x-swagger-router-controller: BrewfatherHops
+      x-swagger-router-controller: brewfather-hops
 
   /inventory/fermentables:
     get:
@@ -801,7 +844,7 @@ paths:
       responses:
         "200":
           description: Array of Brewfather JSON
-      x-swagger-router-controller: BrewfatherFermentables
+      x-swagger-router-controller: brewfather-fermentables
       
   /inventory/fermentables/{id}:
     get:
@@ -832,7 +875,7 @@ paths:
       responses:
         "200":
           description: Brewfather JSON
-      x-swagger-router-controller: BrewfatherFermentables
+      x-swagger-router-controller: brewfather-fermentables
     patch:
       security:
       - basicAuth: []
@@ -870,7 +913,7 @@ paths:
       responses:
         "200":
           description: OK
-      x-swagger-router-controller: BrewfatherFermentables
+      x-swagger-router-controller: brewfather-fermentables
   /recipes/{id}:
     get:
       security:
@@ -900,7 +943,7 @@ paths:
       responses:
         "200":
           description: Brewfather RECIPE JSON
-      x-swagger-router-controller: BrewfatherRecipes
+      x-swagger-router-controller: brewfather-recipes
   /batches/recipes:
     get:
       security:
@@ -974,7 +1017,7 @@ paths:
       responses:
         "200":
           description: array of Brewfather RECIPE JSON
-      x-swagger-router-controller: BrewfatherRecipes
+      x-swagger-router-controller: brewfather-recipes
   /batches/{id}/brewtracker:
     get:
       security:
@@ -998,7 +1041,7 @@ paths:
       responses:
         "200":
           description: brew tracker object
-      x-swagger-router-controller: BrewfatherBatches
+      x-swagger-router-controller: brewfather-batches
   /batches/{id}/readings:
     get:
       security:
@@ -1019,7 +1062,7 @@ paths:
       responses:
         "200":
           description: JSON reading
-      x-swagger-router-controller: BrewfatherBatches
+      x-swagger-router-controller: brewfather-batches
   /batches/{id}/readings/last:
     get:
       security:
@@ -1040,7 +1083,7 @@ paths:
       responses:
         "200":
           description: JSON reading
-      x-swagger-router-controller: BrewfatherBatches
+      x-swagger-router-controller: brewfather-batches
   /batches:
     get:
       security:
@@ -1134,7 +1177,7 @@ paths:
       responses:
         "200":
           description: array of Brewfather BATCH JSON
-      x-swagger-router-controller: BrewfatherBatches
+      x-swagger-router-controller: brewfather-batches
   /batches/{id}:
     get:
       security:
@@ -1167,7 +1210,7 @@ paths:
       responses:
         "200":
           description: Brewfather BATCH JSON
-      x-swagger-router-controller: BrewfatherBatches
+      x-swagger-router-controller: brewfather-batches
     patch:
       security:
       - basicAuth: []
@@ -1301,7 +1344,7 @@ paths:
       responses:
         "200":
           description: Ok.
-      x-swagger-router-controller: BrewfatherBatches
+      x-swagger-router-controller: brewfather-batches
 
 components:
   securitySchemes:
@@ -1334,10 +1377,6 @@ components:
   responses:
     NotFound:
       description: The resource is not found.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
 
   parameters:
     Limit:

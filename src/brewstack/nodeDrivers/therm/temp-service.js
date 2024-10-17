@@ -22,7 +22,7 @@
 let ds18x20;
 const brewlog = require("../../../brewlog.js");
 const broker = require("../../../broker.js");
-let PROBES = require('./probes.js');
+let PROBES = require('./probes-service.js');
 
 let sampleInterval = null;
 

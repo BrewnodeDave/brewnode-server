@@ -9,8 +9,8 @@
 const fs = require('fs');
 const brewdefs= require('./brewdefs.js');
 const brewlog = require('./brewlog.js');
-const brewfather = require('./brewfather.js');
-const temp = require('./brewstack/nodeDrivers/therm/temp.js');
+const brewfather = require('./xxxxbrewfather.js');
+const temp = require('./brewstack/nodeDrivers/therm/temp-service.js');
 
 const FLOW_TIMEOUT_SECS = 2;
 /**
@@ -188,10 +188,6 @@ function readJSONSync(filename, speedupFactor){
  * @param {any} speedupFactor
  */
 function readBrewfatherJSONSync(filename, speedupFactor){
-//"mashWaterAmount": 16.66,
-	//"spargeWaterAmount": 19.93,
-	
-		
 	const jsonFilename = `${BREW_ROOT + filename}/${filename}.json`;
 	const brewfather = JSON.parse(fs.readFileSync(jsonFilename).toString());
 

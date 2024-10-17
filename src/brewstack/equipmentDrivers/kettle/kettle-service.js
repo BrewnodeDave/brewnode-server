@@ -13,8 +13,8 @@
  */
 
 const brewlog = require('../../../brewlog.js');
-const heater = require('../heater/heater.js');
-const Vessel = require('../vessel.js');
+const heater = require('../heater/heater-service.js');
+const Vessel = require('../vessel-service.js');
 const options = {
     name:        'Kettle',
   	tempName:    'TempKettle',

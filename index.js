@@ -24,8 +24,10 @@ function insertMiddleware(app, middleware) {
     app._router.stack.push(...app._router.stack.splice(stackLength - 2, 2));
 }
 
-insertMiddleware(app, cors());
+// Insert Authentication Middleware
+app.use(authenticate);
 
+insertMiddleware(app, cors());
 
 // Initialize the Swagger middleware
 http.createServer(app).listen(serverPort, function () {
@@ -33,3 +35,28 @@ http.createServer(app).listen(serverPort, function () {
     console.log('Swagger-ui is available on http://localhost:%d/docs', serverPort);
 });
 
+function insertMiddleware(app, middleware) {
+    const stackLength = app._router.stack.length;
+    app.use(middleware);
+    app._router.stack.push(...app._router.stack.splice(stackLength - 2, 2));
+}
+
+
+// Authentication Middleware
+function authenticate(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    // if (!authHeader) {
+    //     return;
+    // }
+
+    const auth = authHeader.split(' ')[1];
+    const credentials = Buffer.from(auth, 'base64').toString('ascii');
+    const [username, password] = credentials.split(':');
+
+    // Verify username and password
+    if (username === 'HGoAWTzdg5NdBMxYebUNQrxvCyH3' && password === 'YYlPKDfF7O5LyApAzwrdP2znt8Hyx0ReqoYFFxPPCCzV7Z1te0SiMMWldneqaIqa') {
+        next();
+    } else {
+        res.status(401).send('Invalid credentials');
+    }
+}

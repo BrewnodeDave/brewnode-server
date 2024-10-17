@@ -21,7 +21,7 @@ const brewlog  = require('../../../brewlog.js');
 const broker   = require('../../../broker.js');
 
 // @ts-ignore
-let i2c = require('../../nodeDrivers/i2c/i2c_raspi.js');
+let i2c = require('../../nodeDrivers/i2c/i2c_raspi-service.js');
 let valveSwitchDelay = null;
 let opt = null;
 
