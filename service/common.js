@@ -10,12 +10,7 @@
 
 const axios = require("axios");
 
-const root = 'https://api.brewfather.app/v2';
-
-
-const dotenv = require('dotenv');
-dotenv.config();//Adds contents of .env to environ vars e.g. process.env.DB_PASS
-
+const brewfatherV2 = 'https://api.brewfather.app/v2';
 
 /**
  * Extracts authentication credentials from the request headers.
@@ -41,33 +36,18 @@ function getAuth(req){
   }
 }
 
-/**
- * @param {string} endpoint
- * @param {{ include: any; complete?: any; status?: any; limit?: any; start_after?: any; order_by?: any; order_by_direction?: any; id?: any; }} params
- */
-async function get(req, endpoint, params){
+const callAxios = f => async (req, endpoint, params) => {
   try {
-      const config = { params, auth:getAuth(req) }
-      const response =  await axios.get(`${root}/${endpoint}`, config);
-      return response.data;
+    const config = { params, auth: getAuth(req) };
+    return await f(`${brewfatherV2}/${endpoint}`, config);
   } catch (error) {
-      console.error(error);
-  }
-}
-
-async function patch(req, endpoint, params){
-  try {
-      const config = { params, auth: getReq(req) };
-      const response = await axios.patch(`${root}/${endpoint}`, config);
-      return response.data;
-  } catch (error) {
-      console.error(error);
+    return error;
   }
 }
 
 module.exports = {
   getAuth,
-  get,
-  patch,
-  root
+  get: callAxios(axios.get),
+  patch: callAxios(axios.patch),
+  brewfatherV2
 }

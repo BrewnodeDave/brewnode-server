@@ -16,7 +16,7 @@
  */
 
 const brewlog = require('../../../brewlog.js');
-const Vessel = require('../vessel.js');
+const Vessel = require('../vessel-service.js');
 
 const MASHTUN_TEMPNAME = 'TempMash';
 

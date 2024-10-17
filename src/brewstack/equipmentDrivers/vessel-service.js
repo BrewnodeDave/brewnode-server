@@ -19,7 +19,7 @@
  * an temperatur probe.
  */
 const broker = require('../../broker.js');
-const flow = require('./flow/flow.js');
+const flow = require('./flow/flow-service.js');
 
 const fs = require('fs');
 const path = require('path');

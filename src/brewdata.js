@@ -9,8 +9,8 @@
 const fs = require('fs');
 const brewdefs= require('./brewdefs.js');
 const brewlog = require('./brewlog.js');
-const brewfather = require('./brewfather.js');
-const temp = require('./brewstack/nodeDrivers/therm/temp.js');
+const brewfather = require('./brewfather-service.js');
+const temp = require('./brewstack/nodeDrivers/therm/temp-service.js');
 
 const FLOW_TIMEOUT_SECS = 2;
 /**
@@ -49,8 +49,6 @@ const FLOW_TIMEOUT_SECS = 2;
  * @property {number} fermentDays       - Duration of the fermentation
  */
 
-
-
 const simOptions = {
 	simulate		:!brewdefs.isRaspPi(),
 	ambientTemp		:10,
@@ -63,7 +61,8 @@ const simOptions = {
 * @param {number} grainMass - Dry grain mass in Kg.
 * @returns {number}  - Strike litres
 */
-let strikeVolume = grainMass => grainMass * brewdefs.WATER_TO_GRIST + brewdefs.MASHTUN_LOSSES
+const strikeVolume = grainMass => grainMass * brewdefs.WATER_TO_GRIST + brewdefs.MASHTUN_LOSSES
+
 /**
 * @desc Calculate the strike temperature.
 * @param {number} gristTemp - Dry grain temperature.
@@ -88,114 +87,14 @@ const strikeTemp = (gristTemp, mashTemp, strikeVolume, mashVolume) => {
 const BREW_ROOT = "./brews/";
 
 /**
- * @param {{ grainKg: number; boilMins: number; bottleLitres: number; sparge: string; brewname: string | any[]; mashTemp: number; mashTempC: number; mashMins: number; fermentTempC: number; fermentDays: number; }} jsonOptions
- */
-function validateJSON(jsonOptions){
-	let result = true;
-	
-	result = result && (jsonOptions.grainKg > 0);
-	result = result && (jsonOptions.boilMins > 0);
-	result = result && (jsonOptions.bottleLitres > 0);
-			
-	result = result && ((jsonOptions.sparge == "none") || (jsonOptions.sparge == "batch"));
-
-	result = result && (jsonOptions.brewname.length > 0);
-	result = result && (jsonOptions.mashTemp > 0);
-	result = result && (jsonOptions.mashTempC > 0);
-	result = result && (jsonOptions.mashMins > 0);
-	result = result && (jsonOptions.boilMins > 0);
-	result = result && (jsonOptions.fermentTempC > 0);
-	result = result && (jsonOptions.fermentDays > 0);
-
-	return result;
-}
-
-/**
- * @param {string} filename
- * @param {number} speedupFactor
- */
-function readJSONSync(filename, speedupFactor){
-	simOptions.speedupFactor = speedupFactor;
-		
-	const jsonFilename = `${BREW_ROOT + filename}/${filename}.json`;
-	let jsonOptions = JSON.parse(fs.readFileSync(jsonFilename).toString());
-	
-	if (validateJSON(jsonOptions)){
-		let strikeLitres;
-
-		if (jsonOptions.sparge === "batch"){
-			strikeLitres = strikeVolume(jsonOptions.grainKg);
-		}else{
-			strikeLitres = 0;
-		}
-		let spargeLitres;
-		let spargeTempC;
-		let grainAbsorption = jsonOptions.grainKg;
-		let evaporationLoss = (brewdefs.EVAP_RATE_L_PER_HOUR / 60) * jsonOptions.boilMins;
-		let losses = grainAbsorption
-			+ evaporationLoss
-			+ brewdefs.PIPE_LOSSES
-			+ brewdefs.TRUB_LOSSES;
-		spargeLitres = jsonOptions.bottleLitres - strikeLitres + losses;
-				
-		if (jsonOptions.sparge == "none"){
-			strikeLitres += spargeLitres;
-			spargeLitres = 0;
-		}else 
-		if (jsonOptions.sparge == "batch"){
-			spargeTempC = jsonOptions.spargeTempC;
-		}
-		let options = {
-			filename,
-			totalWeight: jsonOptions.grainKg,
-			brewname: 		jsonOptions.brewname,
-			strikeLitres,
-			sparge:			jsonOptions.sparge,
-			spargeLitres,
-			strikeTemp:  	jsonOptions.mashTemp,
-			spargeTemp: 	spargeTempC,
-			mashMins: 		jsonOptions.mashMins,
-			boilMins: 		jsonOptions.boilMins,
-			fermentTempC: 	jsonOptions.fermentTempC,
-			fermentDays:	jsonOptions.fermentDays,
-			flowTimeoutSecs:FLOW_TIMEOUT_SECS,
-			flowReportSecs:	1,
-			whirlpoolMins:	20,
-			valveSwitchDelay: 5000,
-			numBrews:1
-		};
-		options.sim = simOptions;
-		
-		if (simOptions.simulate){
-			options.boilMins 		= options.boilMins / simOptions.speedupFactor;
-			options.mashMins 		= options.mashMins / simOptions.speedupFactor;
-			options.whirlpoolMins 	= options.whirlpoolMins / simOptions.speedupFactor;
-			options.fermentDays 	= options.fermentDays / simOptions.speedupFactor;
-			options.flowTimeoutSecs	= options.flowTimeoutSecs / simOptions.speedupFactor;
-			options.flowReportSecs	= options.flowReportSecs / simOptions.speedupFactor;
-			options.valveSwitchDelay = options.valveSwitchDelay / simOptions.speedupFactor;
-		}
-
-		options.mashTempC = jsonOptions.mashTempC;
-
-		return options;
-	}
-}
-
-
-/**
  * @param {string} filename
  * @param {any} speedupFactor
  */
 function readBrewfatherJSONSync(filename, speedupFactor){
-//"mashWaterAmount": 16.66,
-	//"spargeWaterAmount": 19.93,
-	
-		
 	const jsonFilename = `${BREW_ROOT + filename}/${filename}.json`;
 	const brewfather = JSON.parse(fs.readFileSync(jsonFilename).toString());
 
-	let recipe;
+	let recipe;``
 	if (brewfather._type === 'batch'){
 		recipe = brewfather.recipe;
 	} else if (brewfather._type === 'recipe'){
@@ -207,8 +106,6 @@ function readBrewfatherJSONSync(filename, speedupFactor){
 	
 	return recipe2Options(recipe, filename, speedupFactor);
 }
-
-
 
 /**
  * @param {number} speedupFactor
@@ -272,8 +169,6 @@ function recipe2Options(recipe, filename, speedupFactor){
 }
 
 module.exports = {
-	readJSONSync,
-
 	/**
 	 * @param {any} speedupFactor
 	 */

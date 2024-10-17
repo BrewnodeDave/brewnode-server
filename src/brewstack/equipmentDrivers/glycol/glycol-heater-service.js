@@ -15,7 +15,7 @@
 
 const brewdefs  = require('../../../brewdefs.js');
 const brewlog   = require('../../../brewlog.js');
-const i2c       = require('../../nodeDrivers/i2c/i2c_raspi.js');
+const i2c       = require('../../nodeDrivers/i2c/i2c_raspi-service.js');
 const broker 	= require('../../../broker.js');
 
 /** 

@@ -1,6 +1,6 @@
-const tempController = require('./brewstack/processControl/tempController.js');
-const kettle = require('./brewstack/equipmentDrivers/kettle/kettle.js');
-const therm = require('./brewstack/nodeDrivers/therm/temp.js');
+const tempController = require('./brewstack/processControl/temp-controller-service.js');
+const kettle = require('./brewstack/equipmentDrivers/kettle/kettle-service.js');
+const therm = require('./brewstack/nodeDrivers/therm/temp-service.js');
 const k2m = require('./brewstack/brewingAlgorithms/k2m.js');
 
 /**

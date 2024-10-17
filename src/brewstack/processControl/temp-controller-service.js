@@ -30,8 +30,8 @@ cause the system to be highly sensitive to noise.
 */
 
 const broker = require('../../broker.js');
-const therm = require('../nodeDrivers/therm/temp.js');
-const kettle = require('../equipmentDrivers/kettle/kettle.js');
+const therm = require('../nodeDrivers/therm/temp-service.js');
+const kettle = require('../equipmentDrivers/kettle/kettle-service.js');
 const phase = require('../brewingAlgorithms/phase.js');
 
 const NanoTimer = require('nanotimer');

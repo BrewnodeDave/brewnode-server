@@ -24,7 +24,7 @@ const path = require('path');
 const brewdefs = require('../../../brewdefs.js');
 const broker = require('../../../broker.js');
 // const i2c = require('../../nodeDrivers/i2c/i2c_mraa.js');
-const i2c = require('../../nodeDrivers/i2c/i2c_raspi.js');
+const i2c = require('../../nodeDrivers/i2c/i2c_raspi-service.js');
 const pwm = require('./pwm.js');
 const pwm2 = require('./pwm.js');
 

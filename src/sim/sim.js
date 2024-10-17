@@ -28,14 +28,14 @@ const path = require('path');
 const logDir = path.join(__dirname, "../brewstack/equipmentDrivers");
 
 const broker = require('../broker.js');
-const pump = require('../brewstack/equipmentDrivers/pump/pump.js');
-const valve = require('../brewstack/equipmentDrivers/valve/valve.js');
+const pump = require('../brewstack/equipmentDrivers/pump/pump-service.js');
+const valve = require('../brewstack/equipmentDrivers/valve/valve-service.js');
 const ds18x20 = require('./ds18x20.js');
-const flow = require('../brewstack/equipmentDrivers/flow/flow.js');
+const flow = require('../brewstack/equipmentDrivers/flow/flow-service.js');
 const brewdefs = require('../brewdefs.js');
-const kettle = require('../brewstack/equipmentDrivers/kettle/kettle.js');
-const mashTun = require('../brewstack/equipmentDrivers/mashtun/mashtun.js');
-const temp = require('../brewstack/nodeDrivers/therm/temp.js');
+const kettle = require('../brewstack/equipmentDrivers/kettle/kettle-service.js');
+const mashTun = require('../brewstack/equipmentDrivers/mashtun/mashtun-service.js');
+const temp = require('../brewstack/nodeDrivers/therm/temp-service.js');
 const brewlog = require('../brewlog.js');
 
 const CHILLER_OUTPUT_TEMP = 20;

@@ -6,9 +6,9 @@
  * you can buy me a beer in return.
  */
 
-const valves = require('../equipmentDrivers/valve/valve.js');
-const flow = require('../equipmentDrivers/flow/flow.js');
-const pump = require('../equipmentDrivers/pump/pump.js');
+const valves = require('../equipmentDrivers/valve/valve-service.js');
+const flow = require('../equipmentDrivers/flow/flow-service.js');
+const pump = require('../equipmentDrivers/pump/pump-service.js');
 const brewlog = require('../../brewlog.js');
 const phase = require('./phase.js');
 
@@ -66,16 +66,5 @@ module.exports = {
 					console.log("oops", err)
 				});
 		});
-	},
-
-	// stop() {
-	// 	return new Promise((resolve, reject) => {
-	// 		console.log("k2f stop");
-	// 		/*flow.stop()
-	// 		.then(pump.stop)
-	// 		*/
-	// 		pump.stop()
-	// 			.then(resolve);
-	// 	});
-	// }
+	}
 }
