@@ -6,19 +6,20 @@
  * you can buy me a beer in return.
  */
 
-const pump = require('../equipmentDrivers/pump/pump-service.js');
-const brewlog = require('../../brewlog.js');
-const broker = require('../../broker.js');
-const therm = require('../nodeDrivers/therm/temp-service.js');
-
-const {promiseSerial} = require('../../brew-pub.js');
+const pump = require('./pump-service.js');
+const brewlog = require('../brewstack/common/brewlog.js');
+const broker = require('../broker.js');
+const therm = require('./temp-service.js');
+const glycolHeater = require('./glycol-heater-service.js');
+const {promiseSerial} = require('../brewstack/common/brew-pub.js');
 
 const GLYCOL_TEMPNAME = "TempGlycol";
 const FERMENT_TEMPNAME = "TempFermenter";
-const FERMENTER_OVERSHOOT = 0;//0.4;//0.1;//0.3;
+const FERMENTER_OVERSHOOT = 0;//0.1;//0;//0.4;//0.1;//0.3;
 
 let glycolTemp;
 
+let _chilling = false;
 let glycolInterval = null;
 
 const hrsecs = hrtime => hrtime[0] + hrtime[1] / 1E9;
@@ -56,13 +57,13 @@ function timeToText(prefix, hrTime){
 }
 
 //Circulate until ferment temp is reached
-function pumpOnOff(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, timeAtTemp, prevTimeAtTemp) {	
+function circulate(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, timeAtTemp, prevTimeAtTemp) {
 	if (msToGo === null) {
 		return;
 	}
-		
-	if (currentFermentTemp < (desiredFermentTemp + FERMENTER_OVERSHOOT)) {
-		//Reached chill temp
+
+	if (currentFermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT)) {
+		//Reached ferment temp
 		timeAtTemp = process.hrtime();
 	        
 		const secsAtTemp = hrsecs(timeAtTemp);	
@@ -76,33 +77,31 @@ function pumpOnOff(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, 
 		const secsToGo = Math.trunc(msToGo / 1000);
 		const nsToGo = (msToGo * 1E6);
 		const hrTime = [secsToGo, nsToGo - (secsToGo * 1E9)];
-		timeToText("Chilling Step To Go = ", hrTime);
+		timeToText("Fermentation Step To Go = ", hrTime);
 		if (msToGo < 0) {
 		    fermentDone();
 		}
 
 		pump.chillPumpOffSync();
 	} else {
-		if (currentFermentTemp > glycolTemp){
+		if (currentFermentTemp < glycolTemp){
 			pump.chillPumpOnSync();
 		}
 	}
 }
 
-function glycolChillTempChange(value) {
+
+function glycolFermentTempChange(value) {
 	glycolTemp = value.value;
 }
 
 module.exports = {
-	chillStep,
-	chillSteps,
+	doSteps,
 	start: function start(opt) {
 		return new Promise((resolve, reject) => {
-			brewlog.info("glycol-chill.js", "Start")
-
 			therm.getTemp(GLYCOL_TEMPNAME)
 			.then(t => {
-				glycolTemp = t;	
+				glycolTemp = t;					
 				const getFermentTemp = () => therm.getTemp(FERMENT_TEMPNAME);
 
 				getFermentTemp()
@@ -112,56 +111,52 @@ module.exports = {
 			});
 		});
 	},
-		
+
 	stop: function () {
-		return new Promise((resolve, reject) => {				
-			//broker.unSubscribe(pumpListener);
+		return new Promise((resolve, reject) => {	
 			broker.unSubscribe(glycolTempListener);
 			
 			clearInterval(glycolInterval);
 			glycolInterval = null;
+			
+			glycolHeater.switchOff();
 			
 			pump.chillPumpOffSync();
 
 			brewlog.info("glycol-ferment.js", "stopped");
 			resolve();
 		});
-	}
-
+	},
 }
-
-
-function glycolFermentTempChange(value) {
-	brewlog.info("glycolFermentTempChange",value.value);
-	glycolTemp = value.value;
-}
-
 
 //This needs to be self contained to allow ferment steps
-function chillStep({stepTemp, stepTime}) {
+function doStep({tempC, mins}) {
 	return () => 
-	new Promise((resolve, reject) => {
+	  new Promise((resolve, reject) => {
 		let pumpInterval = null;
-		const totalMins = stepTime * 24 * 60;
+		const totalMins = mins * 24 * 60;
 		const totalms = totalMins * 60 * 1000;
 		let msToGo = totalms;
 		let timeAtTemp, prevTimeAtTemp;
-		const desiredFermentTemp = parseInt(stepTemp,10);
+		const desiredFermentTemp = parseInt(tempC,10);
 
 		pumpInterval = setInterval(() => {
 			therm.getTemp(FERMENT_TEMPNAME)
 			.then(t => {
-				pumpOnOff(desiredFermentTemp, t, (x) => {
+				circulate(desiredFermentTemp, t, (x) => {
 					clearInterval(pumpInterval);
-					brewlog.info("Chill Step Complete");
+					brewlog.info("Step Complete");
 					resolve(x);
 				}, msToGo, timeAtTemp, prevTimeAtTemp)
 			});
 		}, 60 * 1000);
 
-		glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolChillTempChange);
+		glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
 
-		brewlog.info("glycol-chill.js", `${stepTemp}C for ${stepTime} days`)
+		if (_chilling) {
+			gl
+			ycolInterval = maintainGlycolTemp(desiredFermentTemp);
+		}
 
 		// msTotal = totalms;
 		timeAtTemp = process.hrtime();
@@ -169,7 +164,7 @@ function chillStep({stepTemp, stepTime}) {
 
 		therm.getTemp(FERMENT_TEMPNAME)
 		.then(currentFermentTemp => {
-			pumpOnOff(desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
+			circulate(desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
 			therm.getTemp(GLYCOL_TEMPNAME).then(t => {
 				glycolTemp = t;
 			});
@@ -177,6 +172,19 @@ function chillStep({stepTemp, stepTime}) {
 	  });
 }
 
-function chillSteps(steps) {
-	return promiseSerial(steps.map(chillStep));
+function doSteps(chill, steps){
+	_chill = chill;
+	return promiseSerial(steps.map(doStep));
 }
+
+function maintainGlycolTemp(temp) {
+	const desiredTemp = parseInt(temp,10)+10;
+	const targetTemp = Math.round(desiredTemp * 10) / 10;	
+    brewlog.info(`maintainGlycolTemp=${desiredTemp}`);
+	
+	return setInterval(() => (glycolTemp >= targetTemp) 
+		? glycolHeater.switchOff() 
+		: glycolHeater.switchOn()
+	, 60 * 1000);
+}
+

@@ -7,12 +7,12 @@
     "prestart": "npm install",
     "start": "node index.js",
     "prepare": "husky install",
-    "test": "echo \"N o test specified\""
+    "test": "echo \"No test specified\""
   },
   "keywords": [
     "swagger"
   ],
-  "license": "Unlicense",
+  "license": "Beerware",
   "private": true,
   "dependencies": {
     "axios": "^1.7.7",

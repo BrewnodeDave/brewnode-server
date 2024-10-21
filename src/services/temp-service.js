@@ -20,8 +20,8 @@
 */
  
 let ds18x20;
-const brewlog = require("../../../brewlog.js");
-const broker = require("../../../broker.js");
+const brewlog = require("../brewstack/common/brewlog.js");
+const broker = require("../broker.js");
 let PROBES = require('./probes-service.js');
 
 let sampleInterval = null;
@@ -53,7 +53,7 @@ module.exports = {
 			}
 			
 			if (brewOptions.sim.simulate){
-				ds18x20 = require('../../../sim/ds18x20.js');
+				ds18x20 = require('../sim/ds18x20.js');
 			}else{
 				// @ts-ignore
 				ds18x20 = require('ds18x20');

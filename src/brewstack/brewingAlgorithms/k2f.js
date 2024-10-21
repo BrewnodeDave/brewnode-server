@@ -6,11 +6,10 @@
  * you can buy me a beer in return.
  */
 
-const valves = require('../equipmentDrivers/valve/valve-service.js');
-const flow = require('../equipmentDrivers/flow/flow-service.js');
-const pump = require('../equipmentDrivers/pump/pump-service.js');
-const brewlog = require('../../brewlog.js');
-const phase = require('./phase.js');
+const valves = require('../../services/valve-service.js');
+const flow = require('../../services/flow-service.js');
+const pump = require('../../services/pump-service.js');
+const brewlog = require('../common/brewlog.js');
 
 const startCond = v => v > 0;
 const stopCond = v => v == 0;
@@ -60,7 +59,6 @@ module.exports = {
 					valves.close("ValveChillWortIn");
 					valves.close("ValveFermentIn");
 					brewlog.info("... k2f end");
-					phase.end("K2F");
 					resolve(opt);
 				}).catch(err => {
 					console.log("oops", err)

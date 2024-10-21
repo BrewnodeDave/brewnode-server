@@ -14,6 +14,29 @@ const promiseSerial = funcs =>
     Promise.resolve([]))
 
 
+  const publishCode = () => {
+    execSync("jsdoc -c conf.json -t ./node_modules/ub-jsdoc");
+    
+    const config = {
+      host: process.env.BREWNODE_HOST, 
+      port: process.env.BREWNODE_PORT,
+      user: process.env.BREWNODE_FTPUSER, 
+      password: process.env.BREWNODE_FTPPASSWORD, 
+      wpUser: process.env.BREWNODE_WPUSER, 
+      wpPassword: process.env.BREWNODE_WPPASSWORD
+    };
+
+    sourceCode(config).then(err => {
+      if (err.errors.length) {
+        brewlog.error(err.errors);
+      } else {
+        brewlog.info(`Published!`);
+      }
+    }, reason => {
+      console.log(reason);
+    });
+}
+  
 const ftpClient = require('ftp-client');
 module.exports = {
   sourceCode(config){
@@ -29,7 +52,8 @@ module.exports = {
     })
   },
 
-  promiseSerial
+  promiseSerial,
+  publishCode
 }
 
 

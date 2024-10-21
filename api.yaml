@@ -3,7 +3,7 @@ info:
   title: Brewnode Server
   version: 2.0.0
 paths:
-  /brewing:
+  /brewing: 
     get:
       security:
       - basicAuth: []
@@ -73,7 +73,7 @@ paths:
       parameters:
       - name: steps
         in: query
-        description: Mash Steps
+        description: Mash Steps E.g. [{"tempC":65,"mins":60}]
         schema:
           $ref: '#/components/schemas/TemperatureProfile'
         required: true
@@ -113,12 +113,22 @@ paths:
         "200":
           description: Success
       x-swagger-router-controller: brewnode
+  
   /kettleTemp:
+    get:
+      tags:
+      - Brewnode
+      summary: Get the current kettle temperature
+      operationId: getKettleTemp
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
     put:
       tags:
       - Brewnode
       summary: Set kettle temperature and time
-      operationId: kettleTemp
+      operationId: setKettleTemp
       parameters:
       - name: temp
         in: query
@@ -262,6 +272,39 @@ paths:
         explode: true
         schema:
           $ref: '#/components/schemas/TemperatureProfile'
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /kettleVolume:
+    get:
+      tags:
+      - Simulator
+      summary: Get the current kettle volume
+      operationId: getKettleVolume
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+      
+    put:
+      tags:
+      - Simulator
+      summary: Set kettle volume
+      operationId: setKettleVolume
+      parameters:
+      - name: litres
+        in: query
+        description: Volume in litres
+        required: true
+        style: form
+        explode: true
+        schema:
+          maximum: 49
+          minimum: 1
+          type: integer
+          example: 10
       responses:
         "200":
           description: Success
@@ -1538,13 +1581,13 @@ components:
   schemas:
     ProfileStep:
       properties:
-        stepTemp:
+        tempC:
           maximum: 100
           minimum: 0
           type: integer
           description: Degrees Celsius
           example: 10
-        stepTime:
+        mins:
           maximum: 100
           minimum: 0
           type: integer

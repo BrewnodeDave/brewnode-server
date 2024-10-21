@@ -15,7 +15,7 @@ var options = {
     },
 };
 
-var expressAppConfig = oas3Tools.expressAppConfig(path.join(__dirname, 'api/openapi.yaml'), options);
+var expressAppConfig = oas3Tools.expressAppConfig(path.join(__dirname, 'api.yaml'), options);
 var app = expressAppConfig.getApp();
 
 function insertMiddleware(app, middleware) {
@@ -24,8 +24,6 @@ function insertMiddleware(app, middleware) {
     app._router.stack.push(...app._router.stack.splice(stackLength - 2, 2));
 }
 
-// Insert Authentication Middleware
-app.use(authenticate);
 
 insertMiddleware(app, cors());
 
@@ -42,21 +40,3 @@ function insertMiddleware(app, middleware) {
 }
 
 
-// Authentication Middleware
-function authenticate(req, res, next) {
-    const authHeader = req.headers['authorization'];
-    // if (!authHeader) {
-    //     return;
-    // }
-
-    const auth = authHeader.split(' ')[1];
-    const credentials = Buffer.from(auth, 'base64').toString('ascii');
-    const [username, password] = credentials.split(':');
-
-    // Verify username and password
-    if (username === 'HGoAWTzdg5NdBMxYebUNQrxvCyH3' && password === 'YYlPKDfF7O5LyApAzwrdP2znt8Hyx0ReqoYFFxPPCCzV7Z1te0SiMMWldneqaIqa') {
-        next();
-    } else {
-        res.status(401).send('Invalid credentials');
-    }
-}

@@ -28,15 +28,13 @@ const path = require('path');
 const logDir = path.join(__dirname, "../brewstack/equipmentDrivers");
 
 const broker = require('../broker.js');
-const pump = require('../brewstack/equipmentDrivers/pump/pump-service.js');
-const valve = require('../brewstack/equipmentDrivers/valve/valve-service.js');
+const pump = require('../services/pump-service.js');
+const valve = require('../services/valve-service.js');
 const ds18x20 = require('./ds18x20.js');
-const flow = require('../brewstack/equipmentDrivers/flow/flow-service.js');
-const brewdefs = require('../brewdefs.js');
-const kettle = require('../brewstack/equipmentDrivers/kettle/kettle-service.js');
-const mashTun = require('../brewstack/equipmentDrivers/mashtun/mashtun-service.js');
-const temp = require('../brewstack/nodeDrivers/therm/temp-service.js');
-const brewlog = require('../brewlog.js');
+const flow = require('../services/flow-service.js');
+const brewdefs = require('../brewstack/common/brewdefs.js');
+const temp = require('../services/temp-service.js');
+const brewlog = require('../brewstack/common/brewlog.js');
 
 const CHILLER_OUTPUT_TEMP = 20;
 const FLOW_RATE = 200;
@@ -119,13 +117,9 @@ let fermenterTempChange         = change("TempFermenter");
 let valveMashInChange           = change("valveMashIn");
 let valveKettleInChange         = change("valveKettleIn");
 let powerChange                 = change("power");
-let kettleVolumeChange          = change("KettleVolume");
-let mashVolumeChange            = change("MashVolume");
 let progressChange              = change("progress");
 
 let coolingTimer = null;
-
-let publishWeight = broker.create("Kg");
 
 function change(item){
     return value => {
@@ -133,9 +127,10 @@ function change(item){
             console.log("Sim change",item, simState[item], value.value);
             simState[item] = value.value;
 
+            
             simStateChange();
         }
-    };
+};
 }
 
 function simFlowRate(id, mLPerSec){
@@ -174,8 +169,6 @@ function simPowerChange(){
 
     let deltaSecs = ds;
 
-    //console.log(`delta sim secs since change of power=${deltaSecs * _opt.sim.speedupFactor}`);
-
     if (simState.KettleVolume > 0){    
         let dTemp =  (simState.power * deltaSecs * _opt.sim.speedupFactor) / ((simState.KettleVolume) * C);
         if (dTemp > 0){
@@ -193,16 +186,10 @@ function simPowerChange(){
 let heatTransferTime = null;
 let prevheatTransferTime = null;
 
-let previousFermenterVolume = 0;
-let timeFermentStart = 0;
-
 let mashPumpListener;
 let kettlePumpListener;
 let kettleTempListener;
 let fermenterTempListener;
-let powerListener;
-let kettleVolumeListener;
-let mashVolumeListener;
 let progressListener;
 
 /*
@@ -219,14 +206,11 @@ function heatTransferKettleToFermenter(deltaSecs){
     const deltaFermenterTemp = simState.FermenterVolume ? (heatFlow / (simState.FermenterVolume)) : 0;
     fermenterTemp +=  deltaFermenterTemp
 
-    //fermenter temp needs updated without causing recursion
-    //but the fermentation tempcntroller needs it
-    //??????
     ds18x20.set(FERMENTER_TEMP, fermenterTemp);
 }
 
 function simStateChange(){
-    //simPowerChange();
+    simPowerChange();
     
     simState.prevPower = simState.power;
 
@@ -268,12 +252,6 @@ function simStateChange(){
 
             //Ferment Temp Input
             if (isValveFermentTempInOpen && isPumpKettleOn){
-                if (!isKettleEmpty){
-                    //Ensure kettle volume does not change by not changing flows
-                    //simFlowRate(flow.ID_FLOW_KETTLE_OUT, FLOW_RATE);
-                    //simFlowRate(flow.ID_FLOW_KETTLE_IN, FLOW_RATE);
-                }
-                
                 if (!prevheatTransferTime){
                     prevheatTransferTime = process.hrtime();
                 }else{
@@ -298,14 +276,14 @@ function simStateChange(){
                 ds18x20.set("TempMashIn", mashTemp);
                 ds18x20.set(MASHTUN_TEMP, mashTemp);
                 simFlowRate(flow.ID_FLOW_KETTLE_OUT, FLOW_RATE);
-                simFlowRate(flow.ID_FLOW_MASH_IN,    FLOW_RATE);
+                // simFlowRate(flow.ID_FLOW_MASH_IN,    FLOW_RATE);
             }else{
                 simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
-                simFlowRate(flow.ID_FLOW_MASH_IN,    0);
+                // simFlowRate(flow.ID_FLOW_MASH_IN,    0);
             }
         }
     }else{
-        simFlowRate(flow.ID_FLOW_MASH_IN, 0); 
+        // simFlowRate(flow.ID_FLOW_MASH_IN, 0); 
     }
 
     
@@ -332,40 +310,47 @@ function simStateChange(){
                 ds18x20.set("TempMashIn", ds18x20.getByName(KETTLE_TEMP));
                 if (!isKettleEmpty){
                     simFlowRate(flow.ID_FLOW_KETTLE_OUT, 20);
-                    simFlowRate(flow.ID_FLOW_MASH_IN, 20);
+                    // simFlowRate(flow.ID_FLOW_MASH_IN, 20);
                 }else{
                     simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
-                    simFlowRate(flow.ID_FLOW_MASH_IN, 0);
+                    // simFlowRate(flow.ID_FLOW_MASH_IN, 0);
                 }
             }else{
                 simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
-                simFlowRate(flow.ID_FLOW_MASH_IN, 0);
+                // simFlowRate(flow.ID_FLOW_MASH_IN, 0);
             }
         }
     }
 
-    //Update weight, assuming SG=1.015
-    if (simState.FermenterVolume !== previousFermenterVolume){
-        //assumes fermentation starts immediately
-        if (timeFermentStart === 0){
-            timeFermentStart = hrsecs(process.hrtime());
-        }
-        previousFermenterVolume = simState.FermenterVolume;
-    }
-
-    if (simState.FermenterVolume > 0){
-        const fermentTime = hrsecs(process.hrtime()) - timeFermentStart;
-        const kGLossPerDay = 10 * _opt.sim.speedupFactor * 1 / 7;
-        const kGLossPerSec = kGLossPerDay / (24 * 60 * 60);
-        const weight = Math.trunc((simState.FermenterVolume - (fermentTime * kGLossPerSec)) * 10.15)/10;
-        publishWeight(weight);
-    }
-
 }
 
+const delay = (delaySecs, name="") => new Promise((resolve, reject) => {
+    const reportSecs = 60 / _opt.sim.speedupFactor;
+    const secs2mins = secs => Math.ceil((secs / 60));
+
+    let toGoSecs = delaySecs / _opt.sim.speedupFactor;
+    brewlog.info(`${name} delay for ${secs2mins(delaySecs)} mins`);
+ 
+    const report =  setInterval(() => {
+        toGoSecs -= reportSecs;	
+        brewlog.info(`${name}:${secs2mins(toGoSecs)} mins to go.`);
+    }, reportSecs*1000);
+
+    setTimeout(() => {
+        clearInterval(report);
+        resolve();
+    }, delaySecs*1000 / _opt.sim.speedupFactor);
+});
+
 module.exports = {
+    delay,
+    setKettleTemp: temp => ds18x20.set(KETTLE_TEMP, temp),
+    getKettleVolume: () => simState.KettleVolume,
+    setKettleVolume: vol => simState.KettleVolume = vol,
     start(opt) {
         return new Promise((resolve, reject) => {
+            brewlog.debug("Sim Service", "Start");
+
            _opt = opt;
            //Do nothing if we're not simulating
            if (_opt.sim.simulate === false){
@@ -396,29 +381,28 @@ module.exports = {
             kettlePumpListener = broker.subscribe(pump.kettlePumpName,   kettlePumpChange);
             kettleTempListener = broker.subscribe("TempKettle",          kettleTempChange);
             fermenterTempListener = broker.subscribe("TempFermenter",       fermenterTempChange);
-            powerListener = broker.subscribe("power",               powerChange);
-            kettleVolumeListener = broker.subscribe("KettleVolume",        kettleVolumeChange);
-            mashVolumeListener = broker.subscribe("MashVolume",          mashVolumeChange);
             progressListener = broker.subscribe("progress",      progressChange);
+            powerListener = broker.subscribe("power",      powerChange);
             
 
             const foo = (valveStatii, name) => valveStatii.find(status => status.name === name);
                 
-            //            every so often call ...
+            // Every so often call ...
             simInterval = setInterval(() => {
                 const valveStatii = valve.getStatus();
                 valveKettleInChange({value:foo(valveStatii, 'ValveKettleIn').state});
                 valveMashInChange({value:foo(valveStatii, 'ValveMashIn').state});
-             }, 1000);
+            }, 1000);
 
             const cooling = (factor, sensor) => {
                 let temp = ds18x20.getByName(sensor);
                 const deltaTemp = _opt.sim.speedupFactor * factor * (temp - _opt.sim.ambientTemp);
-                if (deltaTemp > 0){
-                    return ((temp - deltaTemp) > _opt.sim.ambientTemp) ? temp - deltaTemp : _opt.sim.ambientTemp;
-                }else{
-                    return temp;
-                }
+                const newTemp = temp - deltaTemp;
+                return (deltaTemp > 0)
+                    ? (newTemp > _opt.sim.ambientTemp) 
+                        ? newTemp 
+                        : _opt.sim.ambientTemp
+                    : temp;
             };
             
             /**
@@ -427,12 +411,13 @@ module.exports = {
             const intervalSecs = 60 / _opt.sim.speedupFactor;
             coolingTimer = setInterval(() => {
                 let isKettleEmpty = (simState.KettleVolume <= 0);
-                let isMashTunEmpty = (simState.MashVolume <= 0);
                 
-                const KETTLE_COOLING_FACTOR    = isKettleEmpty  ? 0.0001 : 0.000001;
-                const MASH_TUN_COOLING_FACTOR  = isMashTunEmpty ? 0.0001 : 0.00001;
-                const FERMENTER_COOLING_FACTOR =                          0.000001;
+                const KETTLE_COOLING_FACTOR    = isKettleEmpty  ? 0.0001 : 0.00001;
+                const FERMENTER_COOLING_FACTOR = 0.000001;
+                const MASH_TUN_COOLING_FACTOR = 0.000001;
                 
+                powerChange({value:simState.power});
+
                 ds18x20.set(KETTLE_TEMP,  cooling(KETTLE_COOLING_FACTOR,   KETTLE_TEMP));
                 ds18x20.set(MASHTUN_TEMP, cooling(MASH_TUN_COOLING_FACTOR, MASHTUN_TEMP));
                 
@@ -448,16 +433,9 @@ module.exports = {
                     ds18x20.set(FERMENTER_TEMP, cooling(FERMENTER_COOLING_FACTOR, FERMENTER_TEMP));
                 }
 
-                //Also update boil evaporation volume
-                if (ds18x20.getByName(KETTLE_TEMP) > 90) {
-                    kettle.updateVolume(-(brewdefs.EVAP_RATE_L_PER_HOUR / (60 * 60)) * intervalSecs);
-                }        
+                        
             }, intervalSecs * 1000);
            
-            //Get volumes
-            kettle.getStatus();
-            mashTun.getStatus();
-            
             return temp.getStatus(true).then(() => resolve(opt));
             
         });
@@ -465,14 +443,12 @@ module.exports = {
 
     stop() {
         return new Promise((resolve, reject) => {
+            brewlog.debug("Sim Service", "Stop");
 
             broker.unSubscribe(mashPumpListener);
             broker.unSubscribe(kettlePumpListener);
             broker.unSubscribe(kettleTempListener);
             broker.unSubscribe(fermenterTempListener);
-            broker.unSubscribe(powerListener);
-            broker.unSubscribe(kettleVolumeListener);
-            broker.unSubscribe(mashVolumeListener);
             broker.unSubscribe(progressListener);
            
             clearInterval(coolingTimer);

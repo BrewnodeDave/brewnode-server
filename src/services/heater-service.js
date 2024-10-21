@@ -21,12 +21,12 @@
 const fs = require('fs');
 const path = require('path');
  
-const brewdefs = require('../../../brewdefs.js');
-const broker = require('../../../broker.js');
+const brewdefs = require('../brewstack/common/brewdefs.js');
+const broker = require('../broker.js');
 // const i2c = require('../../nodeDrivers/i2c/i2c_mraa.js');
-const i2c = require('../../nodeDrivers/i2c/i2c_raspi-service.js');
-const pwm = require('./pwm.js');
-const pwm2 = require('./pwm.js');
+const i2c = require('./i2c_raspi-service.js');
+const pwm = require('../brewstack/equipmentDrivers/heater/pwm.js');
+const brewlog = require('../brewstack/common/brewlog.js');
 
 const MAX_POWER_W = 3000;
 const POWER = "power";
@@ -35,7 +35,7 @@ const POWER = "power";
 const PERIOD_INTERVAL_MS = 10 * 1000;
 
 //shortest on/off time
-const MIN_ONOFF_MS = 0.5 * 1000;
+const MIN_ONOFF_MS = 0.2 * 1000;
 const MIN_WATTS = (MAX_POWER_W * MIN_ONOFF_MS) / PERIOD_INTERVAL_MS;
 const MAX_WATTS = MAX_POWER_W - MIN_WATTS;
 let currentPower;
@@ -56,7 +56,7 @@ const energy = function(){
 	}
 
 	function set(e) {
-if (e==0) return;
+		if (e==0) return;
 		currentEnergy = e;
 		fs.writeFileSync(filename, currentEnergy.toString());
 	}
@@ -184,12 +184,16 @@ module.exports = {
 		
 	start(brewOptions) {
 		return new Promise((resolve, reject) => {
+			brewlog.info("heater-service", "Start");	
+
 			energy.get();
+			
 			_simOptions = brewOptions.sim;
 			if (brewOptions.sim.simulate){
-				ds18x20 = require('../../../sim/ds18x20.js');
+				ds18x20 = require('../sim/ds18x20.js');
 			}
 			i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_OFF});
+
 			currentPower = 0;
 			prevPower = 0;
 	
@@ -203,11 +207,11 @@ module.exports = {
 			
 			const J2KWHr = j => j / (3600000);
 			//Emit the current power to all listeners every 1 minute
-			//timer = setInterval(getPower.bind(null, true), _updateInterval);
-			timer = setInterval(() => {
-				currentPower = getPower(true);
-				energy.add(J2KWHr(currentPower * (_updateInterval / 1000)));
-			}, _updateInterval);
+			timer = setInterval(getPower.bind(null, true), _updateInterval);
+			// timer = setInterval(() => {
+			// 	currentPower = getPower(true);
+			// 	energy.add(J2KWHr(currentPower * (_updateInterval / 1000)));
+			// }, _updateInterval);
 	
 			resolve(brewOptions);
 		});
@@ -218,7 +222,9 @@ module.exports = {
 	MAX_W : MAX_POWER_W,
 	
 	stop() {
-		return new Promise((resolve, reject) => {		
+		return new Promise((resolve, reject) => {	
+			brewlog.info("heater-service", "stopped");	
+
 			pwm.stop();
 			powerOff();
 			broker.destroy(POWER);

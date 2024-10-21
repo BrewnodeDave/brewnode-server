@@ -1,23 +1,21 @@
-const i2c 		= require('./brewstack/nodeDrivers/i2c/i2c_raspi-service.js');
-const pump 		= require('./brewstack/equipmentDrivers/pump/pump-service.js');
-const flow 		= require('./brewstack/equipmentDrivers/flow/flow-service.js');
-const fan 		= require('./brewstack/equipmentDrivers/fan/fan-service.js');
-const valves 	= require('./brewstack/equipmentDrivers/valve/valve-service.js');
-const wdog 		= require('./brewstack/equipmentDrivers/watchdog/wdog-service.js');
-const temp 		= require('./brewstack/nodeDrivers/therm/temp-service.js');
-const kettle 	= require('./brewstack/equipmentDrivers/kettle/kettle-service.js');
-const mashtun 	= require('./brewstack/equipmentDrivers/mashtun/mashtun-service.js');
-const glycolHeater = require('./brewstack/equipmentDrivers/glycol/glycol-heater-service.js');
-const glycolChill 	= require('./brewstack/brewingAlgorithms/glycol-chill-service.js');
-const fill 				= require('./brewstack/brewingAlgorithms/fillService.js');
-const tempController 	= require('./brewstack/processControl/temp-controller-service.js');
-const glycolFerment 	= require('./brewstack/brewingAlgorithms/glycol-ferment-service.js');
-const brewfather 	= require('./brewfather-service.js');
+const i2c 		= require('./services/i2c_raspi-service.js');
+const pump 		= require('./services/pump-service.js');
+const flow 		= require('./services/flow-service.js');
+const fan 		= require('./services/fan-service.js');
+const valves 	= require('./services/valve-service.js');
+const wdog 		= require('./services/wdog-service.js');
+const temp 		= require('./services/temp-service.js');
+const glycolHeater = require('./services/glycol-heater-service.js');
+const glycol 	= require('./services/glycol-service.js');
+const fill 		= require('./services/fill-service.js');
+const heater 	= require('./services/heater-service.js');
+const tempController 	= require('./services/temp-controller-service.js');
+const brewfather = require('./services/brewfather-service.js');
 
 // const brewmon = require('./brewmon.js');
 
 const sim 		= require('./sim/sim.js');
-const brewlog 	= require('./brewlog.js');
+const brewlog 	= require('./brewstack/common/brewlog.js');
 
 const broker 	= require('./broker.js');
 
@@ -27,49 +25,39 @@ let _debug;
 let publishLog;
 
 async function start(speedupFactor = _speedupFactor, brewOptions = _brewOptions, debug = _debug) {
-	return new Promise((resolve, reject) => {
-		_speedupFactor = speedupFactor;
-		_brewOptions = brewOptions;
-		_debug = debug;
+	_speedupFactor = speedupFactor;
+	_brewOptions = brewOptions;
+	_debug = debug;
+
+	if (speedupFactor) {
+		brewlog.debug('Simulating...');
+		brewOptions.sim.simulate = true;
+		brewOptions.sim.speedupFactor = speedupFactor;
+	}
 	
-		if (speedupFactor) {
-			brewlog.debug('Simulating...');
-			brewOptions.sim.simulate = true;
-			brewOptions.sim.speedupFactor = speedupFactor;
-		}
-		
-		
-		publishLog = broker.create('log'); 
-		brewlog.startSync(brewOptions, publishLog, debug);
+	
+	publishLog = broker.create('log'); 
+	brewlog.startSync(brewOptions, publishLog, debug);
 
-		// brewfather.start();
+	// brewfather.start();
 
-		i2c.start(brewOptions)
-		// .then(brewmon.start)
-		.then(temp.start)
-		.then(brewfather.start) //must come after temp.start
-		.then(pump.start)
-		.then(fan.start)
-		.then(valves.start)
-		.then(wdog.start)
-		.then(flow.start)
-		.then(kettle.start)
-		.then(glycolHeater.start)
-		.then(glycolFerment.start)
-		.then(glycolChill.start)	
-		.then(mashtun.start)
-		.then(fill.start)
-		.then(tempController.start)
-		.then(sim.start.bind(this, brewOptions))
-		.then((r)=>{
-			resolve(brewOptions);
-		}, (err) => {
-			reject(()=>brewlog.error("start error", err));
-		})
-		.catch(err => {
-			brewlog.error("start error", err)
-		});
-	})
+	await i2c.start(brewOptions)//sim.simulate
+	// .then(brewmon.start)
+	brewOptions.ambientTemp = await temp.start(brewOptions)//sim.speedupFactor, sim.ambientTemp => ambientTemp
+	await brewfather.start(brewOptions) // recipeName //must come after temp.start
+	await pump.start(brewOptions)//
+	await fan.start(brewOptions)//
+	await valves.start(brewOptions)//valveSwitchDelay
+	await wdog.start(brewOptions)//
+	await flow.start(brewOptions)// sim.simulate, sim.speedupFactor, flowReportSecs
+	await heater.start(brewOptions);
+	await glycolHeater.start(brewOptions)//
+	await glycol.start(brewOptions)//
+	await fill.start(brewOptions)
+	await tempController.start(brewOptions)
+	await sim.start(brewOptions)
+
+	return 	brewOptions;
 }
 
 function stop(opt) {
@@ -83,11 +71,9 @@ function stop(opt) {
 	.then(valves.stop)
 	.then(wdog.stop)
 	.then(flow.stop)
-	.then(kettle.stop)
-	.then(mashtun.stop)
+	.then(heater.stop)
 	.then(glycolHeater.stop)
-	.then(glycolFerment.stop)
-	.then(glycolChill.stop)
+	.then(glycol.stop)
 	// .then(brewfather.stop)
 	.then(fill.stop)
 	.then(sim.stop)

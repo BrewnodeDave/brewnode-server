@@ -8,7 +8,7 @@
 
 'use strict';
 
-const {get, patch} = require('../service/common.js');
+const {get, patch} = require('./common.js');
 
 async function getFermentables (req, res, next, inventory_negative, include, complete, inventory_exists, limit, start_after, order_by, order_by_direction) {
   const params = {inventory_negative,include,complete,inventory_exists,limit,start_after,order_by,order_by_direction};

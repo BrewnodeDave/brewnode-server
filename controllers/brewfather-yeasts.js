@@ -8,7 +8,7 @@
 
 'use strict';
 
-const {get} = require('../service/common.js');
+const {get} = require('./common.js');
 
 /**
  * Retrieves yeast data from BrewfatherYeasts and sends the response.

@@ -20,11 +20,11 @@
  * Manually stop the Pi to avoid corruption before powering off.
  */
 
-const brewDefs = require('../../../brewdefs.js');
+const brewDefs = require('../brewstack/common/brewdefs.js');
 const exec = require('child_process').exec;	
-const i2c = require('../../nodeDrivers/i2c/i2c_raspi-service.js');
-const brewlog = require('../../../brewlog.js');
-const broker = require('../../../broker.js');
+const i2c = require('./i2c_raspi-service.js');
+const brewlog = require('../brewstack/common/brewlog.js');
+const broker = require('../broker.js');
 
 /**
  * @const {integer} Watchdog interval

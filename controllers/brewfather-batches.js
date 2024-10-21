@@ -8,7 +8,7 @@
 
 'use strict';
 
-const {get, patch} = require('../service/common.js');
+const {get, patch} = require('./common.js');
 
 async function batches (req, res, next, include, complete, status, limit, start_after, order_by, order_by_direction) {
   const params = {include, complete, status, limit, start_after, order_by, order_by_direction};

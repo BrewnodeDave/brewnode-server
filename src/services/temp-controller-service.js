@@ -29,13 +29,12 @@ cause the system to be highly sensitive to noise.
 
 */
 
-const broker = require('../../broker.js');
-const therm = require('../nodeDrivers/therm/temp-service.js');
-const kettle = require('../equipmentDrivers/kettle/kettle-service.js');
-const phase = require('../brewingAlgorithms/phase.js');
+const broker = require('../broker.js');
+const therm = require('./temp-service.js');
+const kettle = require('./kettle-service.js');
 
 const NanoTimer = require('nanotimer');
-const brewlog = require('../../brewlog.js');
+const brewlog = require('../brewstack/common/brewlog.js');
 const mashTimer = new NanoTimer();
 
 //Periodically re-examine temp
@@ -103,7 +102,7 @@ function calculatePower(actualTemperature) {
 	prevError = error;    // Save the error for the next loop
 
 	const W = Math.min(Math.max(U, 0), kettle.MAX_W);
-	brewlog.info(`delta T=${Math.floor(Math.trunc(error*10)/10)}C. P=${W}W.`);
+	// brewlog.info(`delta T=${Math.floor(Math.trunc(error*10)/10)}C. P=${W}W.`);
 	return W;
 };
 
@@ -131,16 +130,14 @@ function pause(){
 	mashTimer.clearInterval();
 }
 
-function init(name, P, I, D, sim) {
+function init(P, I, D, sim) {
 	return new Promise((resolve, reject) => {  
-		currentThermName = name;
 		brewlog.info("init PID",`${P},${I},${D}`);		
 		//Set the PID parameters
 		Kp = P;
 		Ki = I;
 		Kd = D
 		brewlog.debug(currentThermName);	
-		tempListener = broker.subscribe(currentThermName, tempHandler);
 		kettle.setPower(0);
 	
 		if (sim.simulate){
@@ -202,7 +199,6 @@ module.exports = {
 			const phaseName = `Heating to ${targetTemp}C for ${minutes * speedupFactor} mins.`;
 
 			brewlog.info(phaseName);			
-			phase.begin(phaseName, 0, 100);
 			if (currentTemp < targetTemp){
 				//add heatTimer
 				heatTimer.clearInterval();
@@ -223,11 +219,10 @@ module.exports = {
 						}else{
 							percentComplete = 100;
 						}
-						phase.current(phaseName, percentComplete);
+
 						if (timeAtTemp > ms){
 							pause();
 							heatTimer.clearInterval();
-							phase.end(phaseName);
 							resolve();
 						}
 					}
@@ -257,7 +252,6 @@ module.exports = {
 				
 		const phaseName = `Heating Mash to ${targetTemp}C.`;		
 		brewlog.info(phaseName);			
-		phase.begin(phaseName, 0, 100);
 
 		//add heatTimer
 		mashTimer.setInterval(() => {	
@@ -275,8 +269,17 @@ module.exports = {
 
 	pause,
 		
-	start: 	() => init(kettle.KETTLE_TEMPNAME, 1000, 5, 100, {}),
+	start:	() => {
+		brewlog.info("temp-controller-service", "Start");
+		currentThermName = kettle.KETTLE_TEMPNAME;
+		tempListener = broker.subscribe(currentThermName, tempHandler);
+		return init(1000, 5, 100, {});
+	},
 
-	stop,
+	stop: () => {
+		brewlog.info("temp-controller-service", "Stop");
+
+		broker.unSubscribe(tempListener);
+	},
 }
 

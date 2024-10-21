@@ -9,8 +9,8 @@
 const fs = require('fs');
 const brewdefs= require('./brewdefs.js');
 const brewlog = require('./brewlog.js');
-const brewfather = require('./brewfather-service.js');
-const temp = require('./brewstack/nodeDrivers/therm/temp-service.js');
+const brewfather = require('../../services/brewfather-service.js');
+const temp = require('../../services/temp-service.js');
 
 const FLOW_TIMEOUT_SECS = 2;
 /**
@@ -119,7 +119,7 @@ async function getBrewfatherOptions(speedupFactor){
 }
 	
 /**
- * @param {{ name: any; data: { mashWaterAmount: any; strikeTemp: any; spargeWaterAmount: number; hltWaterAmount: any; }; mash: { steps: { stepTemp: number; stepTime:number}[]; }; boilTime: any; fermentation: { steps: { stepTime: any; stepTemp: number }[]; }; equipment: { whirlpoolTime: any; }; }} recipe
+ * @param {{ name: any; data: { mashWaterAmount: any; strikeTemp: any; spargeWaterAmount: number; hltWaterAmount: any; }; mash: { steps: { tempC: number; mins:number}[]; }; boilTime: any; fermentation: { steps: { mins: any; tempC: number }[]; }; equipment: { whirlpoolTime: any; }; }} recipe
  * @param {any} filename
  * @param {number} speedupFactor
  */
@@ -134,14 +134,14 @@ function recipe2Options(recipe, filename, speedupFactor){
 		sparge:			recipe.data.spargeWaterAmount > 0,
 		spargeLitres:   recipe.data.hltWaterAmount,
 		spargeTemp: 	recipe.data.strikeTemp,
-		mashMins: 		recipe.mash.steps.reduce((/** @type {any} */ prev, {stepTime}) => prev + stepTime,0),
+		mashMins: 		recipe.mash.steps.reduce((/** @type {any} */ prev, {mins}) => prev + mins,0),
 		boilMins: 		recipe.boilTime,
-		fermentTempC: 	recipe.fermentation.steps[0].stepTemp,
-		fermentDays:	recipe.fermentation.steps[0].stepTime,
+		fermentTempC: 	recipe.fermentation.steps[0].tempC,
+		fermentDays:	recipe.fermentation.steps[0].mins,
 		fermentSteps:	recipe.fermentation.steps,
-		mashSteps:		recipe.mash.steps.map(({stepTime, stepTemp}) => ({
-            mins:stepTime,
-            temp:stepTemp
+		mashSteps:		recipe.mash.steps.map(({mins, tempC}) => ({
+            mins:mins,
+            temp:tempC
         })),
 		flowTimeoutSecs:FLOW_TIMEOUT_SECS,
 		flowReportSecs:	1,
@@ -163,7 +163,7 @@ function recipe2Options(recipe, filename, speedupFactor){
 		options.mashSteps		= options.mashSteps.map((/** @type {{ mins: number; temp: any; }} */ step) => ({mins:step.mins / simOptions.speedupFactor ,temp:step.temp}));
 	}
 
-	options.mashTempC = recipe.mash.steps[0].stepTemp;
+	options.mashTempC = recipe.mash.steps[0].tempC;
 
 	return options;
 }
