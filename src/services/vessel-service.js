@@ -18,8 +18,8 @@
  * @desc A Vessel has flow values on the input and output. It also has
  * an temperatur probe.
  */
-const broker = require('../../broker.js');
-const flow = require('./flow/flow-service.js');
+const broker = require('../broker.js');
+const flow = require('./flow-service.js');
 
 const fs = require('fs');
 const path = require('path');
@@ -182,6 +182,8 @@ if (isNaN(flowDelta)){
 	this.stop = () => new Promise((resolve, reject) => {
         // clearInterval(thisVessel.saveTimer);
         // thisVessel.saveTimer = null;	
+        brewlog.info("vessel-service", "Stop");
+
 
         broker.destroy(`${thisVessel.name}Volume`);
 

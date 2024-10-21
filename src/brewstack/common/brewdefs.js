@@ -25,7 +25,7 @@ function isRaspPi(){
 
 module.exports = {
 	//installDir: '.',	
-	installDir: `${__dirname}/..`,	
+	installDir: `${__dirname}/../..`,	
 	brewsDir: '/brews/',
 	
 	isLinux: /^linux/.test(process.platform),

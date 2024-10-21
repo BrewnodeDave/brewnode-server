@@ -6,7 +6,7 @@
  * you can buy me a beer in return.
  */
 
-let probes = require('../brewstack/nodeDrivers/therm/probes-service.js');
+let probes = require('../services/probes-service.js');
 
 let listOfDeviceIds = [];
 

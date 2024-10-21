@@ -8,15 +8,14 @@
 
 'use strict';
 
-const brewnode = require('../service/brewnode.js');
-const {promiseSerial} = require('../src/brew-pub.js');
+const {promiseSerial} = require('../src/brewstack/common/brew-pub.js');
 
-const {doMashStep} = require('../service/brewnode.js');
-const { getAuth } = require('../service/common.js');
+const brewnodeStuff = require('./brewnode-stuff.js');
+const { getAuth } = require('./common.js');
 
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
-  const result = await brewnode.whatsBrewing(auth);
+  const result = await brewnodeStuff.whatsBrewing(auth);
   if (result instanceof Error) {
     res.status(500);
     res.send(result.message);
@@ -28,31 +27,31 @@ async function whatsBrewing (req, res, next) {
 
 async function getInventory (req, res, next) {
   const auth = getAuth(req);
-  const result = await brewnode.getInventory(auth);
+  const result = await brewnodeStuff.getInventory(auth);
   res.status(200);
   res.send(result);
 };
 
 async function boil (req, res, next, mins) {
-  const result = await brewnode.boil(mins)
+  const result = await brewnodeStuff.boil(mins)
   res.status(200);
   res.send(result);
 };
 
 async function chill (req, res, next, profile) {
-  const result = await brewnode.chill(profile)
+  const result = await brewnodeStuff.chill(profile)
   res.status(200);
   res.send(result);
 };
 
 async function ferment (req, res, next, profile) {
-  const result = await brewnode.ferment(profile)
+  const result = await brewnodeStuff.ferment(profile)
   res.status(200);
   res.send(result);
 };
 
 async function k2f (req, res, next, flowTimeoutSecs) {
-  const result = brewnode.k2f(flowTimeoutSecs)
+  const result = brewnodeStuff.k2f(flowTimeoutSecs)
   res.status(200);
   res.send(result);
 };
@@ -67,7 +66,7 @@ async function k2f (req, res, next, flowTimeoutSecs) {
  * @returns {Promise<void>} - A promise that resolves when the operation is complete.
  */
 async function k2m (req, res, next, flowTimeoutSecs) {
-  const result = await brewnode.k2m(flowTimeoutSecs)
+  const result = await brewnodeStuff.k2m(flowTimeoutSecs)
   res.status(200);
   res.send(result);
 };
@@ -82,7 +81,7 @@ async function k2m (req, res, next, flowTimeoutSecs) {
  * @returns {Promise<void>} - A promise that resolves when the operation is complete.
  */
 async function m2k (req, res, next, flowTimeoutSecs) {
-  const result = await brewnode.m2k(flowTimeoutSecs)
+  const result = await brewnodeStuff.m2k(flowTimeoutSecs)
   res.status(200);
   res.send(result);
 };
@@ -97,26 +96,32 @@ async function m2k (req, res, next, flowTimeoutSecs) {
  * @param {number} mins - The duration in minutes to maintain the temperature.
  * @returns {Promise<void>} - A promise that resolves when the temperature is set.
  */
-async function kettleTemp (req, res, next, temp, mins) {
-  const result = await brewnode.kettleTemp(temp, mins);
+async function kettleTemp (req, res, next, tempC, mins) {
+  const result = await brewnodeStuff.kettleTemp({tempC, mins});
   res.status(200);
   res.send(result);
 };
 
+async function setKettleVolume (req, res, next, litres) {
+  brewnodeStuff.setKettleVolume(litres);
+  res.status(200);
+  res.send(`Simulated kettle volume set to ${litres} litres`);
+};
+
 async function restart (req, res, next) {
-  const result = await brewnode.restart();
+  const result = await brewnodeStuff.restart();
   res.status(200);
   res.send(result);
 };
 
 async function getStatus (req, res, next) {
-  const result = brewnode.getStatus();
+  const result = brewnodeStuff.getStatus();
   res.status(200);
   res.send(result);
 };
 
 async function heat (req, res, next, onOff) {
-  const result = await brewnode.heat(onOff);
+  const result = await brewnodeStuff.heat(onOff);
   
   res.status(200);
   res.send(result);
@@ -127,12 +132,20 @@ async function mash (req, res, next, steps) {
   
   const stepResponses = await promiseSerial(stepRequests);
 
-  res.status(response.status);
-  res.send(response.data);
+  const errs = stepResponses.filter((val) => val.status === 500);
+
+  if (errs.length > 0) {
+    res.status(500);
+    res.send(errs[0].response);
+    return;
+  }else{
+    res.status(200);
+    res.send("Mash Complete");
+  }
 };
 
 async function fill (req, res, next, litres) {
-  const result = await brewnode.fill(litres);
+  const result = await brewnodeStuff.fill(litres);
   res.status(200);
   res.send(result);
 };
@@ -152,5 +165,6 @@ module.exports = {
   m2k,
   k2f,
   k2m,
-  restart
+  restart,
+  setKettleVolume
 }

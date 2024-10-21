@@ -15,8 +15,8 @@
  * @desc The Mashtun is a simple paramterized instance of a vessel.
  */
 
-const brewlog = require('../../../brewlog.js');
-const Vessel = require('../vessel-service.js');
+const brewlog = require('../brewstack/common/brewlog.js');
+const Vessel = require('./vessel-service.js');
 
 const MASHTUN_TEMPNAME = 'TempMash';
 

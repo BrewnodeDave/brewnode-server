@@ -6,11 +6,11 @@
  * you can buy me a beer in return.
  */
 
-const delay = require('../../delay.js');
-const valves = require('../equipmentDrivers/valve/valve-service.js');
-const flow = require('../equipmentDrivers/flow/flow-service.js');
-const kettle = require('../equipmentDrivers/kettle/kettle-service.js');
-const brewlog = require('../../brewlog.js')
+const delay = require('../brewstack/common/delay.js');
+const valves = require('./valve-service.js');
+const flow = require('./flow-service.js');
+const kettle = require('./kettle-service.js');
+const brewlog = require('../brewstack/common/brewlog.js')
 
 const INTERVAL_SECS = 10;
 

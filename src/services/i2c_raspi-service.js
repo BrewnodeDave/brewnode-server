@@ -73,8 +73,8 @@ Watchdog Halt	0x21	0x12	0x80	23	In(1)
 Watchdog LED	0x21	0x12	0x40	22	Out(0)	1 = On
  */
 
-const brewlog = require('../../../brewlog.js');
-const brewdefs = require('../../../brewdefs.js');
+const brewlog = require('../brewstack/common/brewlog.js');
+const brewdefs = require('../brewstack/common/brewdefs.js');
 let mraa;
 let i2c;
 
@@ -180,7 +180,7 @@ module.exports = {
 				i2c = new I2C();
 				raspi.init(()=>init(i2c));
 			}else{
-				i2c = require('../../../sim/raspi-i2c.js');
+				i2c = require('../sim/raspi-i2c.js');
 				init(i2c);
 			}
 			module.exports.DIR_INPUT =  DIR_INPUT;

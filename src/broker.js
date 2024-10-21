@@ -13,12 +13,12 @@
  */
 
 
-  const brewlog = require("./brewlog.js");
+  const brewlog = require("./brewstack/common/brewlog.js");
   
   const EventEmitter = require("events").EventEmitter;
-  const emitter = new EventEmitter();
+  const sensor = new EventEmitter();
 
-  emitter.setMaxListeners(1000);
+  sensor.setMaxListeners(100);
 
   //socket
   const clients = [];
@@ -64,7 +64,7 @@
 		sensorNames.push(sensorName);	
 		
 		//return a publish function
-		return (/** @type {any} */ value, emit=true) => {    
+		return (value, emit=true) => {    
 			let timeStamp = new Date().getTime();
 			brewlog.sensorLog(sensorName, value);
 			if (_socket){
@@ -72,10 +72,10 @@
 				// _socket.emit(sensorName,  {date: timeStamp, value});
 			}
 			if (emit){
-				emitter.emit("sensor", {
-					name: sensorName, 
+				sensor.emit(sensorName, {
 					date: timeStamp, 
-					value});
+					value
+				});
 			}
 			
 			clients.forEach(client => {
@@ -117,18 +117,12 @@
     subscribe(sensorName, cb) {
 		if (sensorNames.includes(sensorName)){
 			brewlog.info("subscribe", sensorName);
-			emitter.on("sensor", value => {
-				if (value.name == sensorName){
-					cb(value);
-				}
-			});
-						
+			sensor.on(sensorName, cb);
+			return cb;
 		}else{
 			brewlog.error(`Broker cannot subscribe, sensor=${sensorName} does not exist.`);
 		}
 
-		return listener;
-		
 		/**
 		 * @param {{ name: string; }} value
 		 */
@@ -144,9 +138,9 @@
 	 * @param {*} listener 
 	 */
     unSubscribe(listener) {	
-		if (listener) emitter.removeListener("sensor", listener);
+		if (listener) sensor.removeListener("sensor", listener);
 		listener = null;
-		emitter.removeAllListeners("sensor");
+		sensor.removeAllListeners("sensor");
     },
 
 	exists,

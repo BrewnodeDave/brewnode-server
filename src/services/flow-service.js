@@ -15,10 +15,10 @@
  * Every sensor has been calibrated individually. This results in each sensor storing the number of mL per pulse for each sensor.
  */
 // @ts-ignore
-const i2c = require('../../nodeDrivers/i2c/i2c_raspi-service.js');
-const brewdefs = require('../../../brewdefs.js');
-const brewlog = require("../../../brewlog.js");
-const broker = require("../../../broker.js");
+const i2c = require('./i2c_raspi-service.js');
+const brewdefs = require('../brewstack/common/brewdefs.js');
+const brewlog = require("../brewstack/common/brewlog.js");
+const broker = require("../broker.js");
 
 /*
 Pulses/Sec = mL/Sec / mL/Puls_
@@ -198,7 +198,6 @@ function Flow(opt){
 			if ((nowSecs2 - thisFlow.wait.secsOfLastChange) > timeoutSecs){
 				thisFlow.wait.condition = undefined;
 				thisFlow.wait.resolve();	
-				// brewlog.warning("Flow timeout", thisFlow.name)
 			}
 		}			
 		thisFlow.count = 0;//reset count every interval

@@ -14,7 +14,7 @@ const http = require('http');
 let _httpServer;
 
 const brewlog = require('./brewlog.js');
-const broker = require('./broker.js');
+const broker = require('../broker.js');
 // @ts-ignore
 const socketio = require('socket.io');
 const end = (/** @type {{ end: (arg0: string) => void; }} */ response) => (/** @type {any} */ status) => {

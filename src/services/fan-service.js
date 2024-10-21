@@ -13,11 +13,11 @@
  * @desc Simple on/off control of the extractor fan. Every time the state changes (on/off) an event is emitted to all listeners.
  */
 
-const brewdefs  = require('../../../brewdefs.js');
-const brewlog   = require('../../../brewlog.js');
+const brewdefs  = require('../brewstack/common/brewdefs.js');
+const brewlog   = require('../brewstack/common/brewlog.js');
 //const i2c       = require('../../nodeDrivers/i2c/i2c_mraa.js');
-const i2c       = require('../../nodeDrivers/i2c/i2c_raspi-service.js');
-const broker 	= require('../../../broker.js');
+const i2c       = require('./i2c_raspi-service.js');
+const broker 	= require('../broker.js');
 
 const TEMP_FAN_ON = 50;
 const TEMP_FAN_OFF = 30;
@@ -121,15 +121,15 @@ module.exports = {
 	 */
 	start(opt) {
 		return new Promise((resolve, reject) => {		
-			brewlog.info("fan started");
+			brewlog.debug("fan-service", "Started");
 			currentState = FAN_OFF;
 			i2c.init({number:FAN_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:FAN_OFF});
-			brewlog.info("i2c init");
+			
 			publishFanState = broker.create(FAN_DEF.name);
-			brewlog.info("pub fan state");
 			publishFanState("OFF");
-			brewlog.info("fan TempKettle");
+			
 			tempKettleListener = broker.subscribe("TempKettle", tempKettleHandler);
+			
 			resolve(opt);
 		});
 	},
@@ -142,7 +142,7 @@ module.exports = {
 			setState(FAN_OFF);
 			broker.unSubscribe(tempKettleListener);
 			broker.destroy(FAN_DEF.name);
-			brewlog.info("fan.js", "stopped");
+			brewlog.info("fan-service", "Stop");
 
 			resolve();
 		});

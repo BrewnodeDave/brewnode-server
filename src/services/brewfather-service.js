@@ -7,13 +7,13 @@
  */
 
 
-const {post} = require('../controllers/brewfather-stream.js');
+const {post} = require('../../controllers/brewfather-stream.js');
 
 const dotenv = require('dotenv');
 dotenv.config();//Adds contents of .env to environ vars e.g. process.env.DB_PASS
 
-const brewlog = require("./brewlog.js");
-const therm = require("./brewstack/nodeDrivers/therm/temp-service.js");
+const brewlog = require("../brewstack/common/brewlog.js");
+const therm = require("./temp-service.js");
 
 let timer = null;
 
@@ -44,13 +44,13 @@ function logTemps(recipeName, fermenter, ambient, glycol) {
 
 module.exports = {
     start: async (opt) => {
-        brewlog.info("brewfather.js", "Starting to log ferment temp");
+        brewlog.info("brewfather-service", "Start");
         const mins15  = 15 * 60 * 1000;
         timer = setInterval(() =>getFermenterTemp(opt.recipeName), mins15);
         return opt;
     },
     stop: () => {
-        brewlog.info("brewfather.js", "Stop logging ferment temp");
+        brewlog.info("brewfather-service", "Stop");
         clearInterval(timer);
     }
 }

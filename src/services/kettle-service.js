@@ -12,9 +12,9 @@
  * @desc Kettle is an instance of a Vessel aggregrated with a heater and temperature sensor
  */
 
-const brewlog = require('../../../brewlog.js');
-const heater = require('../heater/heater-service.js');
-const Vessel = require('../vessel-service.js');
+const brewlog = require('../brewstack/common/brewlog.js');
+const heater = require('./heater-service.js');
+const Vessel = require('./vessel-service.js');
 const options = {
     name:        'Kettle',
   	tempName:    'TempKettle',
@@ -60,6 +60,7 @@ module.exports = {
 
 	start(opt) {
 		return new Promise((resolve, reject) => {	
+			brewlog.info("kettle-service", "Start");
 			vessel = new Vessel(options);
 			vessel.start(opt)
 			.then(heater.start)

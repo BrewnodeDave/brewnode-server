@@ -10,48 +10,49 @@
 
 const { execSync } = require('child_process');
 
-const  {brewfatherV2} = require('./common.js');
+const  {brewfatherV2,} = require('./common.js');
   
 const axios = require('axios');
-const common = require('../src/common.js');
+const {delay} = require('../src/sim/sim.js');
 
-const {sourceCode} = require('../src/brew-pub.js');
-const brewdata = require('../src/brewdata.js');
-const brewlog = require('../src/brewlog.js');
+const {sourceCode} = require('../src/brewstack/common/brew-pub.js');
+const brewdata = require('../src/brewstack/common/brewdata.js');
+const brewlog = require('../src/brewstack/common/brewlog.js');
 const startStop = require('../src/start-stop.js');
 const broker = require('../src/broker.js');
-const brewfather = require('../src/brewfather-service.js');
+const brewfather = require('../src/services/brewfather-service.js');
 
 //brewingAlgorithms
-const fill = require('../src/brewstack/brewingAlgorithms/fillService.js');
 const k2m = require('../src/brewstack/brewingAlgorithms/k2m.js');
 const m2k = require('../src/brewstack/brewingAlgorithms/m2k.js');
 const k2f = require('../src/brewstack/brewingAlgorithms/k2f.js');
-const glycolChill = require('../src/brewstack/brewingAlgorithms/glycol-chill-service.js');
-const glycolFerment = require('../src/brewstack/brewingAlgorithms/glycol-ferment-service.js');
 
 //equipmentDrivers
-const kettle = require('../src/brewstack/equipmentDrivers/kettle/kettle-service.js');
-const heater = require('../src/brewstack/equipmentDrivers/heater/heater-service.js');  
-const valves = require('../src/brewstack/equipmentDrivers/valve/valve-service.js');  
-const pump = require('../src/brewstack/equipmentDrivers/pump/pump-service.js');  
-const flow = require('../src/brewstack/equipmentDrivers/flow/flow-service.js');  
-const wdog = require('../src/brewstack/equipmentDrivers/watchdog/wdog-service.js');  
-const fan = require('../src/brewstack/equipmentDrivers/fan/fan-service.js');  
+const glycol = require('../src/services/glycol-service.js');
+const fill = require('../src/services/fill-service.js');
+const kettle = require('../src/services/kettle-service.js');
+const heater = require('../src/services/heater-service.js');  
+const valves = require('../src/services/valve-service.js');  
+const pump = require('../src/services/pump-service.js');  
+const flow = require('../src/services/flow-service.js');  
+const wdog = require('../src/services/wdog-service.js');  
+const fan = require('../src/services/fan-service.js');  
 
 //processControl
-const tempController = require('../src/brewstack/processControl/temp-controller-service.js');
+const tempController = require('../src/services/temp-controller-service.js');
 
-const temp = require('../src/brewstack/nodeDrivers/therm/temp-service.js');
+const temp = require('../src/services/temp-service.js');
 
+const sim = require('../src/sim/sim.js');
 
 const progressPublish = broker.create("progress");
 
 //Add these to an API?
-const speedupFactor = 1;
+const speedupFactor = 10;
 const brewOptions = brewdata.defaultOptions();
 const debug = true;
 const flowTimeoutSecs = 5;
+
 startStop.start(speedupFactor, brewOptions, debug)
   .then(x=>console.log("started"));
 
@@ -61,15 +62,14 @@ startStop.start(speedupFactor, brewOptions, debug)
  * litres Integer Fill litres
  * no response value expected for this operation
  **/
-function fillKettle(litres) {
+async function fillKettle(litres) {
   brewlog.debug("Fill start");
 
-  return fill.timedFill({strikeLitres:litres, valveSwitchDelay: 5000}, (/** @type {any} */ x) => {
+  await fill.timedFill({strikeLitres:litres, valveSwitchDelay: 5000}, (x) => {
       kettle.updateVolume(1);
       progressPublish(`${x} Litres`);
   })
-  .then(() => "Fill Complete")	
-  .catch(err => JSON.stringify(err));
+  return "Fill Complete";	
 }
 
 const whatsBrewing = async (auth) => {
@@ -103,7 +103,7 @@ const getReadings = async (batchId) => {
 }
 
 const kettleTemp = async ({tempC, mins}) => {
-    await tempController.init(kettle.KETTLE_TEMPNAME, 600, 0.3, 100, brewOptions);
+    await tempController.init(800, 0.3, 100, brewOptions);
     await tempController.setTemp(tempC, brewOptions.sim.simulate ? (mins / brewOptions.sim.speedupFactor) : mins);
     await tempController.stop();
 }    
@@ -113,23 +113,23 @@ const m2kTransfer =  (flowTimeoutSecs) => m2k.transfer({flowTimeoutSecs});
 const k2fTransfer = async (flowTimeoutSecs) => k2f.transfer({flowTimeoutSecs});
 
 const boil = async (mins) => {
-  await tempController.init(kettle.KETTLE_TEMPNAME, 600, 0.3, 100, brewOptions);
+  await tempController.init(600, 0.3, 100, brewOptions);
   await tempController.setTemp(100, brewOptions.sim.simulate ? (mins / brewOptions.sim.speedupFactor) : mins);
   await tempController.stop();
   return `Boil Complete`;
 }
 
 const ferment = async (temp, hours) => {
-  await glycolFerment.start()
-  await glycolFerment.fermentSteps([{stepTemp:temp, stepTime:hours/24}]);
-  await glycolFerment.stop();
+  await glycol.start()
+  await glycol.doSteps(false, [{tempC:temp, mins:hours/24}]);
+  await glycol.stop();
   return "Ferment Complete";	
 } 
 
 const chill = async (temp, hours) => {
-  await glycolChill.start()
-  await glycolChill.chillSteps([{stepTemp:temp, stepTime:hours/24}]);
-  await glycolFerment.stop();
+  await glycol.start()
+  await glycol.doSteps(true, [{tempC:temp, mins:hours/24}]);
+  await glycol.stop();
   return "Chilling Complete";	
 }
 
@@ -138,24 +138,66 @@ const heat = async (onOff) => {
   return onOff;
 }
 
+
+//Temp loss for a fixed flow rate
+async function pipeHeatLoss(tempFluid, tempSensorName) {
+  const tempAmbient = await therm.getTemp(tempSensorName)
+  const k = 16;// W/mC the heat transfer coefficient of stainless steel
+  const L = 1.76;//0.35;//1.32;//1.76;//the length of pipe
+  const innerDiameter = 12.5;//0.022;
+  const outerDiameter = 31;//0.027;
+  const flowRate = 0.200;
+
+  const C = 4200; //Sepcific heat capacity of water
+  const heatLossJPerSec = 2 * Math.PI * k * L * (tempFluid - tempAmbient) / (Math.log(outerDiameter / innerDiameter));
+
+  const k2 = 18 / (60 - 18);
+  const empiricalDeltaTemp = k2 * (tempFluid - tempAmbient);
+
+  const deltaTemp = heatLossJPerSec / C / flowRate;
+  
+  return deltaTemp;
+}
+
+
+/**
+ * Executes a mash step in the brewing process.
+ *
+ * @param {string} step - A JSON string containing the temperature in Celsius and the duration in minutes for the mash step.
+ * @returns {Function} An asynchronous function that performs the mash step.
+ *
+ * The returned function performs the following actions:
+ * 1. Parses the input step to extract temperature and duration.
+ * 2. Calculates the temperature loss in the pipe.
+ * 3. Logs the temperature loss.
+ * 4. Sets the kettle temperature.
+ * 5. Transfers the liquid from kettle to mash tun.
+ * 6. Waits for the specified duration.
+ * 7. Transfers the liquid back from mash tun to kettle.
+ * 8. Returns an object indicating the completion status and details of the mash step.
+ */
 function doMashStep(step){
   return async function(){
-    const {tempC, mins} = JSON.parse(step);
-    const deltaT = await common.pipeHeatLoss(tempC, "TempMash")
-    brewlog.info("pipe heat loss, deltaT=", deltaT);
-    const temp = tempC + deltaT;
-    await kettleTemp({temp, mins:0});
-    await k2m.transfer({flowTimeoutSecs});
-    await delay(mins * 60);
-    await m2k.transfer({flowTimeoutSecs});
-
-    return {
-      status: 200,
-      response: `Mash Step Complete: ${tempC}C for ${mins} mins`
+    try {
+      const {tempC, mins} = JSON.parse(step);
+      const deltaT = await pipeHeatLoss(tempC, "TempMash");
+      const temp = tempC + deltaT;
+      await kettleTemp({tempC:temp, mins:0});
+      await k2m.transfer({flowTimeoutSecs});
+      await delay(mins * 60);
+      await m2k.transfer({flowTimeoutSecs});
+      return {
+        status: 200,
+        response: `Mash Step Complete: ${tempC}C for ${mins} mins`
+      }
+    } catch (err) { 
+      return {
+        status: 500,
+        response: err
+      }
     }
   }
 }
-
 
 async function getFermentables(auth){
   const config = { auth };
@@ -279,5 +321,6 @@ module.exports = {
   kettleTemp,
   m2k:m2kTransfer,
   publishCode,
-  restart: startStop.restart
+  restart: startStop.restart,
+  setKettleVolume:sim.setKettleVolume
 }

@@ -16,12 +16,12 @@
  * After each open or close command, the state of the valve is verified by waiting upon the valve to indicate that it is open or closed.
  */
 
-const brewdefs = require('../../../brewdefs.js');
-const brewlog  = require('../../../brewlog.js');
-const broker   = require('../../../broker.js');
+const brewdefs = require('../brewstack/common/brewdefs.js');
+const brewlog  = require('../brewstack/common/brewlog.js');
+const broker   = require('../broker.js');
 
 // @ts-ignore
-let i2c = require('../../nodeDrivers/i2c/i2c_raspi-service.js');
+let i2c = require('./i2c_raspi-service.js');
 let valveSwitchDelay = null;
 let opt = null;
 

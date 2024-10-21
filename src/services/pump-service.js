@@ -17,11 +17,11 @@
  * @requires promise
  * @desc There are two pumps in the system. This module is used to switch them on and off. An event is emitted when the state of the pump changes.
  */
-const brewdefs = require('../../../brewdefs.js');
-const brewlog  = require('../../../brewlog.js');
-const broker = require('../../../broker.js');
+const brewdefs = require('../brewstack/common/brewdefs.js');
+const brewlog  = require('../brewstack/common/brewlog.js');
+const broker = require('../broker.js');
 // const i2c = require('../../nodeDrivers/i2c/i2c_mraa.js');
-const i2c = require('../../nodeDrivers/i2c/i2c_raspi-service.js');
+const i2c = require('./i2c_raspi-service.js');
 
 let started = false;
 

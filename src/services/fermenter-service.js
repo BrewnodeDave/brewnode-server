@@ -1,4 +1,4 @@
-/*
+ /*
  * Beerware License
  * ----------------
  * As long as you retain this notice, you can do whatever you want with 
@@ -12,8 +12,8 @@
  * @desc Fermenter is a Vessel
  */
  
-const brewlog = require("../../../brewlog.js");
-const broker = require("../../../broker.js");
+const brewlog = require("../brewstack/common/brewlog.js");
+const broker = require("../broker.js");
 //const weigh = require('../../equipmentDrivers/weight/weigh.js');
 const Vessel = require('../vessel.js');
 

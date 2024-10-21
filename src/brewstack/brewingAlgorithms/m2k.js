@@ -7,9 +7,9 @@
  */
 
 
-const brewlog = require('../../brewlog.js');
-const flow = require('../equipmentDrivers/flow/flow-service.js');
-const pump = require('../equipmentDrivers/pump/pump-service.js');
+const brewlog = require('../common/brewlog.js');
+const flow = require('../../services/flow-service.js');
+const pump = require('../../services/pump-service.js');
 
 const startCond = v => v>0;
 const stopCond = v => v==0;
