@@ -33,6 +33,7 @@ const SAMPLE_PERIOD = 6; //100 times slower in vscode debug
 const I2C_FLOW_KETTLE_OUT_MASK	= 1 << brewdefs.I2C_FLOW_KETTLE_OUT;
 const I2C_FLOW_MASH_OUT_MASK 	= 1 << brewdefs.I2C_FLOW_MASH_OUT;
 const I2C_FLOW_FERMENT_IN_MASK 	= 1 << brewdefs.I2C_FLOW_FERMENT;
+const I2C_FLOW_KETTLE_IN_MASK 	= 1 << brewdefs.I2C_FLOW_KETTLE_IN;
 
 /** 
  * @const

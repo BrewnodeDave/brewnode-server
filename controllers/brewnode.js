@@ -18,6 +18,7 @@ const m2k = require('../src/brewstack/brewingAlgorithms/m2k.js');
 const k2f = require('../src/brewstack/brewingAlgorithms/k2f.js');
 const sim = require('../src/sim/sim.js');
 const heater = require('../src/services/heater-service.js');  
+const fillService = require('../src/services/fill-service.js');
 
 const tempController = require('../src/services/temp-controller-service.js');
 
@@ -28,12 +29,11 @@ const broker = require('../src/broker.js');
 const { getAuth } = require('./common.js');
 
 //Add these to an API?
-const speedupFactor = 10;
 const brewOptions = brewdata.defaultOptions();
 const debug = true;
 const flowTimeoutSecs = 5;
 
-startStop.start(speedupFactor, brewOptions, debug)
+startStop.start(brewOptions, debug)
   .then(x=>console.log("started"));
 
 const progressPublish = broker.create("progress");
@@ -261,11 +261,10 @@ async function mash (req, res, next, steps) {
 };
 
 async function fill (req, res, next, litres) {
-  await fill.timedFill({
+  await fillService.timedFill({
     strikeLitres: litres, 
     valveSwitchDelay: 5000
   }, (x) => {
-      kettle.updateVolume(1);
       progressPublish(`${x} Litres`);
   });
   res.status(200);

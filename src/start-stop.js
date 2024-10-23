@@ -12,38 +12,25 @@ const heater 	= require('./services/heater-service.js');
 const tempController 	= require('./services/temp-controller-service.js');
 const brewfather = require('./services/brewfather-service.js');
 
-// const brewmon = require('./brewmon.js');
-
 const sim 		= require('./sim/sim.js');
 const brewlog 	= require('./brewstack/common/brewlog.js');
 
 const broker 	= require('./broker.js');
 
-let _speedupFactor;
-let _brewOptions;
-let _debug;
 let publishLog;
 
-async function start(speedupFactor = _speedupFactor, brewOptions = _brewOptions, debug = _debug) {
-	_speedupFactor = speedupFactor;
-	_brewOptions = brewOptions;
-	_debug = debug;
-
-	if (speedupFactor) {
+async function start(brewOptions, debug) {
+	if (brewOptions.sim.simutlate) {
 		brewlog.debug('Simulating...');
-		brewOptions.sim.simulate = true;
 		brewOptions.sim.speedupFactor = speedupFactor;
 	}
-	
 	
 	publishLog = broker.create('log'); 
 	brewlog.startSync(brewOptions, publishLog, debug);
 
-	// brewfather.start();
-
 	await i2c.start(brewOptions)//sim.simulate
-	// .then(brewmon.start)
 	brewOptions.ambientTemp = await temp.start(brewOptions)//sim.speedupFactor, sim.ambientTemp => ambientTemp
+
 	await brewfather.start(brewOptions) // recipeName //must come after temp.start
 	await pump.start(brewOptions)//
 	await fan.start(brewOptions)//
