@@ -445,6 +445,9 @@ module.exports = {
         return new Promise((resolve, reject) => {
             brewlog.debug("Sim Service", "Stop");
 
+            brewlog.debug("Sim Service", "Stop");
+
+
             broker.unSubscribe(mashPumpListener);
             broker.unSubscribe(kettlePumpListener);
             broker.unSubscribe(kettleTempListener);
