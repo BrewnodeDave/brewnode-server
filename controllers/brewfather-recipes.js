@@ -8,6 +8,8 @@
 
 'use strict';
 
+const { get } = require('./common.js');
+
 async function getRecipe (req, res, next, include, id) {
   const params = {include};
   const response = await get(req, `recipes/${id}`, params);
