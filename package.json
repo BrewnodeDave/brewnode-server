@@ -23,11 +23,13 @@
     "js-yaml": "^3.3.0",
     "nanotimer": "^0.3.15",
     "oas3-tools": "^2.2.3",
-    "raspi": "^6.0.1",
-    "raspi-i2c": "^6.2.4",
     "rollbar": "^2.26.4",
     "simple-node-logger": "^21.8.12",
     "socket.io": "^4.8.0"
+  },
+  "optionalDependencies": {
+    "raspi": "^6.0.1",
+    "raspi-i2c": "^6.2.4"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
