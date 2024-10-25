@@ -92,17 +92,6 @@ const valveNames = [];
 let timeouts = [];
 let _started = false;
 
-//Call function that is passed in after a delay
-//Use result as resolution
-function getDelayedStatus(getStatus) {
-	return new Promise((resolve, reject) => {
-		timeouts.push(setTimeout(() => {
-			let s = getStatus();
-			resolve(s);
-		}, valveSwitchDelay));
-	});
-}
-
 //Set input pins during simulation only
 function simSetInputs(thisValve, requested) {
 	if (opt.sim.simulate !== true) {
@@ -111,26 +100,8 @@ function simSetInputs(thisValve, requested) {
 
 	//set inputs
 	if (requested === VALVE_OPEN_REQUEST) {
-
-		// thisValve.openedPin.dir(i2c.DIR_OUTPUT);
-		// thisValve.openedPin.write(ACTIVE);
-		// thisValve.openedPin.dir(i2c.DIR_INPUT);
-		
-		// thisValve.closedPin.dir(i2c.DIR_OUTPUT);
-		// thisValve.closedPin.write(INACTIVE);
-		// thisValve.closedPin.dir(i2c.DIR_INPUT);
-
 		thisValve.status = brewdefs.VALVE_STATUS.OPENED;
-
 	} else if (requested === VALVE_CLOSE_REQUEST) {
-		// thisValve.openedPin.dir(i2c.DIR_OUTPUT);
-		// thisValve.openedPin.write(INACTIVE);
-		// thisValve.openedPin.dir(i2c.DIR_INPUT);
-
-		// thisValve.closedPin.dir(i2c.DIR_OUTPUT);
-		// thisValve.closedPin.write(ACTIVE);
-		// thisValve.closedPin.dir(i2c.DIR_INPUT);
-
 		thisValve.status = brewdefs.VALVE_STATUS.CLOSED;
 	}
 };
@@ -161,29 +132,19 @@ function Valve(opt) {
 	/**
 	 * Open the valve and verify if it has after a few seconds. 
 	 */
-	thisValve.open = () => {
-		return thisValve.openOrClose(VALVE_OPEN_REQUEST);
-	};
+	thisValve.open = thisValve.openOrClose(VALVE_OPEN_REQUEST);
 
 	/**
 	 * Close the valve and verify if it has after a few seconds.
 	 */
-	thisValve.close = () => {
-		return thisValve.openOrClose(VALVE_CLOSE_REQUEST);
-	};
-}//valve
+	thisValve.close = () => thisValve.openOrClose(VALVE_CLOSE_REQUEST);
+}
 
 module.exports = {
 	names: valveNames,
 
-	getStatus: function() {
-		let result = [];
-		valves.forEach(({ name, status }) => {
-			result.push({ name, state: status });
-		});
-		return result;
-	},
-	/**
+	getStatus: () => valves.map(({ name, status }) => ({ name, state: status })),
+		/**
 	 * Open a valve by name
 	 * @param {string} name - Valve name
 	 */
@@ -257,11 +218,8 @@ module.exports = {
 			});
 			timeouts = [];
 
-			const allClosed = [];
-			valves.forEach(({ close }) => {
-				allClosed.push(close);
-			});
-
+			const allClosed = valves.map(({ close }) => close)
+	
 			Promise.all(allClosed).then(() => {
 				valves.forEach(({ name }) => {
 					broker.destroy(name);
@@ -276,11 +234,8 @@ module.exports = {
 
 	selfTest() {
 		return new Promise((resolve, reject) => {
-			const testAll = [];
-			valves.forEach(valve => {
-				testAll.push(valve.selfTest());
-			});
-			Promise.all(testAll).then(resolve).catch(console.log);
+			const testAll = valves.map(valve => valve.selfTest());
+			Promise.all(testAll).then(resolve, reject).catch(console.log);
 		});
 	}
 }
