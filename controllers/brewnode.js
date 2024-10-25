@@ -164,13 +164,21 @@ async function restart (req, res, next) {
   res.send("Restarted server");
 };
 
+const pump = require('../src/services/pump-service.js');
+const flow = require('../src/services/flow-service.js');
+const wdog = require('../src/services/wdog-service.js');
+const fan = require('../src/services/fan-service.js');
+const temp = require('../src/services/temp-service.js');
+const valves = require('../src/services/valve-service.js');
+
 async function getStatus (req, res, next) {
+  const tempStatus = await temp.getStatus(true);
   const result = {
-    tempStatus: await temp.getStatus(true),
     pumpStatus: pump.getStatus(),
     flowStatus: flow.getStatus(),
     wdogStatus: wdog.getStatus(),
     fanStatus: fan.getStatus(),
+    tempStatus,
     valveStatus: valves.getStatus()
   }
 

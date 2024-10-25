@@ -28,13 +28,11 @@
     "socket.io": "^4.8.0"
   },
   "optionalDependencies": {
-    "raspi": "^6.0.1",
-    "raspi-i2c": "^6.2.4"
+    "raspi-i2c": "^6.2.4",
+    "raspi": "^6.0.1"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
-    "@commitlint/config-conventional": "^19.5.0",
-    "husky": "^9.1.6",
-    "vercel": "^37.8.0"
+    "@commitlint/config-conventional": "^19.5.0"
   }
 }
