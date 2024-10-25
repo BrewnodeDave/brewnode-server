@@ -195,10 +195,6 @@ module.exports = {
 	 */
     writeBit(bit, value) {
     	try {
-			// Suspect this is causing i2c errors.
-			// brewlog.debug("writeBit", `${bit}, ${value}`);
-			// brewlog.debug("BEFORE dataBytes=\t\t", `${toString(dataByte)}`);
-	  
 			if (bit < 16) {
 			  if (bit < 8) {
 				dataByte[0] = writeReg(REG20, 0x12, dataByte[0], bit - (0 * 8), value);
@@ -208,6 +204,8 @@ module.exports = {
 			} else {
 			  if (bit < 24) {
 				dataByte[2] = writeReg(REG21, 0x12, dataByte[2], bit - (2 * 8), value);
+			  }else {
+				dataByte[3] = writeReg(REG21, 0x13, dataByte[3], bit - (3 * 8), value);
 			  }
 			}
 		  } catch (err) {

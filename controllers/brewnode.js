@@ -102,20 +102,17 @@ async function ferment (req, res, next, profile) {
 
 async function kettle2fermenter (req, res, next, flowTimeoutSecs) {
   const result = await k2f.transfer({flowTimeoutSecs});
-  res.status(200);
-  res.send(result);
+  res.send(200);
 };
 
 async function kettle2mashtun (req, res, next, flowTimeoutSecs) {
-  const result = await k2m.transfer(flowTimeoutSecs)
-  res.status(200);
-  res.send(result);
+  const result = await k2m.transfer({flowTimeoutSecs});
+  res.send(200);
 };
 
 async function mash2kettle (req, res, next, flowTimeoutSecs) {
-  const result = await m2k.transfer(flowTimeoutSecs)
-  res.status(200);
-  res.send(result);
+  const result = await m2k.transfer({flowTimeoutSecs})
+  res.send(200);
 };
 
 /**

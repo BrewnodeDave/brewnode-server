@@ -236,7 +236,10 @@ module.exports = {
 	},
 	
 	forceOn() {
-		i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_ON});
+		// i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_ON});
+		
+		i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
+		
 		if (publishHeater != null){
 			publishHeater(1);
 		} else{
@@ -244,7 +247,9 @@ module.exports = {
 		}	
 	},
 	forceOff() {
-		i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_OFF});
+		// i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_OFF});
+		i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
+		
 		if (publishHeater != null){
 			publishHeater(0);
 		} else{
