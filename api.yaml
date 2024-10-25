@@ -2,6 +2,7 @@ openapi: 3.0.1
 info:
   title: Brewnode Server
   version: 2.0.0
+  description: <h1>Brewnode</h1>This Brewnode Server is designed to be run on a RaspberryPi with custom hardware (my brewery) attached. However, if not running on a RaspberyPi, all brewing processes are simulated. This allows the code to be tested and debugged easily on any platform. <h1>Brewfather</h1>This API exposes the entire Brewfather V2 API. Authorize access by adding your username and password.
 paths:
   /brewing: 
     get:
@@ -10,6 +11,7 @@ paths:
       tags:
       - Brewnode
       summary: Get the current brew
+      description: Fetch the currently active brew from Brewfather
       operationId: whatsBrewing
       responses:
         "200":
@@ -21,6 +23,7 @@ paths:
       security:
       - basicAuth: []
       summary: Get my malt, hops, yeast etc
+      description: Fetch the all my ingredients from Brewfather
       operationId: getInventory
       tags:
       - Brewnode
@@ -34,6 +37,7 @@ paths:
       tags:
       - Brewnode
       summary: Get current status
+      description: Return the values of all sensors etc.
       operationId: getStatus
       responses:
         "200":
@@ -43,7 +47,7 @@ paths:
     put:
       tags:
       - Brewnode
-      summary: Fill
+      summary: Fill the kettle
       operationId: fill
       parameters:
       - name: litres
@@ -69,6 +73,7 @@ paths:
       tags:
       - Brewnode
       summary: Mash
+      description: Perform a series of mash steps
       operationId: mash
       parameters:
       - name: steps
@@ -86,7 +91,7 @@ paths:
     put:
       tags:
       - Brewnode
-      summary: Turn on or off heater
+      summary: Turn on or off kettle heater
       operationId: heat
       parameters:
       - name: onOff
@@ -115,20 +120,11 @@ paths:
       x-swagger-router-controller: brewnode
   
   /kettleTemp:
-    get:
-      tags:
-      - Brewnode
-      summary: Get the current kettle temperature
-      operationId: getKettleTemp
-      responses:
-        "200":
-          description: Success
-      x-swagger-router-controller: brewnode
     put:
       tags:
       - Brewnode
       summary: Set kettle temperature and time
-      operationId: setKettleTemp
+      operationId: kettleTemp
       parameters:
       - name: temp
         in: query
@@ -160,7 +156,7 @@ paths:
     put:
       tags:
       - Brewnode
-      summary: Transfer kettle to mash tun
+      summary: Transfer kettle contents to the mash tun
       operationId: k2m
       parameters:
       - name: flowTimeoutSecs
@@ -180,7 +176,7 @@ paths:
     put:
       tags:
       - Brewnode
-      summary: Transfer Mash tun to kettle
+      summary: Transfer Mash tun contents to the kettle
       operationId: m2k
       parameters:
       - name: flowTimeoutSecs
@@ -200,7 +196,7 @@ paths:
     put:
       tags:
       - Brewnode
-      summary: Transfer kettle to fermenter
+      summary: Transfer kettle contents to the fermenter
       operationId: k2f
       parameters:
       - name: flowTimeoutSecs
@@ -220,7 +216,7 @@ paths:
     put:
       tags:
       - Brewnode
-      summary: Boil
+      summary: Boil the kettle for a number of minutes
       operationId: boil
       parameters:
       - name: mins
@@ -243,6 +239,7 @@ paths:
       tags:
       - Brewnode
       summary: Ferment
+      description: Maintain fermenation temperature using heated glycol
       operationId: ferment
       parameters:
       - name: profile
@@ -261,7 +258,8 @@ paths:
     put:
       tags:
       - Brewnode
-      summary: Ferment
+      summary: Chill
+      description: Maintain fermenation temperature using chilled glycol
       operationId: chill
       parameters:
       - name: profile
@@ -278,20 +276,11 @@ paths:
       x-swagger-router-controller: brewnode
 
   /kettleVolume:
-    get:
-      tags:
-      - Simulator
-      summary: Get the current kettle volume
-      operationId: getKettleVolume
-      responses:
-        "200":
-          description: Success
-      x-swagger-router-controller: brewnode
-      
     put:
       tags:
       - Simulator
       summary: Set kettle volume
+      description: This is necessary to simulate vessel transfers and avoid heating an empty kettle.
       operationId: setKettleVolume
       parameters:
       - name: litres
