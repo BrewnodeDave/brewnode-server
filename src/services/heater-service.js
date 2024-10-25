@@ -25,7 +25,7 @@ const brewdefs = require('../brewstack/common/brewdefs.js');
 const broker = require('../broker.js');
 // const i2c = require('../../nodeDrivers/i2c/i2c_mraa.js');
 const i2c = require('./i2c_raspi-service.js');
-const pwm = require('../brewstack/equipmentDrivers/heater/pwm.js');
+const pwm = require('../pwm.js');
 const brewlog = require('../brewstack/common/brewlog.js');
 
 const MAX_POWER_W = 3000;
