@@ -52,7 +52,7 @@ const FLOW_TIMEOUT_SECS = 2;
 const simOptions = {
 	simulate		:!brewdefs.isRaspPi(),
 	ambientTemp		:10,
-	speedupFactor	:6,
+	speedupFactor	:10,
 	resetLog		:true //Clear out logs before starting
 }
 

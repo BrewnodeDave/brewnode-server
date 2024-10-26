@@ -299,6 +299,40 @@ paths:
           description: Success
       x-swagger-router-controller: brewnode
 
+  /speedFactor:
+    put:
+      tags:
+      - Simulator
+      summary: Set simulation speed factor
+      description: During simulation time is sped up by the factor.
+      operationId: setSimulationSpeed
+      parameters:
+      - name: factor
+        in: query
+        description: Speed factor
+        required: true
+        style: form
+        explode: true
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 10
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+    get:
+      tags:
+      - Simulator
+      summary: Get the simulation speed factor
+      description: During simulation time is sped up by the factor.
+      operationId: getSimulationSpeed
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
   /inventory/yeasts/{id}:
     get:
       tags:

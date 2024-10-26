@@ -347,6 +347,8 @@ module.exports = {
     setKettleTemp: temp => ds18x20.set(KETTLE_TEMP, temp),
     getKettleVolume: () => simState.KettleVolume,
     setKettleVolume: vol => simState.KettleVolume = vol,
+    getSimulationSpeed: () => _opt.sim.speedupFactor,
+    setSimulationSpeed: factor => _opt.sim.speedupFactor = factor,
     start(opt) {
         return new Promise((resolve, reject) => {
             brewlog.debug("Sim Service", "Start");

@@ -19,6 +19,7 @@ const k2f = require('../src/brewstack/brewingAlgorithms/k2f.js');
 const sim = require('../src/sim/sim.js');
 const heater = require('../src/services/heater-service.js');  
 const fillService = require('../src/services/fill-service.js');
+const therm = require('../src/services/temp-service.js');
 
 const tempController = require('../src/services/temp-controller-service.js');
 
@@ -155,6 +156,18 @@ async function setKettleVolume (req, res, next, litres) {
   res.send(`Simulated kettle volume set to ${litres} litres`);
 };
 
+async function getSimulationSpeed (req, res, next) {
+  const factor = sim.getSimulationSpeed();
+  res.status(200);
+  res.send(`${factor}`);
+};
+
+async function setSimulationSpeed (req, res, next, factor) {
+  sim.setSimulationSpeed(factor);
+  res.status(200);
+  res.send(`Simulated speed factor = ${factor}.`);
+};
+
 async function restart (req, res, next) {
   await startStop.restart();
   res.status(200);
@@ -228,10 +241,10 @@ async function pipeHeatLoss(tempFluid, tempSensorName) {
 function doMashStep(step){
   return async function(){
     try {
-      const {tempC, mins} = JSON.parse(step);
+      const {tempC, mins} = step;
       const deltaT = await pipeHeatLoss(tempC, "TempMash");
       const temp = tempC + deltaT;
-      await kettleTemp({tempC:temp, mins:0});
+      await tempController.setTemp(temp, mins);
       await k2m.transfer({flowTimeoutSecs});
       await delay(mins * 60);
       await m2k.transfer({flowTimeoutSecs});
@@ -242,14 +255,14 @@ function doMashStep(step){
     } catch (err) { 
       return {
         status: 500,
-        response: err
+        response: err.message
       }
     }
   }
 }
 
 async function mash (req, res, next, steps) {
-  const stepRequests = steps.map(doMashStep);
+  const stepRequests = JSON.parse(steps).map(doMashStep);
   
   const stepResponses = await promiseSerial(stepRequests);
 
@@ -257,7 +270,7 @@ async function mash (req, res, next, steps) {
 
   if (errs.length > 0) {
     res.status(500);
-    res.send(errs[0].response);
+    res.send(errs[0].response.message);
     return;
   }else{
     res.status(200);
@@ -287,6 +300,8 @@ module.exports = {
   heat,
   getKettleTemp,
   setKettleTemp,
+  getSimulationSpeed,
+  setSimulationSpeed,
   mash,
   m2k: mash2kettle,
   k2f: kettle2fermenter,
