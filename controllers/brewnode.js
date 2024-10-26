@@ -244,7 +244,13 @@ function doMashStep(step){
       const {tempC, mins} = step;
       const deltaT = await pipeHeatLoss(tempC, "TempMash");
       const temp = tempC + deltaT;
-      await tempController.setTemp(temp, mins);
+      // await tempController.setTemp(temp, mins);
+      await tempController.setTemp(
+        temp, 
+        brewOptions.sim.simulate 
+          ? (mins / brewOptions.sim.speedupFactor) 
+          : mins);
+
       await k2m.transfer({flowTimeoutSecs});
       await delay(mins * 60);
       await m2k.transfer({flowTimeoutSecs});

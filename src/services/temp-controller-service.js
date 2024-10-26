@@ -140,7 +140,7 @@ function init(P, I, D, sim) {
 		brewlog.debug(currentThermName);	
 		kettle.setPower(0);
 	
-		if (sim.simulate){
+			if (sim.simulate){
 			speedupFactor = sim.speedupFactor;
 			calculationInterval = CALCULATION_INTERVAL_MS / speedupFactor;
 		}
