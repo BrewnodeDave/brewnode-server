@@ -27,6 +27,7 @@ const broker = require('../broker.js');
 const i2c = require('./i2c_raspi-service.js');
 const pwm = require('../pwm.js');
 const brewlog = require('../brewstack/common/brewlog.js');
+const { getStatus } = require('./pump-service.js');
 
 const MAX_POWER_W = 3000;
 const POWER = "power";
@@ -255,6 +256,11 @@ module.exports = {
 		} else{
 			console.error("heater forceOff but service not started?");
 		}	
-	}
+	},
+
+	getStatus: () => ({
+		heater:i2c.readBit(HEATER_DEF.i2cPinOut),
+		power:currentPower
+	})
 }
 

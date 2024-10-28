@@ -17,9 +17,16 @@ const k2m = require('../src/brewstack/brewingAlgorithms/k2m.js');
 const m2k = require('../src/brewstack/brewingAlgorithms/m2k.js');
 const k2f = require('../src/brewstack/brewingAlgorithms/k2f.js');
 const sim = require('../src/sim/sim.js');
+
 const heater = require('../src/services/heater-service.js');  
 const fillService = require('../src/services/fill-service.js');
 const therm = require('../src/services/temp-service.js');
+const pump = require('../src/services/pump-service.js');
+const flow = require('../src/services/flow-service.js');
+const wdog = require('../src/services/wdog-service.js');
+const fan = require('../src/services/fan-service.js');
+const temp = require('../src/services/temp-service.js');
+const valves = require('../src/services/valve-service.js');
 
 const tempController = require('../src/services/temp-controller-service.js');
 
@@ -27,15 +34,15 @@ const startStop = require('../src/start-stop.js');
 
 const broker = require('../src/broker.js');
 
-const { getAuth } = require('./common.js');
+const axios = require('axios');
+const { brewfatherV2, getAuth } = require('./common.js');
 
 //Add these to an API?
 const brewOptions = brewdata.defaultOptions();
 const debug = true;
 const flowTimeoutSecs = 5;
 
-startStop.start(brewOptions, debug)
-  .then(x=>console.log("started"));
+startStop.start(brewOptions, debug).then(x=>console.log("started"));
 
 const progressPublish = broker.create("progress");
 
@@ -43,14 +50,13 @@ async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
   const params = {
     "complete": true, 
-    "status": 'Brewing'
+    "status": 'Brewing',
   };  
-
-  const config = { params, auth};
+  
+  const config = { params, auth};  
   const response = await axios.get(`${brewfatherV2}/batches`, config);
   const numBrewing = response.data.length;
-
-  if (numBrewing === 0) {
+    if (numBrewing === 0) {
     res.status(500);
     res.send("No brews in progress!");
   }else if (numBrewing === 1) {
@@ -64,14 +70,30 @@ async function whatsBrewing (req, res, next) {
 
 async function getInventory (req, res, next) {
   const auth = getAuth(req);
-  const fermentables = await getFermentables(auth);
-  const yeasts = await getYeasts(auth);
-  const hops = await getHops(auth);
-  const miscs = await getMiscs(auth);
-  
-  res.status(200);
-  res.send({fermentables,hops,yeasts,miscs});
-};
+  const params = {
+    "complete": true, 
+    "status": 'Brewing',
+  };  
+  const config = { params, auth};  
+
+  try {
+    const fermentables = await axios.get(`${brewfatherV2}/inventory/fermentables`, config);
+    const yeasts = await axios.get(`${brewfatherV2}/inventory/yeasts`, config);
+    const hops = await axios.get(`${brewfatherV2}/inventory/hops`, config);
+    const miscs = await axios.get(`${brewfatherV2}/inventory/miscs`, config);
+    
+    res.status(200);
+    res.send({
+      fermentables:fermentables.data,
+      hops: hops.data,
+      yeasts:yeasts.data,
+      miscs:miscs.data
+    });
+  } catch (error) { 
+    res.status(error.status);
+    res.send(error.message);
+  };
+}; 
 
 async function boil (req, res, next, mins) {
   const brewOptions = brewdata.defaultOptions();
@@ -174,12 +196,6 @@ async function restart (req, res, next) {
   res.send("Restarted server");
 };
 
-const pump = require('../src/services/pump-service.js');
-const flow = require('../src/services/flow-service.js');
-const wdog = require('../src/services/wdog-service.js');
-const fan = require('../src/services/fan-service.js');
-const temp = require('../src/services/temp-service.js');
-const valves = require('../src/services/valve-service.js');
 
 async function getStatus (req, res, next) {
   const tempStatus = await temp.getStatus(true);
@@ -188,6 +204,7 @@ async function getStatus (req, res, next) {
     flowStatus: flow.getStatus(),
     wdogStatus: wdog.getStatus(),
     fanStatus: fan.getStatus(),
+    heaterStatus: heater.getStatus(),
     tempStatus,
     valveStatus: valves.getStatus()
   }
