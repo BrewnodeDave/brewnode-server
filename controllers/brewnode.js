@@ -52,10 +52,11 @@ async function whatsBrewing (req, res, next) {
     "complete": true, 
     "status": 'Brewing',
   };  
+  
   const config = { params, auth};  
   const response = await axios.get(`${brewfatherV2}/batches`, config);
   const numBrewing = response.data.length;
-  if (numBrewing === 0) {
+    if (numBrewing === 0) {
     res.status(500);
     res.send("No brews in progress!");
   }else if (numBrewing === 1) {
@@ -75,22 +76,24 @@ async function getInventory (req, res, next) {
   };  
   const config = { params, auth};  
 
-  const fermentables = await axios.get(`${brewfatherV2}/inventory/fermentables`, config);
-
-  const yeasts = await axios.get(`${brewfatherV2}/inventory/yeasts`, config);
-
-  const hops = await axios.get(`${brewfatherV2}/inventory/hops`, config);
-
-  const miscs = await axios.get(`${brewfatherV2}/inventory/miscs`, config);
-  
-  res.status(200);
-  res.send({
-    fermentables:fermentables.data,
-    hops: hops.data,
-    yeasts:yeasts.data,
-    miscs:miscs.data
-  });
-};
+  try {
+    const fermentables = await axios.get(`${brewfatherV2}/inventory/fermentables`, config);
+    const yeasts = await axios.get(`${brewfatherV2}/inventory/yeasts`, config);
+    const hops = await axios.get(`${brewfatherV2}/inventory/hops`, config);
+    const miscs = await axios.get(`${brewfatherV2}/inventory/miscs`, config);
+    
+    res.status(200);
+    res.send({
+      fermentables:fermentables.data,
+      hops: hops.data,
+      yeasts:yeasts.data,
+      miscs:miscs.data
+    });
+  } catch (error) { 
+    res.status(error.status);
+    res.send(error.message);
+  };
+}; 
 
 async function boil (req, res, next, mins) {
   const brewOptions = brewdata.defaultOptions();
