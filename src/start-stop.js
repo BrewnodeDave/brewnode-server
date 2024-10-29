@@ -14,7 +14,6 @@ const brewfather = require('./services/brewfather-service.js');
 
 const sim 		= require('./sim/sim.js');
 const brewlog 	= require('./brewstack/common/brewlog.js');
-
 const broker 	= require('./broker.js');
 
 let publishLog;
@@ -65,7 +64,6 @@ function stop(opt) {
 	.then(fill.stop)
 	.then(sim.stop)
 	.then(tempController.stop)
-	// .then(brewmon.stop)
 	.catch(err => {brewlog.error("stop error", err);});
 }
 module.exports = {

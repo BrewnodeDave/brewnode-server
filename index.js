@@ -38,9 +38,39 @@ const corsMiddleware = cors(corsOptions);
 insertMiddleware(app, corsMiddleware);
 
 // Initialize the Swagger middleware
-http.createServer(app).listen(serverPort, function () {
+const httpServer = http.createServer(app).listen(serverPort, function () {
     console.log('Your server is listening on port %d (http://localhost:%d)', serverPort, serverPort);
     console.log('Swagger-ui is available on http://localhost:%d/docs', serverPort);
 });
+
+const broker = require('./src/broker.js');
+const socketio = require('socket.io');
+const serverSocket = socketio(httpServer);
+initialiseClient(serverSocket);
+
+function initialiseClient(serverSocket) {	  	
+    serverSocket.on('disconnect', ({handshake}) => {
+      console.log('Client disconnected',handshake.address);  	
+  });
+  
+  serverSocket.on('connect', (clientSocket) => {	
+      // console.log('connect',socket.id);
+      if (broker.exists(clientSocket) === false){
+          console.log('Client Connected from', clientSocket.conn.remoteAddress);  
+
+          clientSocket.on('disconnect', (reason) => {
+              if (reason === 'io server disconnect'){
+                  //client.connect();
+              }
+              broker.detach(clientSocket);			
+          });		
+
+          broker.attach(clientSocket);
+      }else {
+          //console.error('connect: broker socket already exists');
+      }	
+  });
+  broker.setEmitFn(serverSocket.emit);
+}
 
 
