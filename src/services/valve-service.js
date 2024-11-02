@@ -132,7 +132,7 @@ function Valve(opt) {
 	/**
 	 * Open the valve and verify if it has after a few seconds. 
 	 */
-	thisValve.open = thisValve.openOrClose(VALVE_OPEN_REQUEST);
+	thisValve.open = () => thisValve.openOrClose(VALVE_OPEN_REQUEST);
 
 	/**
 	 * Close the valve and verify if it has after a few seconds.
