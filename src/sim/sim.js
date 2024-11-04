@@ -25,7 +25,7 @@
  * 5) Vessel evaporation
  */
 const path = require('path');
-const logDir = path.join(__dirname, "../brewstack/equipmentDrivers");
+const logDir = path.join(__dirname, "../brewstack");
 
 const broker = require('../broker.js');
 const pump = require('../services/pump-service.js');

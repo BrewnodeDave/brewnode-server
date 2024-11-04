@@ -124,7 +124,7 @@ paths:
       tags:
       - Brewnode
       summary: Set kettle temperature and time
-      operationId: kettleTemp
+      operationId: setKettleTemp
       parameters:
       - name: temp
         in: query
