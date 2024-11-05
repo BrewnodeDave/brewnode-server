@@ -101,7 +101,7 @@ const powerOff = () => {
 	pwm.stop();	
 	
 	if (publishHeater != null){
-		publishHeater(0);
+		publishHeater(false);
 	} else{
 		console.error("heater powerOff but service not started?");
 	}	
@@ -115,7 +115,7 @@ const powerOn = () => {
 	i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
 
 	if (publishHeater != null){
-		publishHeater(1);
+		publishHeater(true);
 	} else{
 		console.error("heater powerOn but service not started?");
 	}	
@@ -242,7 +242,7 @@ module.exports = {
 		i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
 		
 		if (publishHeater != null){
-			publishHeater(1);
+			publishHeater(true);
 		} else{
 			console.error("heater forceOn but service not started?");
 		}	
@@ -252,7 +252,7 @@ module.exports = {
 		i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
 		
 		if (publishHeater != null){
-			publishHeater(0);
+			publishHeater(false);
 		} else{
 			console.error("heater forceOff but service not started?");
 		}	

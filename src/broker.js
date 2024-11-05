@@ -68,8 +68,8 @@
 			let timeStamp = new Date().getTime();
 			brewlog.sensorLog(sensorName, value);
 			if (_socket){
-				// _socket.broadcast.emit(sensorName,  {date: timeStamp, value});
-				// _socket.emit(sensorName,  {date: timeStamp, value});
+				_socket.broadcast.emit(sensorName,  {date: timeStamp, value});
+				_socket.emit(sensorName,  {date: timeStamp, value});
 			}
 			if (emit){
 				sensor.emit(sensorName, {

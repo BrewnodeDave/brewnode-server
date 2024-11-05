@@ -118,6 +118,7 @@ let valveMashInChange           = change("valveMashIn");
 let valveKettleInChange         = change("valveKettleIn");
 let powerChange                 = change("power");
 let progressChange              = change("progress");
+let heaterChange                = change("heater");
 
 let coolingTimer = null;
 
@@ -126,8 +127,6 @@ function change(item){
         if (simState[item] !== value.value){
             console.log("Sim change",item, simState[item], value.value);
             simState[item] = value.value;
-
-            
             simStateChange();
         }
 };
@@ -210,6 +209,8 @@ function heatTransferKettleToFermenter(deltaSecs){
 }
 
 function simStateChange(){
+    simState.power = simState.heater ? 3000 : 0;
+
     simPowerChange();
     
     simState.prevPower = simState.power;
@@ -385,6 +386,7 @@ module.exports = {
             fermenterTempListener = broker.subscribe("TempFermenter",       fermenterTempChange);
             progressListener = broker.subscribe("progress",      progressChange);
             powerListener = broker.subscribe("power",      powerChange);
+            heaterListener = broker.subscribe("heater",      heaterChange);
             
 
             const foo = (valveStatii, name) => valveStatii.find(status => status.name === name);

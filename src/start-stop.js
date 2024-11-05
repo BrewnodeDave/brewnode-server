@@ -17,15 +17,17 @@ const brewlog 	= require('./brewstack/common/brewlog.js');
 const broker 	= require('./broker.js');
 
 let publishLog;
+let currentOptions;
 
-async function start(brewOptions, debug) {
+async function start(brewOptions = brewdata.defaultOptions()) {
+	currentOptions = brewOptions;
 	if (brewOptions.sim.simutlate) {
 		brewlog.debug('Simulating...');
 		brewOptions.sim.speedupFactor = speedupFactor;
 	}
 	
 	publishLog = broker.create('log'); 
-	brewlog.startSync(brewOptions, publishLog, debug);
+	brewlog.startSync(brewOptions, publishLog);
 
 	await i2c.start(brewOptions)//sim.simulate
 	brewOptions.ambientTemp = await temp.start(brewOptions)//sim.speedupFactor, sim.ambientTemp => ambientTemp
@@ -46,7 +48,7 @@ async function start(brewOptions, debug) {
 	return 	brewOptions;
 }
 
-function stop(opt) {
+function stop(options) {
 	broker.destroy('log');
 
 	brewfather.stop();
@@ -66,8 +68,9 @@ function stop(opt) {
 	.then(tempController.stop)
 	.catch(err => {brewlog.error("stop error", err);});
 }
+
 module.exports = {
-	restart: () => stop().then(start),
+	restart: async () => stop().then(start(currentOptions)),
 	/**
  	 * @desc Start entire system
 	*/
