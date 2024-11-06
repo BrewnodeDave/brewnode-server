@@ -44,7 +44,6 @@ let calculationInterval = CALCULATION_INTERVAL_MS;
 
 let currentTemp;
 let currentPower = null;
-//let heatTimer = null;
 const heatTimer = new NanoTimer();
 
 let timeAtTemp = 0;
@@ -67,7 +66,6 @@ const MAX_TEMP = 97;
 let prevError = 0;
 
 let anotherPercent = null;
-
 
 function limit(value, max){
 	if (value > max) {
@@ -110,18 +108,6 @@ function tempHandler(value){
 	currentTemp = value.value;
 }
 
-function stop(){
-	return new Promise((resolve, reject) => {
-
-	pause();
-	broker.unSubscribe(tempListener);
-	anotherPercent = null;
-	kettle.setPower(0);	
-	currentPower = 0;
-	brewlog.info("pump.js", "stopped");
-	resolve();
-	})
-}
 
 function pause(){
 	heatTimer.clearInterval();
@@ -278,7 +264,9 @@ module.exports = {
 
 	stop: () => {
 		brewlog.info("temp-controller-service", "Stop");
-
+		pause();
+		broker.unSubscribe(tempListener);
+		anotherPercent = null
 		broker.unSubscribe(tempListener);
 	},
 }

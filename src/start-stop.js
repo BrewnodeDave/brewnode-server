@@ -62,7 +62,6 @@ function stop(options) {
 	.then(heater.stop)
 	.then(glycolHeater.stop)
 	.then(glycol.stop)
-	// .then(brewfather.stop)
 	.then(fill.stop)
 	.then(sim.stop)
 	.then(tempController.stop)
