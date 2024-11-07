@@ -74,13 +74,11 @@ io.on("connection", (ws) => {
 
     broker.attach(ws)
 
-    // upon disconnection
     ws.on("disconnect", (reason) => {
           console.log(`socket ${ws.id} disconnected due to ${reason}`);
     });
     
     ws.on("connect", (clientSocket) => {
-        // console.log('connect',socket.id);
         if (broker.exists(clientSocket) === false) {
           console.log("Client Connected from", clientSocket.conn.remoteAddress);
     
@@ -93,7 +91,7 @@ io.on("connection", (ws) => {
     
           broker.attach(clientSocket);
         } else {
-          //console.error('connect: broker socket already exists');
+          console.error('connect: broker socket already exists');
         }
       });
 });
