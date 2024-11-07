@@ -46,10 +46,10 @@ insertMiddleware(app, corsMiddleware);
 // Initialize the Swagger middleware
 const httpServer = http.createServer(app).listen(serverPort, function () {
   console.log(
-    "Your server is listening on port %d (http://localhost:%d)",
-    serverPort,
+    "Your server is listening on http://localhost:%d",
     serverPort
   );
+
   console.log(
     "Swagger-ui is available on http://localhost:%d/docs",
     serverPort
@@ -79,21 +79,21 @@ io.on("connection", (ws) => {
     });
     
     ws.on("connect", (clientSocket) => {
-        if (broker.exists(clientSocket) === false) {
-          console.log("Client Connected from", clientSocket.conn.remoteAddress);
-    
-          clientSocket.on("disconnect", (reason) => {
-            if (reason === "io server disconnect") {
-              //client.connect();
-            }
-            broker.detach(clientSocket);
-          });
-    
-          broker.attach(clientSocket);
-        } else {
-          console.error('connect: broker socket already exists');
-        }
-      });
+      if (broker.exists(clientSocket) === false) {
+        console.log("Client Connected from", clientSocket.conn.remoteAddress);
+  
+        clientSocket.on("disconnect", (reason) => {
+          if (reason === "io server disconnect") {
+            //client.connect();
+          }
+          broker.detach(clientSocket);
+        });
+  
+        broker.attach(clientSocket);
+      } else {
+        console.error('connect: broker socket already exists');
+      }
+    });
 });
 
 
