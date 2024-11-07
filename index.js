@@ -4,9 +4,12 @@ var path = require("path");
 var http = require("http");
 
 const cors = require("cors");
+const broker = require("./src/broker.js");
+const socketio = require("socket.io");
+const oas3Tools = require("oas3-tools");
 
-var oas3Tools = require("oas3-tools");
 var serverPort = 8080;
+const wsPort = 4000;
 
 // swaggerRouter configuration
 var options = {
@@ -53,12 +56,9 @@ const httpServer = http.createServer(app).listen(serverPort, function () {
   );
 });
 
-const broker = require("./src/broker.js");
-const socketio = require("socket.io");
 const serverSocket = socketio(httpServer);
-// initialiseClient(serverSocket);
+broker.setEmitFn(serverSocket.emit);
 
-//////////////
 // Initialize socket.io with CORS options
 const io = new socketio.Server(httpServer, {
   cors: {
@@ -67,28 +67,19 @@ const io = new socketio.Server(httpServer, {
       allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
       credentials: true // Allow credentials
   }
-});
+}).listen(wsPort);
 
-io.on("connection", (socket) => {
-    console.log(`socket ${socket.id} connected`);
+io.on("connection", (ws) => {
+    console.log(`socket ${ws.id} connected`);
 
-    broker.attach(socket)
-
-    // send an event to the client
-    socket.emit("foo", "bar");
-
-    socket.on("foobar", () => {
-        // an event was received from the client
-        console.log(`foobar`);
-
-    });
+    broker.attach(ws)
 
     // upon disconnection
-    socket.on("disconnect", (reason) => {
-        console.log(`socket ${socket.id} disconnected due to ${reason}`);
+    ws.on("disconnect", (reason) => {
+          console.log(`socket ${ws.id} disconnected due to ${reason}`);
     });
     
-    socket.on("connect", (clientSocket) => {
+    ws.on("connect", (clientSocket) => {
         // console.log('connect',socket.id);
         if (broker.exists(clientSocket) === false) {
           console.log("Client Connected from", clientSocket.conn.remoteAddress);
@@ -107,7 +98,4 @@ io.on("connection", (socket) => {
       });
 });
 
-broker.setEmitFn(serverSocket.emit);
-
-io.listen(4000);
 
