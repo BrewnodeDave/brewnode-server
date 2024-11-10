@@ -36,7 +36,7 @@ const temp = require('../services/temp-service.js');
 const brewlog = require('../brewstack/common/brewlog.js');
 
 const CHILLER_OUTPUT_TEMP = 20;
-const FLOW_RATE = 200;
+const FLOW_RATE = 1000;
 const KETTLE_TEMP = "TempKettle";
 const MASHTUN_TEMP = "TempMash";
 const FERMENTER_TEMP = "TempFermenter";
@@ -229,7 +229,7 @@ function simStateChange(){
     if (isValveKettleInOpen){
         //Kettle In Open
         simFlowRate(flow.ID_FLOW_KETTLE_IN, FLOW_RATE); 
-        simState.KettleVolume += FLOW_RATE / SIM_UPDATE_INTERVAL;
+        simState.KettleVolume += (FLOW_RATE/1000) * (SIM_UPDATE_INTERVAL/1000);
     }else{
         //Kettle In Closed
         if (isPumpMashOn){
@@ -242,7 +242,7 @@ function simStateChange(){
                 ds18x20.set("TempMashOut", ds18x20.getByName(MASHTUN_TEMP));
                 ds18x20.set(KETTLE_TEMP, ds18x20.getByName(MASHTUN_TEMP));
                 if (isPumpKettleOn){ 
-                    simFlowRate(flow.ID_FLOW_MASH_IN,    FLOW_RATE);
+//                    simFlowRate(flow.ID_FLOW_MASH_IN,    FLOW_RATE);
                     simState.MashVolume += FLOW_RATE / SIM_UPDATE_INTERVAL;
 
                     simFlowRate(flow.ID_FLOW_KETTLE_OUT, FLOW_RATE);
@@ -254,7 +254,7 @@ function simStateChange(){
             }
         }else{
             simFlowRate(flow.ID_FLOW_KETTLE_IN, 0);
-            simFlowRate(flow.ID_FLOW_MASHOUT, 0);
+            simFlowRate(flow.ID_FLOW_MASH_OUT, 0);
 
             //Ferment Temp Input
             if (isValveFermentTempInOpen && isPumpKettleOn){
@@ -285,6 +285,8 @@ function simStateChange(){
                 simState.KettleVolume -= FLOW_RATE / SIM_UPDATE_INTERVAL;
 
                 // simFlowRate(flow.ID_FLOW_MASH_IN,    FLOW_RATE);
+                simState.MashVolume += FLOW_RATE / SIM_UPDATE_INTERVAL;
+
             }else{
                 simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
                 // simFlowRate(flow.ID_FLOW_MASH_IN,    0);

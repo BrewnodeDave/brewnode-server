@@ -28,6 +28,7 @@ const i2c = require('./i2c_raspi-service.js');
 const pwm = require('../pwm.js');
 const brewlog = require('../brewstack/common/brewlog.js');
 const { getStatus } = require('./pump-service.js');
+const { set } = require('../sim/ds18x20.js');
 
 const MAX_POWER_W = 3000;
 const POWER = "power";
@@ -240,7 +241,9 @@ module.exports = {
 		// i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_ON});
 		
 		i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
-		
+	
+		setPower(MAX_POWER_W);
+
 		if (publishHeater != null){
 			publishHeater(true);
 		} else{
@@ -250,7 +253,8 @@ module.exports = {
 	forceOff() {
 		// i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_OFF});
 		i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
-		
+
+		setPower(0);
 		if (publishHeater != null){
 			publishHeater(false);
 		} else{

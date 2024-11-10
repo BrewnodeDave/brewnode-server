@@ -18,8 +18,6 @@
   const EventEmitter = require("events").EventEmitter;
   const sensor = new EventEmitter();
 
-  sensor.setMaxListeners(100);
-
   //socket
   const clients = [];
   let _socket = null;
@@ -30,6 +28,10 @@
   const sensorNames = [];
 
   let debug = false;
+
+  const progressPublish = create("progress");
+  sensor.setMaxListeners(100);
+
   
   /**
  * @param {{ conn: { remoteAddress: any; }; }} socket
@@ -48,6 +50,37 @@
 	return found;
  }
 
+/**
+ * @param {String} sensorName
+ * @return {Function} Function to be used to publish this event  
+ */
+function create(sensorName) {
+   sensorNames.push(sensorName);	
+   
+   //return a publish function
+   return (value, emit=true) => {    
+	   let timeStamp = new Date().getTime();
+	   brewlog.sensorLog(sensorName, value);
+	   if (_socket){
+		   _socket.broadcast.emit(sensorName,  {date: timeStamp, value});
+		   _socket.emit(sensorName,  {date: timeStamp, value});
+	   }
+	   if (emit){
+		   sensor.emit(sensorName, {
+			   date: timeStamp, 
+			   value
+		   });
+	   }
+	   
+	   clients.forEach(client => {
+		   if (client.connected){
+			   client.emit(sensorName,  {date: timeStamp, value});
+			   client.broadcast.emit(sensorName,  {date: timeStamp, value});
+		   }
+	   });
+   };		
+}		
+
  module.exports = {
 	 /**
 	  * @param {any} emit
@@ -56,36 +89,7 @@
 		_emit = emit;
 	 },
 
-	 /**
-	  * @param {String} sensorName
-	  * @return {Function} Function to be used to publish this event  
-	  */
- 	create(sensorName) {
-		sensorNames.push(sensorName);	
-		
-		//return a publish function
-		return (value, emit=true) => {    
-			let timeStamp = new Date().getTime();
-			brewlog.sensorLog(sensorName, value);
-			if (_socket){
-				_socket.broadcast.emit(sensorName,  {date: timeStamp, value});
-				_socket.emit(sensorName,  {date: timeStamp, value});
-			}
-			if (emit){
-				sensor.emit(sensorName, {
-					date: timeStamp, 
-					value
-				});
-			}
-			
-			clients.forEach(client => {
-				if (client.connected){
-					client.emit(sensorName,  {date: timeStamp, value});
-					client.broadcast.emit(sensorName,  {date: timeStamp, value});
-				}
-			});
-		};		
-	},		  
+	create,  
 	
 	/**
 	   * @param {boolean} onOff
@@ -177,4 +181,5 @@
 		_socket = null;
 	},
 
+	progressPublish
   }
