@@ -30,6 +30,7 @@
   let debug = false;
 
   const progressPublish = create("progress");
+
   sensor.setMaxListeners(100);
 
   
@@ -178,8 +179,15 @@ function create(sensorName) {
 				console.log(`Detached client ${conn.remoteAddress}`);
 			}
 		});
+
 		_socket = null;
 	},
 
-	progressPublish
+	progressPublish,
+	
+	remainingFillLitres:create("remainingFillLitres"),
+	remainingBoilMinutes: create("remainingBoilMinutes"),
+	remainingKettleMinutes: create("remainingKettleMinutes"),
+	remainingMashMinutes: create("remainingMashMinutes"),
+	remainingFermentDays:create("remainingFermentDays")
   }

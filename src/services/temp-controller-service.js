@@ -65,8 +65,6 @@ let D = 0;
 const MAX_TEMP = 97;
 let prevError = 0;
 
-let anotherPercent = null;
-
 function limit(value, max){
 	if (value > max) {
 		return max;
@@ -126,7 +124,7 @@ function init(P, I, D, sim) {
 		brewlog.debug(currentThermName);	
 		kettle.setPower(0);
 	
-			if (sim.simulate){
+		if (sim.simulate){
 			speedupFactor = sim.speedupFactor;
 			calculationInterval = CALCULATION_INTERVAL_MS / speedupFactor;
 		}
@@ -160,34 +158,25 @@ module.exports = {
 		return currentTemp;
 	},	
 	
-	//call every percent change completeness
-	registerUpdate(cb) {
-		anotherPercent = cb;
-	},
-
 	/** 
 	* @desc Define temp then update until reached.
 	* @param {number} desiredTemp - Desired temp.
 	* @param {number} mins - Hold duration.
 	*/
-	setTemp(desiredTemp, mins) {
+	setTemp(desiredTemp, mins, remaining) {
 		return new Promise((resolve, reject) => {	
 			const minutes = Math.trunc(mins * 10) / 10;
 			brewlog.debug("setTemp=",`${desiredTemp}, ${minutes}`);
-			let minsAtTemp = 0;
 			const ms = minutes * 60 * 1000;
-			const onePercent = ms / 100;
 			targetTemp = Math.round(desiredTemp * 10) / 10;	
 			
-			let percentComplete = 0;
-			let prevPercentComplete = 0;
-
 			const phaseName = `Heating to ${targetTemp}C for ${minutes * speedupFactor} mins.`;
 
 			brewlog.info(phaseName);			
-			if (currentTemp < targetTemp){
+			// if (currentTemp < targetTemp){
 				//add heatTimer
 				heatTimer.clearInterval();
+				timeAtTemp = 0;
 
 				heatTimer.setInterval(() => {	
 					brewlog.debug("Check kettle temp", `Current:${currentTemp}, Target:${targetTemp}`);
@@ -195,15 +184,7 @@ module.exports = {
 						//temp reached
 						timeAtTemp += calculationInterval;
 						if (ms > 0){
-							percentComplete = Math.trunc(timeAtTemp * 100 / ms);
-							if (percentComplete !== prevPercentComplete){
-								if (anotherPercent !== null){
-									anotherPercent(percentComplete);
-								}
-								prevPercentComplete = percentComplete;
-							}
-						}else{
-							percentComplete = 100;
+							remaining(Math.trunc(speedupFactor*(mins - (timeAtTemp / 60000))));
 						}
 
 						if (timeAtTemp > ms){
@@ -222,10 +203,10 @@ module.exports = {
 					
 				}, '', `${calculationInterval}m`);
 				
-			}else{
-				//pause();
-				resolve();
-			}
+			// }else{
+			// 	//pause();
+			// 	resolve();
+			// }
 		});
 	},
 
@@ -255,18 +236,17 @@ module.exports = {
 
 	pause,
 		
-	start:	() => {
+	start: (brewOptions) => {
 		brewlog.info("temp-controller-service", "Start");
 		currentThermName = kettle.KETTLE_TEMPNAME;
 		tempListener = broker.subscribe(currentThermName, tempHandler);
-		return init(1000, 5, 100, {});
+		return init(1000, 5, 100, brewOptions.sim);
 	},
 
 	stop: () => {
 		brewlog.info("temp-controller-service", "Stop");
 		pause();
 		broker.unSubscribe(tempListener);
-		anotherPercent = null
 		broker.unSubscribe(tempListener);
 	},
 }

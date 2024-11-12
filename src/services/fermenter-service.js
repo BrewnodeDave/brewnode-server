@@ -14,30 +14,7 @@
  
 const brewlog = require("../brewstack/common/brewlog.js");
 const broker = require("../broker.js");
-//const weigh = require('../../equipmentDrivers/weight/weigh.js');
 const Vessel = require('../vessel.js');
-
-
-let gravityPublish;
-
-/**
- * @desc Calculate Specific Gravity.
- * @param {number} Kg - Weight on scales.
- * OG = OriginalMass / Volume
- * FG = FinalMass / Volume
- * ABV = (76.08*(OG-FG)/(1.775-OG)) * (FG/0.794)
- */
-function calcSG(Kg) {
-	if (gravityPublish){
-		if (vessel.currentVolume != 0){	
-			//Round to 3 decimal places
-			let SG = Math.round(1000 * Kg / (vessel.currentVolume)) / 1000;			
-			gravityPublish(SG);
-		}
-	}else{
-		brewlog.error("gravityPublish() has not yet been initialised");
-	}
-}
 
 const options = {
     name:        'Fermenter',
@@ -47,16 +24,6 @@ const options = {
     inletVolume: 0,
 	outletVolume:0
 };
-
-
-//on weight change	
-/**
- * @desc Calculate Specific Gravity upon a weight change
- * @param {{name:string, date:number, value:number}} data - Data from sensor.
- */
-function weightHandler({value}) {
-	calcSG(value);	
-}
 
 let vessel;
 

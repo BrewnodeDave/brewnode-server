@@ -10,6 +10,7 @@ const delay = require('../brewstack/common/delay.js');
 const valves = require('./valve-service.js');
 const kettle = require('./kettle-service.js');
 const brewlog = require('../brewstack/common/brewlog.js')
+const {remainingFillLitres} = require('../broker.js');	
 
 const INTERVAL_SECS = 10;
 
@@ -56,7 +57,7 @@ module.exports = {
 	 * @param {object} opt - Brew Options
 	 * @param {function} progress - Phase progress
 	 */
-	timedFill(opt, progress) {
+	timedFill(opt) {
 		return new Promise((resolve, reject) => {
 			const FILL_VALVE_NAME = 'ValveKettleIn';
 			const mLPerSec = 200;
@@ -73,18 +74,15 @@ module.exports = {
 				resolve();
 			} else {
 				valves.open(FILL_VALVE_NAME);
-				//Update progress every litre
-				let progressInterval;
-				if (progress !== undefined) {
-					let msPerLitre = 1000 * (1000 / mLPerSec) / _speedupFactor;
-					let n = 1;
-					progressInterval = setInterval(() => {
-						if (progress) {
-							progress(`${n++}`);
-						}
-					}, msPerLitre);
-				}
 
+				//Update progress every litre
+				let msPerLitre = 1000 * (1000 / mLPerSec) / _speedupFactor;
+				let n = 1;
+				const progressInterval = setInterval(() => {
+					remainingFillLitres(opt.strikeLitres - n);
+					n++;	
+				}, msPerLitre);
+			
 				//t must be in secs.
 				return delay(t, "Fill")
 					.then(() => {

@@ -32,7 +32,7 @@ const tempController = require('../src/services/temp-controller-service.js');
 
 const startStop = require('../src/start-stop.js');
 
-const {progressPublish} = require('../src/broker.js');
+const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/broker.js');
 
 const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
@@ -96,27 +96,26 @@ async function getInventory (req, res, next) {
 async function boil (req, res, next, mins) {
   const brewOptions = brewdata.defaultOptions();
 
-  progressPublish(`Boiling for ${mins} mins`);
-
   await tempController.init(600, 0.3, 100, brewOptions);
-  await tempController.setTemp(100, brewOptions.sim.simulate ? (mins / brewOptions.sim.speedupFactor) : mins);
-  await tempController.stop();
+  await tempController.setTemp(
+    100, 
+    brewOptions.sim.simulate 
+      ? (mins / brewOptions.sim.speedupFactor) 
+      : mins,
+    remainingBoilMinutes
+  );
+  tempController.stop();
 
   res.status(200);
-  progressPublish(``);
   res.send(`Boil Complete`);
 };
 
 async function chill (req, res, next, profile) {
-
-  progressPublish(`Chilling to ${temp}C for ${hours} hours`);
-
   await glycol.start()
   await glycol.doSteps(true, [{tempC:temp, mins:hours/24}]);
   await glycol.stop();
 
   res.status(200);
-  progressPublish(``);
   res.send("Chilling Complete");
 };
 
@@ -164,13 +163,18 @@ async function mash2kettle (req, res, next, flowTimeoutSecs) {
  * @returns {Promise<void>} - A promise that resolves when the temperature is set.
  */
 async function setKettleTemp (req, res, next, tempC, mins) {
-  progressPublish(`Setting kettle to ${tempC}C for ${mins} mins`);
+  // progressPublish(`Setting kettle to ${tempC}C for ${mins} mins`);
   await tempController.init(800, 0.3, 100, brewOptions);
-  await tempController.setTemp(tempC, brewOptions.sim.simulate ? (mins / brewOptions.sim.speedupFactor) : mins);
-  await tempController.stop();
+  await tempController.setTemp(
+    tempC, 
+    brewOptions.sim.simulate 
+      ? (mins / brewOptions.sim.speedupFactor) 
+      : mins,
+    remainingKettleMinutes
+  );
+  tempController.stop();
   
   res.status(200);
-  progressPublish(``);
   res.send(`Kettle reached ${tempC}`);
 };
 
@@ -209,10 +213,8 @@ async function setSimulationSpeed (req, res, next, factor) {
 };
 
 async function restart (req, res, next) {
-  progressPublish(`Restarting server`);
   await startStop.restart();
   res.status(200);
-  progressPublish(``);
   res.send("Restarted server");
 };
 
@@ -281,16 +283,17 @@ function doMashStep(step){
       const {tempC, mins} = step;
       const deltaT = await pipeHeatLoss(tempC, "TempMash");
       const temp = tempC + deltaT;
-      // await tempController.setTemp(temp, mins);
       await tempController.setTemp(
         temp, 
         brewOptions.sim.simulate 
           ? (mins / brewOptions.sim.speedupFactor) 
-          : mins);
+          : mins,
+        remainingMashMinutes);
 
       await k2m.transfer({flowTimeoutSecs});
       await delay(mins * 60);
       await m2k.transfer({flowTimeoutSecs});
+
       return {
         status: 200,
         response: `Mash Step Complete: ${tempC}C for ${mins} mins`
@@ -325,11 +328,8 @@ async function fill (req, res, next, litres) {
   await fillService.timedFill({
     strikeLitres: litres, 
     valveSwitchDelay: 5000
-  }, (x) => {
-      progressPublish(`${x} Litres`);
   });
   res.status(200);
-  progressPublish(``);
   res.send("Fill Complete");
 };
 
