@@ -21,10 +21,6 @@ let currentOptions;
 
 async function start(brewOptions = brewdata.defaultOptions()) {
 	currentOptions = brewOptions;
-	if (brewOptions.sim.simulate) {
-		brewlog.debug('Simulating...');
-		brewOptions.sim.speedupFactor = speedupFactor;
-	}
 	
 	publishLog = broker.create('log'); 
 	brewlog.startSync(brewOptions, publishLog);
