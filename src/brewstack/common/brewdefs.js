@@ -23,6 +23,9 @@ function isRaspPi(){
 	}
 }
 
+const dotenv = require('dotenv');
+dotenv.config();//Adds contents of .env tsso environ vars e.g. process.env.DB_PASS
+
 module.exports = {
 	//installDir: '.',	
 	installDir: `${__dirname}/../..`,	
