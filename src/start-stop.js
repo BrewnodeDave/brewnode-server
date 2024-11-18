@@ -21,7 +21,7 @@ let currentOptions;
 
 async function start(brewOptions = brewdata.defaultOptions()) {
 	currentOptions = brewOptions;
-	if (brewOptions.sim.simutlate) {
+	if (brewOptions.sim.simulate) {
 		brewlog.debug('Simulating...');
 		brewOptions.sim.speedupFactor = speedupFactor;
 	}
@@ -42,6 +42,7 @@ async function start(brewOptions = brewdata.defaultOptions()) {
 	await glycolHeater.start(brewOptions)//
 	await glycol.start(brewOptions)//
 	await fill.start(brewOptions)
+	await temp.start(brewOptions)
 	await tempController.start(brewOptions)
 	await sim.start(brewOptions)
 

@@ -200,6 +200,7 @@ module.exports = {
 	},
 
 	critical(msg, data = '') {
+		console.log(data);
 		rollbar.critical(msg);
 		if (data) {
 			gLogger.error(msg, ` ${data}`);
