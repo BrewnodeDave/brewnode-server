@@ -219,21 +219,24 @@ async function restart (req, res, next) {
 };
 
 
-async function getStatus (req, res, next) {
-  const tempStatus = await temp.getStatus(true);
-  const result = {
-    pumpStatus: pump.getStatus(),
-    flowStatus: flow.getStatus(),
-    wdogStatus: wdog.getStatus(),
-    fanStatus: fan.getStatus(),
-    heaterStatus: heater.getStatus(),
-    tempStatus,
-    valveStatus: valves.getStatus()
-  }
+async function sensorStatus(req, res, next) {
+  try {
+    const result = [];
+    const tempStatus = await temp.getStatus(true);
+    result.push(pump.getStatus().flat());
+    result.push(flow.getStatus().flat());
+    result.push(wdog.getStatus());
+    result.push(fan.getStatus());
+    result.push(heater.getStatus());
+    result.push(tempStatus.flat());
+    result.push(valves.getStatus().flat());
 
-  res.status(200);
-  res.send(result);
-};
+    res.status(200).json(result.flat());
+  } catch (error) {
+    console.error('Error getting status:', error);
+    res.status(500).send('Internal Server Error');
+  }
+}
 
 async function heat (req, res, next, onOff) {
   (onOff === 'On') ? heater.forceOn() : heater.forceOff(); 
@@ -340,7 +343,7 @@ module.exports = {
   ferment,
   fill,
   getInventory,
-  getStatus,
+  sensorStatus,
   heat,
   getKettleTemp,
   setKettleTemp,

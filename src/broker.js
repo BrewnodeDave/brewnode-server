@@ -29,7 +29,7 @@
 
   let debug = false;
 
-  const progressPublish = create("progress");
+  const progressPublish = create("Progress");
 
   sensor.setMaxListeners(100);
 

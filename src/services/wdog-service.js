@@ -110,6 +110,9 @@ module.exports = {
 	},
 	
 	getStatus() {	
-		return error;	
+		return {
+			name:WATCHDOG_EVENT_NAME,
+			value:"ALIVE"
+		}	
 	}
 }

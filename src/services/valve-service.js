@@ -123,6 +123,8 @@ function Valve(opt) {
 	thisValve.requestPin = opt.i2cPinOut;
 	i2c.setDir(opt.i2cPinOut, i2c.DIR_OUTPUT);
 
+	thisValve.publish = broker.create(opt.name);
+
 	thisValve.openOrClose = (requested) => {
 		i2c.writeBit(thisValve.requestPin, requested);
 		brewlog.info(`thisValve.openOrClose ${thisValve.name}=`, `${requested}`);
@@ -132,18 +134,32 @@ function Valve(opt) {
 	/**
 	 * Open the valve and verify if it has after a few seconds. 
 	 */
-	thisValve.open = () => thisValve.openOrClose(VALVE_OPEN_REQUEST);
+	thisValve.open = () => {
+		thisValve.openOrClose(VALVE_OPEN_REQUEST);
+		thisValve.status = brewdefs.VALVE_STATUS.OPENED;
+		thisValve.publish(thisValve.status);
+	}
 
 	/**
 	 * Close the valve and verify if it has after a few seconds.
 	 */
-	thisValve.close = () => thisValve.openOrClose(VALVE_CLOSE_REQUEST);
+	thisValve.close = () => {
+		thisValve.openOrClose(VALVE_CLOSE_REQUEST);
+		thisValve.status = brewdefs.VALVE_STATUS.CLOSED;
+		thisValve.publish(thisValve.status);
+	}
 }
 
 module.exports = {
 	names: valveNames,
 
-	getStatus: () => valves.map(({ name, status }) => ({ name, state: status })),
+	getStatus: () => valves.map(valve => {
+		valve.publish(valve.status);
+		return { 
+			name :valve.name, 
+			state: valve.status 
+		};
+	}),
 		/**
 	 * Open a valve by name
 	 * @param {string} name - Valve name
@@ -190,7 +206,6 @@ module.exports = {
 
 			valveSwitchDelay = brewOptions.valveSwitchDelay;
 			const initValue = { dir: i2c.DIR_OUTPUT, value: VALVE_CLOSE_REQUEST };
-			let c = [];
 			VALVE_DEFS.forEach(valveDef => {
 				const v = new Valve(valveDef);
 				valveNames.push(valveDef.name);
@@ -200,7 +215,7 @@ module.exports = {
 
 				simSetInputs(v, VALVE_CLOSE_REQUEST);
 
-				c.push(v.close);
+				v.close();
 				valves.push(v);
 			});
 

@@ -142,14 +142,14 @@ module.exports = {
 			if (sensorName === "Watchdog") {
 				//Don't write watchdog to logfile or console
 			}
-			else if (sensorName === "heater") {
+			else if (sensorName === "Heater") {
 				//Don't write heater to console
 				gSensorLogger[sensorName].info(`${value}`);
 			}
 			else if (sensorName.substring(0, 4) === "Flow") {
 				gSensorLogger[sensorName].info(`${value.rate},${value.delta}`);
 			}
-			else if (sensorName === "power") {
+			else if (sensorName === "Power") {
 				gSensorLogger[sensorName].info(`${value}`);
 				//Only write delta to console		
 				if (value !== prevPower) {

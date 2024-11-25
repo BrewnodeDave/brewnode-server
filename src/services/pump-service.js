@@ -43,7 +43,7 @@ let chillPump;
 
 const MASH_PUMP = "PumpMash";
 const KETTLE_PUMP = "PumpKettle";
-const CHILL_PUMP = "PumpChill";
+const CHILL_PUMP = "PumpGlycol";
 
 const pumpStop = pump => {
 	if (pump) {

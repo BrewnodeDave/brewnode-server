@@ -114,11 +114,11 @@ let kettlePumpChange            = change(pump.kettlePumpName);
 let kettleTempChange            = change(KETTLE_TEMP);
 let glycolTempChange            = change("TempGlycol");
 let fermenterTempChange         = change("TempFermenter");
-let valveMashInChange           = change("valveMashIn");
-let valveKettleInChange         = change("valveKettleIn");
-let powerChange                 = change("power");
-let progressChange              = change("progress");
-let heaterChange                = change("heater");
+let valveMashInChange           = change("ValveMashIn");
+let valveKettleInChange         = change("ValveKettleIn");
+let powerChange                 = change("Power");
+let progressChange              = change("Progress");
+let heaterChange                = change("Heater");
 
 let coolingTimer = null;
 
@@ -383,9 +383,9 @@ module.exports = {
             kettlePumpListener = broker.subscribe(pump.kettlePumpName,   kettlePumpChange);
             kettleTempListener = broker.subscribe("TempKettle",          kettleTempChange);
             fermenterTempListener = broker.subscribe("TempFermenter",       fermenterTempChange);
-            progressListener = broker.subscribe("progress",      progressChange);
-            powerListener = broker.subscribe("power",      powerChange);
-            heaterListener = broker.subscribe("heater",      heaterChange);
+            progressListener = broker.subscribe("Progress",      progressChange);
+            powerListener = broker.subscribe("Power",      powerChange);
+            heaterListener = broker.subscribe("Heater",      heaterChange);
             
 
             const foo = (valveStatii, name) => valveStatii.find(status => status.name === name);

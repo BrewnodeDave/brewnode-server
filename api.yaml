@@ -32,17 +32,20 @@ paths:
           description: Success
       x-swagger-router-controller: brewnode
 
-  /status:
+  /sensorStatus:
     get:
       tags:
       - Brewnode
       summary: Get current status
       description: Return the values of all sensors etc.
-      operationId: getStatus
+      operationId: sensorStatus
       responses:
-        "200":
+        200:
           description: Success
+        500:
+          description: Error
       x-swagger-router-controller: brewnode
+      
   /fill:
     put:
       tags:

@@ -14,7 +14,8 @@
  * @requires brewlog.js
  * @requires pwm.js
  * @requires i2c.js* @requires events
- * @desc Modulate Kettle heating element to control the power.
+ * @desc Modulate Kettle heating element to control the ater
+ * .
  * Every time the state changes an event is emitted to all listeners.
  */
  
@@ -29,9 +30,10 @@ const pwm = require('../pwm.js');
 const brewlog = require('../brewstack/common/brewlog.js');
 const { getStatus } = require('./pump-service.js');
 const { set } = require('../sim/ds18x20.js');
+const { name } = require('./wdog-service.js');
 
 const MAX_POWER_W = 3000;
-const POWER = "power";
+const POWER = "Power";
 
 //Heater Mark + Space
 const PERIOD_INTERVAL_MS = 10 * 1000;
@@ -200,7 +202,7 @@ module.exports = {
 			prevPower = 0;
 	
 			publishPower = broker.create(POWER);
-			publishHeater = broker.create("heater");
+			publishHeater = broker.create("Heater");
 
 			//Define callbacks for PWM mark and space functions
 			pwm.init(powerOn, powerOff);
@@ -230,7 +232,7 @@ module.exports = {
 			pwm.stop();
 			powerOff();
 			broker.destroy(POWER);
-			broker.destroy("heater");
+			broker.destroy("Heater");
 			clearInterval(timer);
 			timer = null;
 			resolve();
@@ -262,9 +264,18 @@ module.exports = {
 		}	
 	},
 
-	getStatus: () => ({
-		heater:i2c.readBit(HEATER_DEF.i2cPinOut),
-		power:currentPower
-	})
+	getStatus: () => {
+		const heater = i2c.readBit(HEATER_DEF.i2cPinOut);
+		const power = currentPower;
+		publishHeater(heater);
+		publishPower(power);
+		return [{
+			name	: "Heater", 
+			value	: heater
+		},{
+			name	: "Power",		
+			value	: power
+		}]
+	}
 }
 

@@ -149,13 +149,9 @@ module.exports = {
 	},
 	
 	getStatus() {
-		setState(currentState);
-		if (currentState === FAN_OFF){
-			return "OFF";
-		}else if (currentState === FAN_ON){
-			return "ON";
-		}else{
-			return "?";
-		}
+		return {
+			name: FAN_DEF.name,
+			value: (currentState === FAN_ON) ? "ON" : "OFF"
+		};
 	}
 }
