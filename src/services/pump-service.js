@@ -99,8 +99,29 @@ function Pump(name, requestPin){
   }
 }
 
+function on(name){
+	if (name === MASH_PUMP){
+		mashPump.onSync();
+	}else if (name === KETTLE_PUMP){
+		kettlePump.onSync();
+	}else if (name === CHILL_PUMP){
+		chillPump.onSync();
+  	};
+}
+
+function off(name){
+	if (name === MASH_PUMP){
+		mashPump.offSync();
+	}else if (name === KETTLE_PUMP){
+		kettlePump.offSync();
+	}else if (name === CHILL_PUMP){
+		chillPump.offSync();
+  	};
+}	
 
 module.exports = {
+	on,
+	off,
 	ON,
 	OFF,
 	mashPumpName: MASH_PUMP,

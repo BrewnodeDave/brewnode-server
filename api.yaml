@@ -111,6 +111,207 @@ paths:
           description: Success
       x-swagger-router-controller: brewnode
 
+  /fan:
+    put:
+      tags:
+      - Brewnode
+      summary: Turn on or off kettle extractor fan
+      operationId: extractor
+      parameters:
+      - name: onOff
+        in: query
+        description: Fan state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /fan/status:
+    get:
+      tags:
+      - Brewnode
+      summary: Get fan status
+      operationId: fanStatus
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /valves/status:
+    get:
+      tags:
+      - Brewnode
+      summary: Get status of all valves
+      operationId: valvesStatus
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /valve/kettlein:
+    put:
+      tags:
+      - Brewnode
+      summary: Open or close the kettle in valve
+      operationId: kettleInValve
+      parameters:
+      - name: onOff
+        in: query
+        description: Valve state
+        schema:
+          type: string
+          enum:
+          - Open
+          - Close
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /valve/mashin:
+    put:
+      tags:
+      - Brewnode
+      summary: Open or close the mash in valve
+      operationId: mashInValve
+      parameters:
+      - name: onOff
+        in: query
+        description: Valve state
+        schema:
+          type: string
+          enum:
+          - Open
+          - Close
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /valve/chillwortin:
+    put:
+      tags:
+      - Brewnode
+      summary: Open or close the wort into the chiller valve
+      operationId: chillWortInValve
+      parameters:
+      - name: onOff
+        in: query
+        description: Valve state
+        schema:
+          type: string
+          enum:
+          - Open
+          - Close
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /valve/fermentin:
+    put:
+      tags:
+      - Brewnode
+      summary: Open or close the chiller to fermenter valve
+      operationId: fermentInValve
+      parameters:
+      - name: onOff
+        in: query
+        description: Valve state
+        schema:
+          type: string
+          enum:
+          - Open
+          - Close
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /pumps/status:
+    get:
+      tags:
+      - Brewnode
+      summary: Get status of all pumps
+      operationId: pumpsStatus
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /pump/kettle:
+    put:
+      tags:
+      - Brewnode
+      summary: Turn on or off kettle pump
+      operationId: kettlePump
+      parameters:
+      - name: onOff
+        in: query
+        description: Fan state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /pump/mash:
+    put:
+      tags:
+      - Brewnode
+      summary: Turn on or off mash pump
+      operationId: mashPump
+      parameters:
+      - name: onOff
+        in: query
+        description: Fan state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /pump/glycol:
+    put:
+      tags:
+      - Brewnode
+      summary: Turn on or off the glycol pump
+      operationId: glycolPump
+      parameters:
+      - name: onOff
+        in: query
+        description: Pump state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
   /restart:
     put:
       tags:

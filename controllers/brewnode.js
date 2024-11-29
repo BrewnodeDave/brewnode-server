@@ -7,29 +7,25 @@
  */
 
 'use strict';
-
+const { KETTLE_TEMPNAME } = require('../src/services/kettle-service.js');
+const tempService = require('../src/services/temp-service.js');
 const glycol = require('../src/services/glycol-service.js');
-
 const brewdata = require('../src/brewstack/common/brewdata.js');
-
 const {promiseSerial} = require('../src/brewstack/common/brew-pub.js');
 const k2m = require('../src/brewstack/brewingAlgorithms/k2m.js');
 const m2k = require('../src/brewstack/brewingAlgorithms/m2k.js');
 const k2f = require('../src/brewstack/brewingAlgorithms/k2f.js');
 const sim = require('../src/sim/sim.js');
-
 const heater = require('../src/services/heater-service.js');  
 const fillService = require('../src/services/fill-service.js');
 const therm = require('../src/services/temp-service.js');
-const pump = require('../src/services/pump-service.js');
+const pumps = require('../src/services/pump-service.js');
 const flow = require('../src/services/flow-service.js');
 const wdog = require('../src/services/wdog-service.js');
 const fan = require('../src/services/fan-service.js');
 const temp = require('../src/services/temp-service.js');
 const valves = require('../src/services/valve-service.js');
-
 const tempController = require('../src/services/temp-controller-service.js');
-
 const startStop = require('../src/start-stop.js');
 
 const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/broker.js');
@@ -179,9 +175,6 @@ async function setKettleTemp (req, res, next, tempC, mins) {
 };
 
 
-const { KETTLE_TEMPNAME } = require('../src/services/kettle-service.js');
-const tempService = require('../src/services/temp-service.js');
-
 async function getKettleTemp (req, res, next) {
   const result = await tempService.getTemp(KETTLE_TEMPNAME);
   res.status(200);
@@ -223,7 +216,7 @@ async function sensorStatus(req, res, next) {
   try {
     const result = [];
     const tempStatus = await temp.getStatus(true);
-    result.push(pump.getStatus().flat());
+    result.push(pumps.getStatus().flat());
     result.push(flow.getStatus().flat());
     result.push(wdog.getStatus());
     result.push(fan.getStatus());
@@ -238,11 +231,60 @@ async function sensorStatus(req, res, next) {
   }
 }
 
+async function pumpsStatus(req, res, next) {
+  try {
+    res.status(200).json(pumps.getStatus().flat());
+  } catch (error) {
+    console.error('Error getting status:', error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+async function valvesStatus(req, res, next) {
+  try {
+    res.status(200).json(valves.getStatus().flat());
+  } catch (error) {
+    console.error('Error getting status:', error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+async function fanStatus(req, res, next) {
+  try {
+    res.status(200).json(fan.getStatus());
+  } catch (error) {
+    console.error('Error getting status:', error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+
 async function heat (req, res, next, onOff) {
   (onOff === 'On') ? heater.forceOn() : heater.forceOff(); 
   res.status(200);
   res.send(onOff);
 };
+
+async function extractor (req, res, next, onOff) {
+  (onOff === 'On') ? fan.switchOn() : fan.switchOff(); 
+  res.status(200);
+  res.send(onOff);
+};
+
+async function valve(req, res, next, valveName, openClose) {
+  (openClose === 'Open') ? valves.open(valveName) : valves.close(valveName); 
+  res.status(200);
+  res.send(openClose);
+}
+
+async function pump(req, res, next, pumpName, onOff) {
+  (onOff === 'On') ? pumps.on(pumpName) : pumps.off(pumpName); 
+  res.status(200);
+  res.send(onOff);
+} 
+
+const getValve = (name) => async (req, res, next, openClose) => valve(req, res, next, name, openClose);
+const getPump = (name) => async (req, res, next, onOff) => pump(req, res, next, name, onOff);   
 
 //Temp loss for a fixed flow rate
 async function pipeHeatLoss(tempFluid, tempSensorName) {
@@ -336,25 +378,35 @@ async function fill (req, res, next, litres) {
   res.send("Fill Complete");
 };
 
-
 module.exports = {
   boil,
   chill,
+  chillWortInValve: getValve("ValveChillWortIn"),
+  extractor,
+  fanStatus,
   ferment,
+  fermentInValve: getValve("ValveFermentIn"),
   fill,
   getInventory,
-  sensorStatus,
-  heat,
   getKettleTemp,
-  setKettleTemp,
+  getKettleVolume,
   getSimulationSpeed,
-  setSimulationSpeed,
-  mash,
-  m2k: mash2kettle,
+  glycolPump: getPump("PumpGlycol"),
+  heat,
   k2f: kettle2fermenter,
   k2m: kettle2mashtun,
+  kettleInValve: getValve("ValveKettleIn"),
+  kettlePump: getPump("PumpKettle"),
+  m2k: mash2kettle,
+  mash,
+  mashInValve: getValve("ValveMashIn"),
+  mashPump: getPump("PumpMash"),
+  pumpsStatus,
   restart,
-  getKettleVolume,
+  sensorStatus,
+  setKettleTemp,
   setKettleVolume,
+  setSimulationSpeed,
+  valvesStatus,
   whatsBrewing
 }
