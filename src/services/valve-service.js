@@ -158,7 +158,7 @@ module.exports = {
 		// valve.publish(valve.status);
 		return { 
 			name :valve.name, 
-			state: valve.status 
+			value: valve.status 
 		};
 	}),
 		/**

@@ -186,11 +186,11 @@ module.exports = {
 			mashState = mashPump.state;
 			if (mashState === OFF){
 				mashPump.publishState("OFF");
-				result.push({name:mashPump.name, state:"OFF"});
+				result.push({name:mashPump.name, value:"OFF"});
 			}
 			else if (mashState === ON){
 				mashPump.publishState("ON");
-				result.push({name:mashPump.name, state:"ON"});
+				result.push({name:mashPump.name, value:"ON"});
 			}
 		}else{
 			brewlog.error("getStatus: Mash pump has not been started")
@@ -201,11 +201,11 @@ module.exports = {
 			kettleState = kettlePump.state;		
 			if (kettleState === OFF){
 				kettlePump.publishState("OFF");
-				result.push({name:kettlePump.name, state:"OFF"});
+				result.push({name:kettlePump.name, value:"OFF"});
 			}
 			else if (kettleState === ON){
 				kettlePump.publishState("ON");
-				result.push({name:kettlePump.name, state:"ON"});
+				result.push({name:kettlePump.name, value:"ON"});
 			}
 		}else{
 			brewlog.error("getStatus: Kettle pump has not been started")
@@ -216,11 +216,11 @@ module.exports = {
 			chillState = chillPump.state;		
 			if (chillState === OFF){
 				chillPump.publishState("OFF");
-				result.push({name:chillPump.name, state:"OFF"});
+				result.push({name:chillPump.name, value:"OFF"});
 			}
 			else if (chillState === ON){
 				chillPump.publishState("ON");
-				result.push({name:chillPump.name, state:"ON"});
+				result.push({name:chillPump.name, value:"ON"});
 			}
 		}else{
 			brewlog.error("getStatus: Chill pump has not been started")

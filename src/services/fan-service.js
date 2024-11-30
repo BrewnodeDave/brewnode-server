@@ -63,9 +63,9 @@ function setState(state){
 	
 	if (publishFanState){
 		if (currentState == FAN_ON){
-			publishFanState("ON");
+			publishFanState("On");
 		}else{
-			publishFanState("OFF");
+			publishFanState("Off");
 		}
 	}
 }
@@ -126,7 +126,7 @@ module.exports = {
 			i2c.init({number:FAN_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:FAN_OFF});
 			
 			publishFanState = broker.create(FAN_DEF.name);
-			publishFanState("OFF");
+			publishFanState("Off");
 			
 			tempKettleListener = broker.subscribe("TempKettle", tempKettleHandler);
 			
@@ -151,7 +151,7 @@ module.exports = {
 	getStatus() {
 		return {
 			name: FAN_DEF.name,
-			value: (currentState === FAN_ON) ? "ON" : "OFF"
+			value: (currentState === FAN_ON) ? "On" : "Off"
 		};
 	}
 }
