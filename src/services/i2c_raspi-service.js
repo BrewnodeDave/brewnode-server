@@ -76,7 +76,7 @@ Watchdog LED	0x21	0x12	0x40	22	Out(0)	1 = On
 const brewlog = require('../brewstack/common/brewlog.js');
 const brewdefs = require('../brewstack/common/brewdefs.js');
 let mraa;
-let i2c;
+let _i2c;
 
 const REG20 = 0x20;
 const REG21 = 0x21;
@@ -120,7 +120,7 @@ function writeReg(chipAddress, address, currentByte, bit, value){
 	}
 
 	//setDir(bit, DIR_OUTPUT);
-	i2c.writeByteSync(chipAddress, address, result);
+	_i2c.writeByteSync(chipAddress, address, result);
 	//setDir(bit, DIR_INPUT);
 
 
@@ -170,21 +170,22 @@ function toString(bytes){
   return bytes.reduce((acc, byte) => toHex(byte) + acc, '');
 }
 
+
 module.exports = { 
+	DIR_INPUT,
+	DIR_OUTPUT,
 	start(opt) {
 		return new Promise((resolve, reject) => {
 			_opt = opt;
 			if (brewdefs.isRaspPi() && (opt.sim.simulate === false)) {
 				raspi = require('raspi');
 				I2C = require('raspi-i2c').I2C;
-				i2c = new I2C();
-				raspi.init(()=>init(i2c));
+				_i2c = new I2C();
+				raspi.init(()=>init(_i2c));
 			}else{
-				i2c = require('../sim/raspi-i2c.js');
-				init(i2c);
+				_i2c = require('../sim/raspi-i2c.js');
+				init(_i2c);
 			}
-			module.exports.DIR_INPUT =  DIR_INPUT;
- 			module.exports.DIR_OUTPUT = DIR_OUTPUT;
 			resolve(opt);
 		})
 	},
@@ -221,21 +222,21 @@ module.exports = {
 	  let result;
 	  if (bit < 16){
 	    if (bit < 8){
-	      dataByte[0] = i2c.readByteSync(REG20, 0x12);
+	      dataByte[0] = _i2c.readByteSync(REG20, 0x12);
 	    //   brewlog.debug("Read [byte0]=>"+dataByte[0])
 	      result = getBit(dataByte[0], bit); 
 	    }else{		
-	      dataByte[1] = i2c.readByteSync(REG20, 0x13);
+	      dataByte[1] = _i2c.readByteSync(REG20, 0x13);
 	    //   brewlog.debug("Read [byte1]=>"+dataByte[1])
 	      result = getBit(dataByte[1], bit-8); 
 	    }
 	  }else{
 	    if (bit < 24){
-	      dataByte[2] = i2c.readByteSync(REG21, 0x12);		
+	      dataByte[2] = _i2c.readByteSync(REG21, 0x12);		
 	        // brewlog.debug("Read [byte2]=>"+dataByte[2])
 		result = getBit(dataByte[2], bit-16); 
 	    }else{		
-	      dataByte[3] = i2c.readByteSync(REG21, 0x13);		
+	      dataByte[3] = _i2c.readByteSync(REG21, 0x13);		
 	    //   brewlog.debug("Read [byte3]=>"+dataByte[3])
 	      result = getBit(dataByte[3], bit-24); 
 	    }
@@ -280,10 +281,10 @@ module.exports = {
 	
 	getWord() {
 		try {
-			const byte0 = i2c.readByteSync(REG20, 0x12);
-			const byte1 = i2c.readByteSync(REG20, 0x13);
-			const byte2 = i2c.readByteSync(REG21, 0x12);		
-			const byte3 = i2c.readByteSync(REG21, 0x13);		
+			const byte0 = _i2c.readByteSync(REG20, 0x12);
+			const byte1 = _i2c.readByteSync(REG20, 0x13);
+			const byte2 = _i2c.readByteSync(REG21, 0x12);		
+			const byte3 = _i2c.readByteSync(REG21, 0x13);		
 			
 		//console.log(byte3,byte2,byte1,byte0);
 			const word = (byte3 << 24) | (byte2 << 16) | (byte1 << 8) | byte0;

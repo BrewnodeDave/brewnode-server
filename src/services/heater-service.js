@@ -104,7 +104,7 @@ const powerOff = () => {
 	pwm.stop();	
 	
 	if (publishHeater != null){
-		publishHeater(false);
+		publishHeater('OFF');
 	} else{
 		console.error("heater powerOff but service not started?");
 	}	
@@ -118,7 +118,7 @@ const powerOn = () => {
 	i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
 
 	if (publishHeater != null){
-		publishHeater(true);
+		publishHeater('ON');
 	} else{
 		console.error("heater powerOn but service not started?");
 	}	
@@ -153,11 +153,11 @@ function setPower(watts){
 		currentPower = 0;
 	}else 
 	if (watts > MAX_WATTS){//2700
-		//Off time is too short. Under power to avoid overshoot.
+		//OFF time is too short. Under power to avoid overshoot.
 		currentPower = MAX_WATTS;
 	}else
 	if (watts < MIN_WATTS){//300
-		//On time is too short. Under power to avoid overshoot.
+		//ON time is too short. Under power to avoid overshoot.
 		currentPower = 0;
 	}else{
 		currentPower = watts;
@@ -247,7 +247,7 @@ module.exports = {
 		setPower(MAX_POWER_W);
 
 		if (publishHeater != null){
-			publishHeater(true);
+			publishHeater('ON');
 		} else{
 			console.error("heater forceOn but service not started?");
 		}	
@@ -258,7 +258,7 @@ module.exports = {
 
 		setPower(0);
 		if (publishHeater != null){
-			publishHeater(false);
+			publishHeater('OFF');
 		} else{
 			console.error("heater forceOff but service not started?");
 		}	
@@ -267,11 +267,15 @@ module.exports = {
 	getStatus: () => {
 		const heater = i2c.readBit(HEATER_DEF.i2cPinOut);
 		const power = currentPower;
-		publishHeater(heater);
-		publishPower(power);
+		if (publishHeater != null){
+			publishHeater(heater === HEATER_ON ? 'ON' : 'OFF');
+		}
+		if (publishPower != null){
+			publishPower(power);
+		}	
 		return [{
 			name	: "Heater", 
-			value	: heater
+			value	: heater === HEATER_ON ? 'ON' : 'OFF'
 		},{
 			name	: "Power",		
 			value	: power

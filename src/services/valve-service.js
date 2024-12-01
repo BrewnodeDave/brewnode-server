@@ -86,11 +86,13 @@ const VALVE_DEFS = [{
 }
 ];
 
-const valves = [];
 const valveNames = [];
 
 let timeouts = [];
 let _started = false;
+let _valves = [];
+
+
 
 //Set input pins during simulation only
 function simSetInputs(thisValve, requested) {
@@ -150,10 +152,12 @@ function Valve(opt) {
 	}
 }
 
+
 module.exports = {
+	isStarted: () => _started,
 	names: valveNames,
 
-	getStatus: () => valves.map(valve => {
+	getStatus: () => _valves.map(valve => {
 //Why publish!!!!? To update the UI?
 		// valve.publish(valve.status);
 		return { 
@@ -167,7 +171,7 @@ module.exports = {
 	 */
 	open(name) {
 		brewlog.info("OPEN", name);
-	    const v = valves.find(valve => (valve.name === name));	
+	    const v = _valves.find(valve => (valve.name === name));	
 		if (v) {
 		  v.open();
 		} else {
@@ -182,7 +186,7 @@ module.exports = {
 	 */
 	close(name) {
 		brewlog.info("CLOSE", name);
-	    const v = valves.find(valve => (valve.name === name));	
+	    const v = _valves.find(valve => (valve.name === name));	
 		if (v) {
 		  v.close();
 		} else {
@@ -207,19 +211,21 @@ module.exports = {
 
 			valveSwitchDelay = brewOptions.valveSwitchDelay;
 			const initValue = { dir: i2c.DIR_OUTPUT, value: VALVE_CLOSE_REQUEST };
-			VALVE_DEFS.forEach(valveDef => {
+			
+			//i2c must have been started
+			_valves = VALVE_DEFS.map(valveDef => {
 				const v = new Valve(valveDef);
 				valveNames.push(valveDef.name);
-
+			
 				initValue.number = v.requestPin;
 				i2c.init(initValue);
-
+			
 				simSetInputs(v, VALVE_CLOSE_REQUEST);
-
+			
 				v.close();
-				valves.push(v);
+				return v;
 			});
-
+			
 			_started = true;
 			resolve(brewOptions);
 		});
@@ -234,15 +240,16 @@ module.exports = {
 			});
 			timeouts = [];
 
-			const allClosed = valves.map(({ close }) => close)
+			const allClosed = _valves.map(({ close }) => close)
 	
 			Promise.all(allClosed).then(() => {
-				valves.forEach(({ name }) => {
+				_valves.forEach(({ name }) => {
 					broker.destroy(name);
 				});
 				_started = false;
 				brewlog.info("valve.js", "stopped");
 
+				_valves = [];
 				resolve(opt);
 			});
 		});
@@ -250,7 +257,7 @@ module.exports = {
 
 	selfTest() {
 		return new Promise((resolve, reject) => {
-			const testAll = valves.map(valve => valve.selfTest());
+			const testAll = _valves.map(valve => valve.selfTest());
 			Promise.all(testAll).then(resolve, reject).catch(console.log);
 		});
 	}

@@ -392,6 +392,9 @@ module.exports = {
                 
             // Every so often call ...
             simInterval = setInterval(() => {
+                if (valve.isStarted() === false) {
+                    return;
+                }
                 const valveStatii = valve.getStatus();
                 valveKettleInChange({value:foo(valveStatii, 'ValveKettleIn').state});
                 valveMashInChange({value:foo(valveStatii, 'ValveMashIn').state});

@@ -45,28 +45,31 @@ async function start(brewOptions = brewdata.defaultOptions()) {
 	return 	brewOptions;
 }
 
-function stop(options) {
+async function stop(options) {
 	broker.destroy('log');
 
 	brewfather.stop();
 
-	return pump.stop()
-	.then(temp.stop)
-	.then(fan.stop)
-	.then(valves.stop)
-	.then(wdog.stop)
-	.then(flow.stop)
-	.then(heater.stop)
-	.then(glycolHeater.stop)
-	.then(glycol.stop)
-	.then(fill.stop)
-	.then(sim.stop)
-	.then(tempController.stop)
-	.catch(err => {brewlog.error("stop error", err);});
+	await pump.stop();
+	await temp.stop();
+	await fan.stop();
+	await valves.stop();
+	await wdog.stop();
+	await flow.stop();
+	await heater.stop();
+	await glycolHeater.stop();
+	await glycol.stop();
+	await fill.stop();
+	await sim.stop();
+
+	tempController.stop();
 }
 
 module.exports = {
-	restart: async () => stop().then(start(currentOptions)),
+	restart: async () => {
+		await stop();
+		await start(currentOptions);
+	},
 	/**
  	 * @desc Start entire system
 	*/
