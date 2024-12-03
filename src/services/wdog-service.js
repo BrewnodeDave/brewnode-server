@@ -63,7 +63,7 @@ module.exports = {
 				//Heartbeat
 				i2c.toggleBit(brewDefs.I2C_WATCHDOG_LED_BIT);
 				error = false;
-				bark("ALIVE");
+				bark("");
 			
 				//Halt upon a button press
 				const result = i2c.readBit(brewDefs.I2C_WATCHDOG_HALT_BIT);	
@@ -112,7 +112,7 @@ module.exports = {
 	getStatus() {	
 		return {
 			name:WATCHDOG_EVENT_NAME,
-			value:"ALIVE"
+			value:""
 		}	
 	}
 }
