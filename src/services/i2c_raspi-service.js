@@ -270,7 +270,6 @@ module.exports = {
 	 * {number, dir, value} bitInfo
 	 */
     init(bitInfo) {
-		this.setDir(bitInfo.number, bitInfo.dir);
 		brewlog.debug("INIT", `${JSON.stringify(bitInfo)}`);
 		this.setDir(bitInfo.number, bitInfo.dir);
 
