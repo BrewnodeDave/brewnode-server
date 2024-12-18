@@ -14,9 +14,29 @@ const brewlog = require('../common/brewlog.js');
 const startCond = v => v > 0;
 const stopCond = v => v == 0;
 
+/**
+ * @type {number} interval - A variable to store the interval ID for a setInterval or setTimeout function.
+ */
 let interval;
+/**
+ * @type {number|undefined} timeout - A variable to store the timeout ID for clearing the timeout later.
+ */
 let timeout;
-//modulate valves so that only one is open at a time.
+
+/**
+ * Modulates the start of the brewing process by opening and closing valves and controlling the pump.
+ * 
+ * This function sets an interval to repeatedly perform the following actions every 10 seconds:
+ * - Opens the "ValveFermentIn" and "ValveChillWortIn" valves.
+ * - Turns off the kettle pump synchronously.
+ * 
+ * After half of the interval minus 500 milliseconds, it performs the following actions:
+ * - Closes the "ValveFermentIn" valve.
+ * - Opens the "ValveChillWortIn" valve.
+ * - Turns on the kettle pump synchronously.
+ * 
+ * @function
+ */
 function modulateStart() {
 	const SLICE = 10 * 1000;
 	interval = setInterval(() => {
@@ -30,6 +50,13 @@ function modulateStart() {
 		}, (SLICE / 2) - 500);
 	}, SLICE);
 }
+
+/**
+ * Stops the modulation process by clearing the interval and timeout,
+ * and closing the specified valves.
+ *
+ * @function
+ */
 function modulateStop() {
 	clearInterval(interval);
 	clearTimeout(timeout);
@@ -38,31 +65,29 @@ function modulateStop() {
 }
 
 module.exports = {
-	transfer(opt) {
-		return new Promise((resolve, reject) => {
-			let timeoutSecs = opt.flowTimeoutSecs;
+	/**
+	 * Transfers wort from the kettle to the fermenter.
+	 *
+	 * @param {Object} opt - The options for the transfer process.
+	 * @param {number} opt.flowTimeoutSecs - The timeout in seconds for the flow operations.
+	 * @returns {Promise} A promise that resolves when the transfer is complete.
+	 */
+	transfer: async function(opt) {
+		let timeoutSecs = opt.flowTimeoutSecs;
 
-			console.log("k2f transfer")
+		console.log("k2f transfer")
 
-			valves.open("ValveChillWortIn");
-			valves.open("ValveFermentIn");
-
-			pump.kettleOnSync()
-
-			flow.wait("FlowKettleOut", startCond, timeoutSecs)
-				.then(() => {
-					//flow.wait("FlowFermentIn",	stopCond, timeoutSecs), 
-					return flow.wait("FlowKettleOut", stopCond, timeoutSecs);
-				})
-				.then(() => {
-					pump.kettleOffSync();
-					valves.close("ValveChillWortIn");
-					valves.close("ValveFermentIn");
-					brewlog.info("... k2f end");
-					resolve(opt);
-				}).catch(err => {
-					console.log("oops", err)
-				});
-		});
+		valves.open("ValveChillWortIn");
+		valves.open("ValveFermentIn");
+		pump.kettleOnSync();
+		await flow.wait("FlowKettleOut", startCond, timeoutSecs);
+		await flow.wait("FlowKettleOut", stopCond, timeoutSecs);
+				
+		pump.kettleOffSync();
+		valves.close("ValveChillWortIn");
+		valves.close("ValveFermentIn");
+		
+		brewlog.info("... k2f end");
+		return opt;
 	}
 }

@@ -11,7 +11,6 @@ const { KETTLE_TEMPNAME } = require('../src/services/kettle-service.js');
 const tempService = require('../src/services/temp-service.js');
 const glycol = require('../src/services/glycol-service.js');
 const brewdata = require('../src/brewstack/common/brewdata.js');
-const {promiseSerial} = require('../src/brewstack/common/brew-pub.js');
 const k2m = require('../src/brewstack/brewingAlgorithms/k2m.js');
 const m2k = require('../src/brewstack/brewingAlgorithms/m2k.js');
 const k2f = require('../src/brewstack/brewingAlgorithms/k2f.js');
@@ -39,6 +38,7 @@ const debug = true;
 const flowTimeoutSecs = 5;
 
 startStop.start(brewOptions, debug).then(x=>console.log("started"));
+
 
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
@@ -231,6 +231,14 @@ async function sensorStatus(req, res, next) {
   }
 }
 
+/**
+ * Handles the request to get the status of the pumps.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @returns {Promise<void>} - A promise that resolves when the status is sent.
+ */
 async function pumpsStatus(req, res, next) {
   try {
     res.status(200).json(pumps.getStatus().flat());
@@ -240,6 +248,14 @@ async function pumpsStatus(req, res, next) {
   }
 }
 
+/**
+ * Handles the request to get the status of the valves.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @returns {Promise<void>} - A promise that resolves when the status is sent.
+ */
 async function valvesStatus(req, res, next) {
   try {
     res.status(200).json(valves.getStatus().flat());
@@ -249,6 +265,17 @@ async function valvesStatus(req, res, next) {
   }
 }
 
+/**
+ * Handles the request to get the status of the fan.
+ *
+ * @async
+ * @function fanStatus
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @returns {Promise<void>} - A promise that resolves when the status is sent.
+ * @throws {Error} - If there is an error getting the fan status.
+ */
 async function fanStatus(req, res, next) {
   try {
     res.status(200).json(fan.getStatus());
@@ -259,34 +286,90 @@ async function fanStatus(req, res, next) {
 }
 
 
+/**
+ * Controls the heater by turning it on or off based on the provided parameter.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {string} onOff - A string indicating whether to turn the heater 'On' or 'Off'.
+ * @returns {void}
+ */
 async function heat (req, res, next, onOff) {
   (onOff === 'On') ? heater.forceOn() : heater.forceOff(); 
   res.status(200);
   res.send(onOff);
 };
 
+/**
+ * Controls the state of the fan based on the onOff parameter and sends the response.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {string} onOff - The state to set the fan to, either 'On' or 'Off'.
+ * @returns {void}
+ */
 async function extractor (req, res, next, onOff) {
   (onOff === 'On') ? fan.switchOn() : fan.switchOff(); 
   res.status(200);
   res.send(onOff);
 };
 
+/**
+ * Controls the state of a specified valve.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {string} valveName - The name of the valve to control.
+ * @param {string} openClose - The action to perform on the valve ('Open' or 'Close').
+ */
 async function valve(req, res, next, valveName, openClose) {
   (openClose === 'Open') ? valves.open(valveName) : valves.close(valveName); 
   res.status(200);
   res.send(openClose);
 }
 
+/**
+ * Controls the state of a specified pump.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {string} pumpName - The name of the pump to control.
+ * @param {string} onOff - The desired state of the pump ('On' or 'Off').
+ * @returns {void}
+ */
 async function pump(req, res, next, pumpName, onOff) {
   (onOff === 'On') ? pumps.on(pumpName) : pumps.off(pumpName); 
   res.status(200);
   res.send(onOff);
 } 
 
+/**
+ * Returns an asynchronous middleware function to handle valve operations.
+ *
+ * @param {string} name - The name of the valve.
+ * @returns {Function} An asynchronous middleware function that takes req, res, next, and openClose parameters.
+ */
 const getValve = (name) => async (req, res, next, openClose) => valve(req, res, next, name, openClose);
+
+/**
+ * Returns an asynchronous function that handles a request to control a pump.
+ *
+ * @param {string} name - The name of the pump.
+ * @returns {Function} - An asynchronous function that takes in req, res, next, and onOff parameters and calls the pump function.
+ */
 const getPump = (name) => async (req, res, next, onOff) => pump(req, res, next, name, onOff);   
 
-//Temp loss for a fixed flow rate
+/**
+ * Calculates the heat loss in a pipe and returns the temperature difference.
+ *
+ * @param {number} tempFluid - The temperature of the fluid inside the pipe.
+ * @param {string} tempSensorName - The name of the temperature sensor to get the ambient temperature.
+ * @returns {Promise<number>} - The temperature difference due to heat loss.
+ */
 async function pipeHeatLoss(tempFluid, tempSensorName) {
   const tempAmbient = await therm.getTemp(tempSensorName)
   const k = 16;// W/mC the heat transfer coefficient of stainless steel
@@ -352,6 +435,17 @@ function doMashStep(step){
   }
 }
 
+/**
+ * Handles the mash process by executing a series of mash steps.
+ *
+ * @async
+ * @function mash
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {string} steps - A JSON string representing an array of mash steps.
+ * @returns {Promise<void>} Sends a response indicating the result of the mash process.
+ */
 async function mash (req, res, next, steps) {
   const stepRequests = JSON.parse(steps).map(doMashStep);
   
@@ -369,6 +463,17 @@ async function mash (req, res, next, steps) {
   }
 };
 
+/**
+ * Fills the specified amount of litres using the fill service and sends a response.
+ *
+ * @async
+ * @function fill
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {number} litres - The amount of litres to fill.
+ * @returns {Promise<void>} - A promise that resolves when the fill is complete.
+ */
 async function fill (req, res, next, litres) {
   await fillService.timedFill({
     strikeLitres: litres, 

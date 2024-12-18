@@ -11,7 +11,12 @@ const brewlog = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
 const therm = require('./temp-service.js');
 const glycolHeater = require('./glycol-heater-service.js');
-const {promiseSerial} = require('../brewstack/common/brew-pub.js');
+
+const promiseSerial = funcs =>
+  funcs.reduce((promise, f) =>
+    promise.then(result => f().then(Array.prototype.concat.bind(result))),
+    Promise.resolve([]))
+
 
 const GLYCOL_TEMPNAME = "TempGlycol";
 const FERMENT_TEMPNAME = "TempFermenter";

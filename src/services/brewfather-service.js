@@ -25,10 +25,15 @@ async function getFermenterTemp(recipeName = "") {
     await logTemps(recipeName, fermenterT, ambientT, glycolT);
 }
 
+
 /**
- * @param {any} fermenter
- * @param {any} ambient
- * @param {any} glycol
+ * Logs temperature data to Brewfather.
+ *
+ * @param {string} recipeName - The name of the beer recipe.
+ * @param {number} fermenter - The temperature of the fermenter.
+ * @param {number} ambient - The ambient temperature.
+ * @param {number} glycol - The temperature of the glycol.
+ * @returns {Promise} - A promise that resolves when the data is posted.
  */
 function logTemps(recipeName, fermenter, ambient, glycol) {
     const data = JSON.stringify({

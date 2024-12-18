@@ -19,6 +19,12 @@ const broker 	= require('./broker.js');
 let publishLog;
 let currentOptions;
 
+/**
+ * Starts the brewing process with the provided options.
+ *
+ * @param {Object} [brewOptions=brewdata.defaultOptions()] - The options for the brewing process.
+ * @returns {Promise<Object>} The brewing options used to start the process.
+ */
 async function start(brewOptions = brewdata.defaultOptions()) {
 	currentOptions = brewOptions;
 	

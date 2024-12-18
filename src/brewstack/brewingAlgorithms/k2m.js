@@ -14,29 +14,30 @@ const pump = require('../../services/pump-service.js');
 
 let startCond = v => v > 0;
 let stopCond = v => v == 0;
-	
+const flowName = "FlowKettleOut";
+const flowStart = () => flow.wait(flowName, startCond, options.flowTimeoutSecs);
+const flowStop = () => flow.wait(flowName, stopCond, options.flowTimeoutSecs);
+
+
 //Transfer contents of kettle to mash tun 
 module.exports = {
-	
-	transfer(options) {	
-		const flowName = "FlowKettleOut";
-		const flowStart = () => flow.wait(flowName, startCond, options.flowTimeoutSecs);
-		const flowStop = () => flow.wait(flowName, stopCond, options.flowTimeoutSecs);
+	/**
+	 * Transfers liquid from the kettle to the mash tun.
+	 *
+	 * @param {Object} options - The options for the transfer process.
+	 * @param {number} options.flowTimeoutSecs - The timeout in seconds for the flow operations.
+	 * @returns {Promise<Object>} A promise that resolves with the options object when the transfer is complete.
+	 */
+	transfer: async function(options) {	
+		brewlog.info("Begin Kettle-to-Mash transfer");
 
-		return new Promise((resolve, reject) => {
-			brewlog.info("Begin Kettle-to-Mash transfer");
+		valves.open("ValveMashIn");
+		pump.kettleOnSync();
+		await flowStart();
+		await flowStop()
+		valves.close("ValveMashIn");
+		pump.kettleOffSync();
 
-			valves.open("ValveMashIn");
-
-			pump.kettleOnSync();
-			
-			flowStart()
-		    .then(flowStop)
-			.then(() => {
-				valves.close("ValveMashIn");
-				pump.kettleOffSync();
-				resolve(options)
-			});
-		});
+		return options;
 	}
 }

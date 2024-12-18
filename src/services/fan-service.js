@@ -62,20 +62,12 @@ function setState(state){
 	i2c.writeBit(FAN_DEF.i2cPinOut, currentState);
 	
 	if (publishFanState){
-		if (currentState == FAN_ON){
-			publishFanState("On");
-		}else{
-			publishFanState("Off");
-		}
+		const newState = (currentState === FAN_ON) ? "On" : "Off";
+		publishFanState(newState);
 	}
 }
 
-/** 
-* @returns {boolean} currentState. 
-*/
-function isOn() {
-    return (currentState === FAN_ON);
-}
+const isOn = () => (currentState === FAN_ON);
 
 /**
  * Automatically switch on/off fan with temperature

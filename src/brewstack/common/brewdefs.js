@@ -15,6 +15,16 @@
 
 const fs = require('fs');
 
+/**
+ * Checks if the current platform is a Raspberry Pi.
+ *
+ * This function determines if the current platform is running on a Raspberry Pi
+ * by first checking if the operating system is Linux. If it is, it reads the
+ * contents of the '/etc/os-release' file to check for specific identifiers
+ * ('Raspbian' or 'bullseye') that indicate a Raspberry Pi.
+ *
+ * @returns {boolean} True if the platform is a Raspberry Pi, false otherwise.
+ */
 function isRaspPi(){
 	const isLinux = /^linux/.test(process.platform);
 	if (isLinux){
