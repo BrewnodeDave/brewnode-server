@@ -209,7 +209,7 @@ function heatTransferKettleToFermenter(deltaSecs){
 }
 
 function simStateChange(){
-    simState.power = simState.heater ? 3000 : 0;
+    simState.power = (simState.Heater === 'ON') ? 3000 : 0;
 
     simPowerChange();
     
