@@ -177,7 +177,10 @@ module.exports = {
 	start(opt) {
 		return new Promise((resolve, reject) => {
 			_opt = opt;
-			if (brewdefs.isRaspPi() && (opt.sim.simulate === false)) {
+			const ispi = brewdefs.isRaspPi();
+			const sim = (opt?.sim?.simulate === false);
+			console.log (`raspi=${ispi}. sim=${sim}`);
+			if (ispi && !sim) {
 				raspi = require('raspi');
 				I2C = require('raspi-i2c').I2C;
 				_i2c = new I2C();
