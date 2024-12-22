@@ -43,7 +43,7 @@ let chillPump;
 
 const MASH_PUMP = "PumpMash";
 const KETTLE_PUMP = "PumpKettle";
-const CHILL_PUMP = "PumpGlycol";
+const GLYCOL_PUMP = "PumpGlycol";
 
 const pumpStop = pump => {
 	if (pump) {
@@ -104,7 +104,7 @@ function on(name){
 		mashPump.onSync();
 	}else if (name === KETTLE_PUMP){
 		kettlePump.onSync();
-	}else if (name === CHILL_PUMP){
+	}else if (name === GLYCOL_PUMP){
 		chillPump.onSync();
   	};
 }
@@ -114,7 +114,7 @@ function off(name){
 		mashPump.offSync();
 	}else if (name === KETTLE_PUMP){
 		kettlePump.offSync();
-	}else if (name === CHILL_PUMP){
+	}else if (name === GLYCOL_PUMP){
 		chillPump.offSync();
   	};
 }	
@@ -126,7 +126,7 @@ module.exports = {
 	OFF,
 	mashPumpName: MASH_PUMP,
 	kettlePumpName: KETTLE_PUMP,
-	chillPumpName: CHILL_PUMP,
+	chillPumpName: GLYCOL_PUMP,
 	start(opt) {			
 		return new Promise((resolve, reject) => {
 			if (started === true){
@@ -134,7 +134,7 @@ module.exports = {
 				return;
 			}
 
-			mashPump = new Pump(MASH_PUMP, brewdefs.I2C_PUMP1_BIT);
+			mashPump = new Pump(MASH_PUMP, brewdefs.I2C_MASH_PUMP);
 
 			mashPump.publishState = broker.create(MASH_PUMP);
 			module.exports.mashOnSync = mashPump.onSync;
@@ -143,7 +143,7 @@ module.exports = {
 			module.exports.mashOff = mashPump.off;
 			mashPump.offSync();
 			
-			kettlePump = new Pump(KETTLE_PUMP, brewdefs.I2C_PUMP0_BIT);
+			kettlePump = new Pump(KETTLE_PUMP, brewdefs.I2C_KETTLE_PUMP);
 			kettlePump.publishState = broker.create(KETTLE_PUMP);
 			module.exports.kettleOn = kettlePump.on;
 			module.exports.kettleOnSync = kettlePump.onSync;
@@ -151,8 +151,8 @@ module.exports = {
 			module.exports.kettleOffSync = kettlePump.offSync;
 			kettlePump.offSync();
 
-			chillPump = new Pump(CHILL_PUMP, brewdefs.I2C_CHILL_PUMP);
-			chillPump.publishState = broker.create(CHILL_PUMP);
+			chillPump = new Pump(GLYCOL_PUMP, brewdefs.I2C_GLYCOL_PUMP);
+			chillPump.publishState = broker.create(GLYCOL_PUMP);
 			module.exports.chillPumpOn = chillPump.on;
 			module.exports.chillPumpOnSync = chillPump.onSync;
 			module.exports.chillPumpOff = chillPump.off;

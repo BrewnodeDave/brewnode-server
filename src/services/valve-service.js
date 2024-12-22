@@ -52,37 +52,22 @@ const VALVE_DEFS = [{
 	name: "ValveFermentIn",//2
 	pinOpened: brewdefs.GPIO_VALVE1_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE1_CLOSED,
-	i2cPinOut: brewdefs.ValveFermentIn
+	i2cPinOut: brewdefs.I2C_FERMENTER_VALVE_IN
 }, {
 	name: "ValveChillWortIn",//3	
 	pinOpened: brewdefs.GPIO_VALVE2_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE2_CLOSED,
-	i2cPinOut: brewdefs.ValveChillWortIn
-}, {
-	name: "ValveChillCleanOut",//4
-	pinOpened: brewdefs.GPIO_VALVE3_OPENED,
-	pinClosed: brewdefs.GPIO_VALVE3_CLOSED,
-	i2cPinOut: brewdefs.ValveChillCleanOut
-}, {
-	name: "ValveChillColdIn",//5
-	pinOpened: brewdefs.GPIO_VALVE4_OPENED,
-	pinClosed: brewdefs.GPIO_VALVE4_CLOSED,
-	i2cPinOut: brewdefs.ValveChillColdIn
+	i2cPinOut: brewdefs.I2C_CHILL_WORT_VALVE_IN
 }, {
 	name: "ValveKettleIn",//6	
 	pinOpened: brewdefs.GPIO_VALVE5_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE5_CLOSED,
-	i2cPinOut: brewdefs.ValveKettleIn
+	i2cPinOut: brewdefs.I2C_KETTLE_VALVE_IN
 }, {
 	name: "ValveMashIn",	//7
 	pinOpened: brewdefs.GPIO_VALVE6_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE6_CLOSED,
-	i2cPinOut: brewdefs.ValveMashIn
-}, {
-	name: "ValveFermentTempIn",//8
-	pinOpened: brewdefs.GPIO_VALVE7_OPENED,
-	pinClosed: brewdefs.GPIO_VALVE7_CLOSED,
-	i2cPinOut: brewdefs.ValveFermentTempIn
+	i2cPinOut: brewdefs.I2C_MASH_IN_VALVE
 }
 ];
 
