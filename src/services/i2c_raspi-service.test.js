@@ -1,8 +1,15 @@
 const i2cService = require('./i2c_raspi-service');
 
-for(let i=0; i<32; i++){
-    test(i);
-}   
+
+// Get the bit number from the command-line arguments
+const bitToTest = parseInt(process.argv[2], 10);
+
+if (isNaN(bitToTest) || bitToTest < 0 || bitToTest >= 32) {
+    console.error('Please provide a valid bit number (0-31) as a command-line argument.');
+    process.exit(1);
+}
+
+test(bitToTest);
 
 async function test(bitNumber){
     await i2cService.start({sim: true});
