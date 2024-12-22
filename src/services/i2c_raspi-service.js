@@ -36,6 +36,22 @@ BANK1:
 	IO_DIR_B @ 0x10
 
 
+	bit 1 = relay 3
+	bit 2 = kettle heater
+	bit 3 = mash pump
+	bit 4 = fermenter pump
+	bit 5 = kettle in valve
+	bit 6 = relay 4
+	bit 8 = glycol pump
+	bit 9 = valve 3 = chill in valve
+	bit 10 = valve 5
+	bit 11 = mash in valve
+	bit 12 = kettle pump
+	bit 13 - fan
+	bit 14 = relay 4
+	bit 15 = relay 2
+	bit 22 = watchdog led?
+	
 	E.g. Switch on watchdog led  =>  
 	DIR:0=out: 
 	i2cset -y 1 0x21 0x0  0xBF
