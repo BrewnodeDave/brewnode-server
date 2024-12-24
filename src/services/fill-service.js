@@ -60,12 +60,12 @@ module.exports = {
 	timedFill(opt) {
 		return new Promise((resolve, reject) => {
 			const FILL_VALVE_NAME = 'ValveKettleIn';
-			const mLPerSec = 200;
-			//128 from garden hose	
-			//196 from blue hose
+			const mLPerSec = 190;
 
+			//The time it takes to open/close, 0.5L pass.
+			
 			//If delay is too short then no flow pulses will be registered.
-			let t = (opt.strikeLitres * 1000 / mLPerSec) / _speedupFactor;
+			let t = ((opt.strikeLitres - 1) * 1000 / mLPerSec) / _speedupFactor;
 
 			//valveSwitchDelay is in mS
 			if (t * 1000 < opt.valveSwitchDelay) {

@@ -79,19 +79,19 @@ module.exports = {
 	
 	I2C_WATCHDOG_HALT_BIT:	23,
 
-	I2C_RELAY_3:	 		1,
-	I2C_HEAT_OUTPUT_BIT:	2, //kettle heater		
-    I2C_MASH_PUMP: 			3, //mash pump
+	I2C_RELAY_3:	 		1,	//unused
+	I2C_HEAT_OUTPUT_BIT:	2, 		
+    I2C_MASH_PUMP: 			3, 
 	I2C_FERMENTER_PUMP: 	4,
 	I2C_KETTLE_VALVE_IN: 	5,
 	I2C_RELAY_12:	 		6,
 	I2C_FERMENTER_VALVE_IN: 7, //BROKEN ???????
-	I2C_GLYCOL_PUMP: 		8, //glycol pump
+	I2C_GLYCOL_PUMP: 		8, 
 	I2C_CHILL_WORT_VALVE_IN:9, //valve 3
-	I2C_RELAY_13:	 		10, //unused
-	I2C_MASH_IN_VALVE: 		11, //mash in valve
-	I2C_KETTLE_PUMP: 		12, //ketttle pump
-	I2C_FAN_OUTPUT_BIT:		13,	//extractor fan
+	I2C_RELAY_13:	 		10, 
+	I2C_MASH_IN_VALVE: 		11, 
+	I2C_KETTLE_PUMP: 		12, 
+	I2C_FAN_OUTPUT_BIT:		13,	
 	I2C_RELAY_4:	 		14,
 	I2C_RELAY_2:	 		15,
 	I2C_WATCHDOG_LED_BIT: 	22,
