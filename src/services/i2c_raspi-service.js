@@ -194,7 +194,7 @@ module.exports = {
 		return new Promise((resolve, reject) => {
 			_opt = opt;
 			const ispi = brewdefs.isRaspPi();
-			const sim = (opt?.sim?.simulate === false);
+			const sim = (opt?.sim?.simulate === true);
 			console.log (`raspi=${ispi}. sim=${sim}`);
 			if (ispi && !sim) {
 				raspi = require('raspi');
