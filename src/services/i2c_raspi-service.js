@@ -268,7 +268,8 @@ module.exports = {
 	 * @param {number} bit - Bit number [0:31]
 	 */
 	toggleBit(bit) {
-		this.writeBit(bit, (this.readBit(bit) === 0) ? 1 : 0);
+		const value = this.readBit(bit);
+		this.writeBit(bit, ((value) === 0) ? 1 : 0);
 	},
 	
 	/** Set direction of a single bit
