@@ -94,8 +94,8 @@ const brewdefs = require('../brewstack/common/brewdefs.js');
 let mraa;
 let _i2c;
 
-const REG20 = 0x20;
-const REG21 = 0x21;
+const REGx20 = 0x20;
+const REGx21 = 0x21;
 
 const DIR_INPUT =  1;
 const DIR_OUTPUT = 0;
@@ -165,11 +165,11 @@ function init(i2c){
 	try {
 	//Initialise all as inputs 
 	brewlog.debug("INIT I2C")
-	i2c.writeByteSync(REG20, 0x0, dataDir[0]);
-	i2c.writeByteSync(REG20, 0x1, dataDir[1]);
+	i2c.writeByteSync(REGx20, 0x0, dataDir[0]);
+	i2c.writeByteSync(REGx20, 0x1, dataDir[1]);
 
-	i2c.writeByteSync(REG21, 0x0, dataDir[2]);
-	i2c.writeByteSync(REG21, 0x1, dataDir[3]);
+	i2c.writeByteSync(REGx21, 0x0, dataDir[2]);
+	i2c.writeByteSync(REGx21, 0x1, dataDir[3]);
 	}
 	catch (err) {
 		if (err.errno == 121){
@@ -217,15 +217,15 @@ module.exports = {
     	try {
 			if (bit < 16) {
 			  if (bit < 8) {
-				dataByte[0] = writeReg(REG20, 0x12, dataByte[0], bit - (0 * 8), value);
+				dataByte[0] = writeReg(REGx20, 0x12, dataByte[0], bit - (0 * 8), value);
 			  } else {
-				dataByte[1] = writeReg(REG20, 0x13, dataByte[1], bit - (1 * 8), value);
+				dataByte[1] = writeReg(REGx20, 0x13, dataByte[1], bit - (1 * 8), value);
 			  }
 			} else {
 			  if (bit < 24) {
-				dataByte[2] = writeReg(REG21, 0x12, dataByte[2], bit - (2 * 8), value);
+				dataByte[2] = writeReg(REGx21, 0x12, dataByte[2], bit - (2 * 8), value);
 			  }else {
-				dataByte[3] = writeReg(REG21, 0x13, dataByte[3], bit - (3 * 8), value);
+				dataByte[3] = writeReg(REGx21, 0x13, dataByte[3], bit - (3 * 8), value);
 			  }
 			}
 		  } catch (err) {
@@ -241,21 +241,21 @@ module.exports = {
 	  let result;
 	  if (bit < 16){
 	    if (bit < 8){
-	      dataByte[0] = _i2c.readByteSync(REG20, 0x12);
+	      dataByte[0] = _i2c.readByteSync(REGx20, 0x12);
 	    //   brewlog.debug("Read [byte0]=>"+dataByte[0])
 	      result = getBit(dataByte[0], bit); 
 	    }else{		
-	      dataByte[1] = _i2c.readByteSync(REG20, 0x13);
+	      dataByte[1] = _i2c.readByteSync(REGx20, 0x13);
 	    //   brewlog.debug("Read [byte1]=>"+dataByte[1])
 	      result = getBit(dataByte[1], bit-8); 
 	    }
 	  }else{
 	    if (bit < 24){
-	      dataByte[2] = _i2c.readByteSync(REG21, 0x12);		
+	      dataByte[2] = _i2c.readByteSync(REGx21, 0x12);		
 	        // brewlog.debug("Read [byte2]=>"+dataByte[2])
 		result = getBit(dataByte[2], bit-16); 
 	    }else{		
-	      dataByte[3] = _i2c.readByteSync(REG21, 0x13);		
+	      dataByte[3] = _i2c.readByteSync(REGx21, 0x13);		
 	    //   brewlog.debug("Read [byte3]=>"+dataByte[3])
 	      result = getBit(dataByte[3], bit-24); 
 	    }
@@ -300,10 +300,10 @@ module.exports = {
 	
 	getWord() {
 		try {
-			const byte0 = _i2c.readByteSync(REG20, 0x12);
-			const byte1 = _i2c.readByteSync(REG20, 0x13);
-			const byte2 = _i2c.readByteSync(REG21, 0x12);		
-			const byte3 = _i2c.readByteSync(REG21, 0x13);		
+			const byte0 = _i2c.readByteSync(REGx20, 0x12);
+			const byte1 = _i2c.readByteSync(REGx20, 0x13);
+			const byte2 = _i2c.readByteSync(REGx21, 0x12);		
+			const byte3 = _i2c.readByteSync(REGx21, 0x13);		
 			
 		//console.log(byte3,byte2,byte1,byte0);
 			const word = (byte3 << 24) | (byte2 << 16) | (byte1 << 8) | byte0;
@@ -322,15 +322,15 @@ function setDir(bit, dir) {
 	// brewlog.debug(`BEFORE bit ${bit}=${dir} I2C DIR BITS`, `${toString(dataDir)}`);
 	if (bit < 16){
 		if (bit < 8){
-			dataDir[0] = writeReg(REG20, 0x0, dataDir[0], bit-(0*8), dir); 
+			dataDir[0] = writeReg(REGx20, 0x0, dataDir[0], bit-(0*8), dir); 
 		}else{		
-			dataDir[1] = writeReg(REG20, 0x1, dataDir[1], bit-(1*8), dir); 
+			dataDir[1] = writeReg(REGx20, 0x1, dataDir[1], bit-(1*8), dir); 
 		}
 	} else {
 		if (bit < 24){
-			dataDir[2] = writeReg(REG21, 0x0, dataDir[2], bit-(2*8), dir); 
+			dataDir[2] = writeReg(REGx21, 0x0, dataDir[2], bit-(2*8), dir); 
 		}else{		
-			dataDir[3] = writeReg(REG21, 0x1, dataDir[3], bit-(3*8), dir); 
+			dataDir[3] = writeReg(REGx21, 0x1, dataDir[3], bit-(3*8), dir); 
 		}
 	}
 	// brewlog.debug("AFTER I2C DIR BITS", `${toString(dataDir)}`);
