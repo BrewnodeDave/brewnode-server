@@ -37,7 +37,7 @@ function setSampleInterval(secs){
 
 	module.exports.getStatus(true);//.then(console.log);
 	
-	sampleInterval = setInterval(() => module.exports.getStatus(true)/*.then(console.log)*/, secs * 1000);										
+	sampleInterval = setInterval(() => module.exports.getStatus(false)/*.then(console.log)*/, secs * 1000);										
 }
 
 module.exports = { 	

@@ -39,6 +39,12 @@ paths:
       summary: Get current status
       description: Return the values of all sensors etc.
       operationId: sensorStatus
+      parameters:
+      - name: force
+        in: query
+        description: Force a sensor update
+        schema:
+          $ref: '#/components/schemas/Bool'
       responses:
         200:
           description: Success
@@ -1827,6 +1833,8 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/ProfileStep'
+    Bool:
+      type: boolean
     
   responses:
     NotFound:
