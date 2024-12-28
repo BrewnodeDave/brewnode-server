@@ -215,7 +215,7 @@ async function restart (req, res, next) {
 async function sensorStatus(req, res, next) {
   try {
     const result = [];
-    const force = req.query.force === 'true';
+    const force = req.query.force === true;
     const tempStatus = await temp.getStatus(force);
     result.push(pumps.getStatus().flat());
     result.push(flow.getStatus().flat());

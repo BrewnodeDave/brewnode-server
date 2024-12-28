@@ -65,10 +65,12 @@ module.exports = {
 			//The time it takes to open/close, 0.5L pass.
 			
 			//If delay is too short then no flow pulses will be registered.
-			let t = ((opt.strikeLitres - 1) * 1000 / mLPerSec) / _speedupFactor;
+			const mLPerL = 1000;
+			let tSecs = (mLPerL * opt.strikeLitres / mLPerSec) / _speedupFactor;
 
 			//valveSwitchDelay is in mS
-			if (t * 1000 < opt.valveSwitchDelay) {
+			const msPerSec = 1000;
+			if ((tSecs * msPerSec) < opt.valveSwitchDelay) {
 				//bypass pulses and simply update kettle volume
 				//				kettle.updateVolume(litres);
 				resolve();
@@ -76,17 +78,20 @@ module.exports = {
 				valves.open(FILL_VALVE_NAME);
 
 				//Update progress every litre
-				let msPerLitre = 1000 * (1000 / mLPerSec) / _speedupFactor;
+				let msPerLitre = msPerSec * (mLPerL / mLPerSec) / _speedupFactor;
 				let n = 1;
 				const progressInterval = setInterval(() => {
 					remainingFillLitres(opt.strikeLitres - n);
+					console.log({n})
 					n++;	
 				}, msPerLitre);
 			
 				//t must be in secs.
-				return delay(t, "Fill")
+				return delay(tSecs, "Fill")
 					.then(() => {
 						clearInterval(progressInterval);
+						console.log(0)
+						remainingFillLitres(0);
 						valves.close(FILL_VALVE_NAME);
 						resolve();
 					});
