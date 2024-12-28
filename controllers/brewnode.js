@@ -51,13 +51,13 @@ async function whatsBrewing (req, res, next) {
   const response = await axios.get(`${brewfatherV2}/batches`, config);
   const numBrewing = response.data.length;
     if (numBrewing === 0) {
-    res.status(500);
+    res.status(400);
     res.send("No brews in progress!");
   }else if (numBrewing === 1) {
     res.status(200);
     res.send(response.data[0].recipe);
   }else {
-    res.status(500);
+    res.status(400);
     res.send(`Multiple brews in progress!`);
   }
 }
