@@ -11,6 +11,8 @@ const fill 		= require('./services/fill-service.js');
 const heater 	= require('./services/heater-service.js');
 const tempController 	= require('./services/temp-controller-service.js');
 const brewfather = require('./services/brewfather-service.js');
+const mysql		 = require('./services/mysql-service.js');
+const brewdata 	= require('./brewstack/common/brewdata.js');
 
 const sim 		= require('./sim/sim.js');
 const brewlog 	= require('./brewstack/common/brewlog.js');
@@ -35,6 +37,7 @@ async function start(brewOptions = brewdata.defaultOptions()) {
 	brewOptions.ambientTemp = await temp.start(brewOptions)//sim.speedupFactor, sim.ambientTemp => ambientTemp
 
 	await brewfather.start(brewOptions) // recipeName //must come after temp.start
+	await mysql.start(brewOptions.brewname);
 	await pump.start(brewOptions)//
 	await fan.start(brewOptions)//
 	await valves.start(brewOptions)//valveSwitchDelay
@@ -56,6 +59,7 @@ async function stop(options) {
 
 	brewfather.stop();
 
+	await mysql.stop();
 	await pump.stop();
 	await temp.stop();
 	await fan.stop();

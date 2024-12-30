@@ -40,6 +40,31 @@ paths:
       description: Return the values of all sensors etc.
       operationId: sensorStatus
       parameters:
+      - name: name
+        in: query
+        description: Name of sensor status to fetch
+        required: false
+        style: form
+        schema:
+          type: string
+          enum:
+          - All
+          - Temperatures
+          - PumpKettle
+          - PumpMash
+          - PumpGlycol
+          - TempKettle
+          - TempMash
+          - TempWort
+          - TempFermenter
+          - ValveKettleIn
+          - ValveMashIn
+          - ValveChillWortIn
+          - ValveFermentIn
+          - Heater
+          - Fan
+          - Watchdog
+          default: All
       - name: force
         in: query
         description: Force a sensor update
@@ -68,7 +93,7 @@ paths:
         schema:
           maximum: 49
           minimum: 1
-          type: integer
+          type: number
           example: 10
       responses:
         200:

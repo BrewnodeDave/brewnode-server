@@ -273,13 +273,15 @@ module.exports = {
 		if (publishPower != null){
 			publishPower(power);
 		}	
-		return [{
-			name	: "Heater", 
-			value	: heater === HEATER_ON ? 'ON' : 'OFF'
-		},{
-			name	: "Power",		
-			value	: power
-		}]
+
+		return heater === HEATER_ON ? 'ON' : 'OFF';
+		// return [{
+		// 	name	: "Heater", 
+		// 	value	: heater === HEATER_ON ? 'ON' : 'OFF'
+		// },{
+		// 	name	: "Power",		
+		// 	value	: power
+		// }]
 	}
 }
 

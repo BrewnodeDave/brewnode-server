@@ -14,6 +14,7 @@
 
 
   const brewlog = require("./brewstack/common/brewlog.js");
+  const mysql = require("./services/mysql-service.js");
   
   const EventEmitter = require("events").EventEmitter;
   const sensor = new EventEmitter();
@@ -60,29 +61,27 @@ function create(sensorName) {
    
    //return a publish function
    return (value, emit=true) => {    
-	   let timeStamp = new Date().getTime();
-	   brewlog.sensorLog(sensorName, value);
+	//    brewlog.sensorLog(sensorName, value);
 	   if (_socket){
-		   _socket.broadcast.emit(sensorName,  {date: timeStamp, value});
-		   _socket.emit(sensorName,  {date: timeStamp, value});
+		   _socket.broadcast.emit(sensorName,  value);
+		   _socket.emit(sensorName,  value);
 	   }
 	   if (emit){
-		   sensor.emit(sensorName, {
-			   date: timeStamp, 
-			   value
-		   });
+		   sensor.emit(sensorName, value);
+		   mysql.insert(sensorName, value);
 	   }
 	   
 	   clients.forEach(client => {
 		   if (client.connected){
-			   client.emit(sensorName,  {date: timeStamp, value});
-			   client.broadcast.emit(sensorName,  {date: timeStamp, value});
+			   client.emit(sensorName,  value);
+			   client.broadcast.emit(sensorName,  value);
 		   }
 	   });
    };		
 }		
 
- module.exports = {
+
+ module.exports = {	
 	 /**
 	  * @param {any} emit
 	  */
@@ -162,6 +161,13 @@ function create(sensorName) {
 			clients.push(socket);
 			console.log(`New Attached client ${socket.conn.remoteAddress}`);
         }
+
+
+// Catch socket disconnect
+_socket.on('disconnect', () => {
+    console.log(`Socket ${_socket.id} disconnected`);
+    // Perform any necessary cleanup or logging here
+});
     },
 		
 	/**

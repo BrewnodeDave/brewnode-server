@@ -26,19 +26,44 @@ const temp = require('../src/services/temp-service.js');
 const valves = require('../src/services/valve-service.js');
 const tempController = require('../src/services/temp-controller-service.js');
 const startStop = require('../src/start-stop.js');
-
+const {getBrewfatherOptions} = require('../src/brewstack/common/brewdata.js');
 const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/broker.js');
 
 const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
 
-//Add these to an API?
-const brewOptions = brewdata.defaultOptions();
 const debug = true;
 const flowTimeoutSecs = 5;
 
-startStop.start(brewOptions, debug).then(x=>console.log("started"));
 
+
+async function foo(){
+  const brewOptions = brewdata.defaultOptions();
+  const recipe = await getBatch();
+  if (recipe?.data !== undefined) {
+    brewOptions.brewname = recipe.name;
+  }
+
+  await startStop.start(brewOptions, debug).then(x=>console.log("started"));
+}
+
+foo();
+
+async function getBatch () {
+  const auth = getAuth();
+  const params = {
+    "complete": true, 
+    "status": 'Brewing',
+  };  
+  
+  const config = { params, auth};  
+  const response = await axios.get(`${brewfatherV2}/batches`, config);
+  const numBrewing = response.data.length;
+  if (numBrewing === 1) {
+    return response.data[0].recipe;
+  }else {
+    return brewdata.defaultOptions()  }
+  }
 
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
@@ -214,18 +239,85 @@ async function restart (req, res, next) {
 
 async function sensorStatus(req, res, next) {
   try {
-    const result = [];
     const force = req.query.force === true;
-    const tempStatus = await temp.getStatus(force);
-    result.push(pumps.getStatus().flat());
-    result.push(flow.getStatus().flat());
-    result.push(wdog.getStatus());
-    result.push(fan.getStatus());
-    result.push(heater.getStatus());
-    result.push(tempStatus.flat());
-    result.push(valves.getStatus().flat());
+    let result = [];
+    let f;
 
-    res.status(200).json(result.flat());
+    switch(req.query.name){
+      case "ValveKettleIn":
+        result = valves.getStatus().find(v => v.name === "ValveKettleIn").value;
+        break; 
+      case "ValveMashIn": 
+        result = valves.getStatus().find(v => v.name === "ValveMashIn").value;
+        break;
+      case "ValveChillWortIn":
+        result = valves.getStatus().find(v => v.name === "ValveChillWortIn").value;
+        break;
+      case "ValveFermentIn":
+        result = valves.getStatus().find(v => v.name === "ValveFermentIn").value;
+        break;
+      case "PumpKettle":
+        result = pumps.getStatus().find(p => p.name === "PumpKettle").value;
+        break;
+      case "PumpMash":
+        result = pumps.getStatus().find(p => p.name === "PumpMash").value;
+        break;
+      case "PumpGlycol":
+        result = pumps.getStatus().find(p => p.name === "PumpGlycol").value;
+        break;
+      case "Watchdog":
+        result = wdog.getStatus();
+        break;
+      case "Fan":
+        result = fan.getStatus();
+        break;
+      case "Heater":
+        result = heater.getStatus();
+        break;
+      case "Pumps":
+        result = pumps.getStatus().flat();
+        break;
+      case "Valves":
+        result = valves.getStatus().flat();
+        break;
+      case "Temperatures":
+        result = await temp.getStatus(force);
+        break;
+      case "TempKettle":
+        f = await temp.getStatus(force);
+        result = f.find(t => t.name === "TempKettle").value;
+        break;
+      case "TempMash":
+        f = await temp.getStatus(force);
+        result = f.find(t => t.name === "TempMash").value;
+        break;    
+      case "TempFermenter":
+        f = await temp.getStatus(force);
+        result = f.find(t => t.name === "TempFermenter").value;
+        break;
+      case "TempGlycol":
+        f = await temp.getStatus(force);
+        result = f.find(t => t.name === "TempGlycol").value;
+        break
+      case "All":
+        const tempStatus = await temp.getStatus(force);
+        result.push(tempStatus.flat());
+        result.push(pumps.getStatus().flat());
+        result.push(flow.getStatus().flat());
+        result.push(wdog.getStatus());
+        result.push(fan.getStatus());
+        result.push(heater.getStatus());
+        result.push(valves.getStatus().flat());
+
+        result = result.flat();
+        break;
+      default:
+        console.error(`Unknown sensor name: ${req.query.name}`);
+        res.status(400).send(`Unknown sensor name: ${req.query.name}`);
+        return;
+    }
+
+    res.status(200).json(result);
   } catch (error) {
     console.error('Error getting status:', error);
     res.status(500).send('Internal Server Error');

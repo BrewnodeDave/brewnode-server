@@ -124,9 +124,9 @@ let coolingTimer = null;
 
 function change(item){
     return value => {
-        if (simState[item] !== value.value){
-            console.log("Sim change",item, simState[item], value.value);
-            simState[item] = value.value;
+        if (simState[item] !== value){
+            console.log("Sim change",item, simState[item], value);
+            simState[item] = value;
             simStateChange();
         }
     };
@@ -396,8 +396,8 @@ module.exports = {
                     return;
                 }
                 const valveStatii = valve.getStatus();
-                valveKettleInChange({value:foo(valveStatii, 'ValveKettleIn').state});
-                valveMashInChange({value:foo(valveStatii, 'ValveMashIn').state});
+                valveKettleInChange(foo(valveStatii, 'ValveKettleIn').state);
+                valveMashInChange(foo(valveStatii, 'ValveMashIn').state);
             }, SIM_UPDATE_INTERVAL);
 
             const cooling = (factor, sensor) => {
@@ -422,7 +422,7 @@ module.exports = {
                 const FERMENTER_COOLING_FACTOR = 0.000001;
                 const MASH_TUN_COOLING_FACTOR = 0.000001;
                 
-                powerChange({value:simState.power});
+                powerChange(simState.power);
 
                 ds18x20.set(KETTLE_TEMP,  cooling(KETTLE_COOLING_FACTOR,   KETTLE_TEMP));
                 ds18x20.set(MASHTUN_TEMP, cooling(MASH_TUN_COOLING_FACTOR, MASHTUN_TEMP));
