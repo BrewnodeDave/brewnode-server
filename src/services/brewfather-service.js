@@ -48,11 +48,11 @@ function logTemps(recipeName, fermenter, ambient, glycol) {
 }
 
 module.exports = {
-    start: async (opt) => {
+    start: async (recipeName) => {
         brewlog.info("brewfather-service", "Start");
         const mins15  = 15 * 60 * 1000;
-        timer = setInterval(() =>getFermenterTemp(opt.recipeName), mins15);
-        return opt;
+        timer = setInterval(() => getFermenterTemp(recipeName), mins15);
+        return;
     },
     stop: () => {
         brewlog.info("brewfather-service", "Stop");

@@ -12,6 +12,11 @@ let connection;
 let _session;
 
 
+/**
+ * Creates a table in the MySQL database if it does not already exist.
+ *
+ * @param {string} tableName - The name of the table to be created.
+ */
 function createBrewTable(tableName) {
     const createTableQuery = `
 		CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, value JSON NOT NULL, timestamp TIMESTAMP  DEFAULT CURRENT_TIMESTAMP)`;
@@ -25,19 +30,30 @@ function createBrewTable(tableName) {
     });
 }
 
+/**
+ * Sanitizes a brew name by replacing any character that is not a letter, number, or underscore with an underscore.
+ * Ensures the name starts with a letter or underscore and truncates the result to 64 characters.
+ *
+ * @param {string} brewname - The brew name to sanitize.
+ * @returns {string} - The sanitized brew name.
+ */
 function sanitizeBrewName(brewname) {
-    // Replace any character that is not a letter, number, or underscore with an underscore
     let sanitized = brewname.replace(/[^a-zA-Z0-9_]/g, '_');
-    // Ensure the name starts with a letter or underscore
     if (!/^[a-zA-Z_]/.test(sanitized)) {
         sanitized = '_' + sanitized;
     }
-    // Truncate to 64 characters
     return sanitized.substring(0, 64);
 }
 
 
-function connect(name){
+/**
+ * Establishes a connection to the MySQL database and creates a session-specific table.
+ * 
+ * @param {string} name - The name of the brew session.
+ * @returns {Promise<number>} - A promise that resolves with the MySQL connection thread ID.
+ * @throws {Error} - If there is an error connecting to the MySQL database.
+ */
+function start(name){
 	return new Promise((resolve, reject) => {
 		connection = mysql.createConnection({
 			host     : '192.185.20.89',
@@ -69,7 +85,7 @@ function connect(name){
 		connection.on('error', (err) => {
 			console.error('MySQL error:', err.code);
 			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-				connect(opt); // Reconnect on connection loss
+				start(opt); // Reconnect on connection loss
 			} else {
 				throw err;
 			}
@@ -77,8 +93,15 @@ function connect(name){
 	});
 } 
 
+/**
+ * Inserts a name and value into the current session's table in the MySQL database.
+ * 
+ * @param {string} name - The name to be inserted.
+ * @param {any} value - The value to be inserted, which will be stringified.
+ * @returns {Promise} - A promise that resolves if the insertion is successful or if certain conditions are met, and rejects if there is an error during the query execution.
+ */
 function insert(name, value){
-	return new Promise((resolve, reject) => {
+	 return new Promise((resolve, reject) => {
 		if (_session === undefined || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
 			resolve();
 			return;
@@ -101,7 +124,12 @@ function insert(name, value){
 	});		
 }
 
-function disconnect(){
+/**
+ * Stops the MySQL connection.
+ * 
+ * @returns {Promise<void>} A promise that resolves when the connection is successfully closed, or rejects with an error if the connection could not be closed.
+ */
+function stop(){
 	return new Promise((resolve, reject) => {
 		connection.end((err) => {
 			if (err) {
@@ -114,7 +142,6 @@ function disconnect(){
 
 module.exports = {
 	insert,
-	setSession: s => _session = s,
-	start: connect,
-	stop: disconnect
+	start,
+	stop
 }

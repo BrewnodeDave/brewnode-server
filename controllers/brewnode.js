@@ -15,7 +15,7 @@ const k2m = require('../src/brewstack/brewingAlgorithms/k2m.js');
 const m2k = require('../src/brewstack/brewingAlgorithms/m2k.js');
 const k2f = require('../src/brewstack/brewingAlgorithms/k2f.js');
 const sim = require('../src/sim/sim.js');
-const heater = require('../src/services/heater-service.js');  
+const kettleHeater = require('../src/services/kettle-heater-service.js');  
 const fillService = require('../src/services/fill-service.js');
 const therm = require('../src/services/temp-service.js');
 const pumps = require('../src/services/pump-service.js');
@@ -26,16 +26,14 @@ const temp = require('../src/services/temp-service.js');
 const valves = require('../src/services/valve-service.js');
 const tempController = require('../src/services/temp-controller-service.js');
 const startStop = require('../src/start-stop.js');
-const {getBrewfatherOptions} = require('../src/brewstack/common/brewdata.js');
 const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/broker.js');
 
 const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
+const mysqlService = require('../src/services/mysql-service.js');
+const {getSimulationSpeed} = require('../src/sim/sim.js');
 
-const debug = true;
 const flowTimeoutSecs = 5;
-
-
 
 async function foo(){
   const brewOptions = brewdata.defaultOptions();
@@ -44,10 +42,10 @@ async function foo(){
     brewOptions.brewname = recipe.name;
   }
 
-  await startStop.start(brewOptions, debug).then(x=>console.log("started"));
+  await startStop.start().then(x=>console.log("started"));
 }
 
-foo();
+// foo();
 
 async function getBatch () {
   const auth = getAuth();
@@ -62,8 +60,9 @@ async function getBatch () {
   if (numBrewing === 1) {
     return response.data[0].recipe;
   }else {
-    return brewdata.defaultOptions()  }
+    return brewdata.defaultOptions()  
   }
+}
 
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
@@ -76,8 +75,20 @@ async function whatsBrewing (req, res, next) {
   const response = await axios.get(`${brewfatherV2}/batches`, config);
   const numBrewing = response.data.length;
     if (numBrewing === 0) {
-    res.status(400);
-    res.send("No brews in progress!");
+      const params = {
+        "complete": true, 
+        "status": 'Fermenting'
+      }; 
+      const config = { params, auth};  
+      const response = await axios.get(`${brewfatherV2}/batches`, config);
+      const numBrewing = response.data.length;
+      if (numBrewing === 0) {
+        res.status(400);
+        res.send("No brews in progress!");
+      }else {
+        res.status(200);
+        res.send(response.data[0].recipe);
+      }
   }else if (numBrewing === 1) {
     res.status(200);
     res.send(response.data[0].recipe);
@@ -115,13 +126,11 @@ async function getInventory (req, res, next) {
 }; 
 
 async function boil (req, res, next, mins) {
-  const brewOptions = brewdata.defaultOptions();
-
-  await tempController.init(600, 0.3, 100, brewOptions);
+  await tempController.init(600, 0.3, 100);
   await tempController.setTemp(
     100, 
-    brewOptions.sim.simulate 
-      ? (mins / brewOptions.sim.speedupFactor) 
+    (getSimulationSpeed() !== 1)
+      ? (mins / getSimulationSpeed()) 
       : mins,
     remainingBoilMinutes
   );
@@ -132,21 +141,20 @@ async function boil (req, res, next, mins) {
 };
 
 async function chill (req, res, next, profile) {
-  await glycol.start()
-  await glycol.doSteps(true, [{tempC:temp, mins:hours/24}]);
-  await glycol.stop();
+  progressPublish(`Chilling`);
+
+  await glycol.doSteps(profile);
 
   res.status(200);
-  res.send("Chilling Complete");
+  progressPublish(``);
+  res.send("Chill Complete");
 };
 
 async function ferment (req, res, next, profile) {
-
   progressPublish(`Fermenting`);
 
-  await glycol.start();
-  await glycol.doSteps(false, profile);
-  await glycol.stop();
+  await glycol.doSteps(profile);
+
   res.status(200);
   progressPublish(``);
   res.send("Ferment Complete");
@@ -185,11 +193,11 @@ async function mash2kettle (req, res, next, flowTimeoutSecs) {
  */
 async function setKettleTemp (req, res, next, tempC, mins) {
   // progressPublish(`Setting kettle to ${tempC}C for ${mins} mins`);
-  await tempController.init(800, 0.3, 100, brewOptions);
+  await tempController.init(800, 0.3, 100);
   await tempController.setTemp(
     tempC, 
-    brewOptions.sim.simulate 
-      ? (mins / brewOptions.sim.speedupFactor) 
+    (getSimulationSpeed() !== 1)  
+      ? (mins / getSimulationSpeed()) 
       : mins,
     remainingKettleMinutes
   );
@@ -218,7 +226,7 @@ async function setKettleVolume (req, res, next, litres) {
   res.send(`Simulated kettle volume set to ${litres} litres`);
 };
 
-async function getSimulationSpeed (req, res, next) {
+async function getSimSpeed (req, res, next) {
   const factor = sim.getSimulationSpeed();
   res.status(200);
   res.send(`${factor}`);
@@ -272,7 +280,7 @@ async function sensorStatus(req, res, next) {
         result = fan.getStatus();
         break;
       case "Heater":
-        result = heater.getStatus();
+        result = kettleHeater.getStatus();
         break;
       case "Pumps":
         result = pumps.getStatus().flat();
@@ -306,7 +314,7 @@ async function sensorStatus(req, res, next) {
         result.push(flow.getStatus().flat());
         result.push(wdog.getStatus());
         result.push(fan.getStatus());
-        result.push(heater.getStatus());
+        result.push(kettleHeater.getStatus());
         result.push(valves.getStatus().flat());
 
         result = result.flat();
@@ -389,7 +397,7 @@ async function fanStatus(req, res, next) {
  * @returns {void}
  */
 async function heat (req, res, next, onOff) {
-  (onOff === 'On') ? heater.forceOn() : heater.forceOff(); 
+  (onOff === 'On') ? kettleHeater.forceOn() : kettleHeater.forceOff(); 
   res.status(200);
   res.send(onOff);
 };
@@ -506,8 +514,8 @@ function doMashStep(step){
       const temp = tempC + deltaT;
       await tempController.setTemp(
         temp, 
-        brewOptions.sim.simulate 
-          ? (mins / brewOptions.sim.speedupFactor) 
+        (getSimulationSpeed() !== 1)
+          ? (mins / getSimulationSpeed()) 
           : mins,
         remainingMashMinutes);
 
@@ -568,13 +576,16 @@ async function mash (req, res, next, steps) {
  * @returns {Promise<void>} - A promise that resolves when the fill is complete.
  */
 async function fill (req, res, next, litres) {
-  await fillService.timedFill({
-    strikeLitres: litres, 
-    valveSwitchDelay: 5000
-  });
+  await fillService.timedFill(litres);
   res.status(200);
   res.send("Fill Complete");
 };
+
+function setBrewname (req, res, next, name) {
+  mysqlService.start(name);
+  res.status(200);
+  res.send(`Brewname set to ${name}`);
+} 
 
 module.exports = {
   boil,
@@ -588,7 +599,7 @@ module.exports = {
   getInventory,
   getKettleTemp,
   getKettleVolume,
-  getSimulationSpeed,
+  getSimSpeed,
   glycolPump: getPump("PumpGlycol"),
   heat,
   k2f: kettle2fermenter,
@@ -602,6 +613,7 @@ module.exports = {
   pumpsStatus,
   restart,
   sensorStatus,
+  setBrewname,
   setKettleTemp,
   setKettleVolume,
   setSimulationSpeed,

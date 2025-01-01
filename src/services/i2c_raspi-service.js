@@ -91,7 +91,7 @@ Watchdog LED	0x21	0x12	0x40	22	Out(0)	1 = On
 
 const brewlog = require('../brewstack/common/brewlog.js');
 const brewdefs = require('../brewstack/common/brewdefs.js');
-let mraa;
+
 let _i2c;
 
 const REGx20 = 0x20;
@@ -109,7 +109,6 @@ const BYTE_INPUT = (DIR_INPUT << 0) | (DIR_INPUT << 1) | (DIR_INPUT << 2) | (DIR
 
 let I2C;
 let raspi;
-let _opt;
 
 //IN=1, OUT=0
 let dataDir  = [BYTE_INPUT, BYTE_INPUT, BYTE_INPUT, BYTE_INPUT];
@@ -187,14 +186,14 @@ function toString(bytes){
 }
 
 
+module.exports = {}
 module.exports = { 
 	DIR_INPUT,
 	DIR_OUTPUT,
-	start(opt) {
-		return new Promise((resolve, reject) => {
-			_opt = opt;
+	start : (simulationSpeed) => 
+		new Promise((resolve, reject) => {
 			const ispi = brewdefs.isRaspPi();
-			const sim = (opt?.sim?.simulate === true);
+			const sim = simulationSpeed !== 1;
 			console.log (`raspi=${ispi}. sim=${sim}`);
 			if (ispi && !sim) {
 				raspi = require('raspi');
@@ -205,9 +204,8 @@ module.exports = {
 				_i2c = require('../sim/raspi-i2c.js');
 				init(_i2c);
 			}
-			resolve(opt);
-		})
-	},
+			resolve();
+		}),
 	
 	/** Set or clear any bit
 	 * @param {number} bit - Bit number [0:31]
@@ -314,7 +312,7 @@ module.exports = {
 		} catch (err) {
 			brewlog.critical("getWord Error", `${err}`)
 			//restart
-			this.start(_opt)
+			this.start()
 		}
 
 	}

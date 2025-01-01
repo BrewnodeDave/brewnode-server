@@ -39,7 +39,7 @@ const I2C_FLOW_KETTLE_IN_MASK 	= 1 << brewdefs.I2C_FLOW_KETTLE_IN;
  * @const
  * @desc Interval between flow events
  */
-let reportPeriodSecs = null;
+const reportPeriodSecs = 1;
 
 let samplePeriodTooSmall = null;
 let pulseTimer = null;
@@ -89,18 +89,18 @@ const hrsecs = (hrtime) => hrtime[0] + hrtime[1]/1E9;
 /**
  * @class Flow
  * @classdesc Each sensor emits a pulse every time a small volume flows through it.  
- * @param {{id:number, name:string, i2cPin:number, mLPerPulse:number, k:number}} opt - Sensor name, I2C pin number and calibrated volume per pulse.
+ * @param {{id:number, name:string, i2cPin:number, mLPerPulse:number, k:number}} flowDef - Sensor name, I2C pin number and calibrated volume per pulse.
  */
-function Flow(opt){
+function Flow(flowDef){
 	const thisFlow = this;  
 
-	thisFlow.id = opt.id;
-	thisFlow.name = opt.name;
-	thisFlow.i2cPin = opt.i2cPin;
-	thisFlow.mLPerPulse = opt.mLPerPulse;
-	thisFlow.k = opt.k;
-	thisFlow.k_init = opt.k;
-	thisFlow.mLPerPulse_init = opt.mLPerPulse;
+	thisFlow.id = flowDef.id;
+	thisFlow.name = flowDef.name;
+	thisFlow.i2cPin = flowDef.i2cPin;
+	thisFlow.mLPerPulse = flowDef.mLPerPulse;
+	thisFlow.k = flowDef.k;
+	thisFlow.k_init = flowDef.k;
+	thisFlow.mLPerPulse_init = flowDef.mLPerPulse;
 	thisFlow.emitSecs2 = undefined;
 	thisFlow.count = 0;
 	thisFlow.prevState;
@@ -244,17 +244,16 @@ module.exports = {
 	ID_FLOW_FERMENT_IN,
 	ID_FLOW_KETTLE_IN,//????????
 
-	start(opt) { 
+	start(simulationSpeed) { 
 		return new Promise((resolve, reject) => {
 			samplePeriodTooSmall = 0;
 			//only start once
 			if (started === true){
-				resolve(opt);
+				resolve();
 				return;
 			}
 			
-			simInterval = 500 / opt.sim.speedupFactor;
-			reportPeriodSecs = opt.flowReportSecs;
+			simInterval = 500 / simulationSpeed;
 			let initValue = {number:undefined, dir:i2c.DIR_INPUT, value:undefined};
 
 			FLOW_DEFS.forEach(flowDef => {
@@ -271,7 +270,7 @@ module.exports = {
 			}
 			active = false;
 			
-			if (opt.sim.simulate === false){
+			if (simulationSpeed === 1){
 				timeoutSecs = TIMEOUT_SECS;
 				pulseTimer = setInterval(() => {
 					//Make this as fast as possible
@@ -291,23 +290,23 @@ module.exports = {
 					}
 				}, SAMPLE_PERIOD);
 			}else{
-				timeoutSecs = TIMEOUT_SECS / opt.sim.speedupFactor;
+				timeoutSecs = TIMEOUT_SECS / simulationSpeed;
 			}
 			started = true;
-			resolve(opt);
+			resolve();
 		});
 	},
 
 	/**
 	 * Stop the flow service.	
 	 */
-	stop(opt) {
+	stop() {
 		return new Promise((resolve, reject) => {
 			console.log({samplePeriodTooSmall});	
 			samplePeriodTooSmall = null;
 
 			if (started === false){
-				resolve(opt);
+				resolve();
 				return;
 			}
 			
@@ -324,7 +323,7 @@ module.exports = {
 			started = false;
 			brewlog.info("flow.js", "stopped");
 
-			resolve(opt);
+			resolve();
 		});
 	},
 /*
@@ -348,13 +347,13 @@ module.exports = {
 	//Increment by (1/secsPerPulse) every second.
 	//Or by (N/secsPerPulse) every (second/N)
 	
-	simToggleInterval(flowId, mLPerSec, opt) {
+	simToggleInterval(flowId, mLPerSec) {
 		let pulsesPerSec = mLPerSec / flows[flowId].mLPerPulse;
 		let emitTime = process.hrtime();
 		let prevemitTime = process.hrtime();
 		return setInterval(() => {
 			emitTime =  process.hrtime();
-			const deltaSecs = (hrsecs(emitTime) - hrsecs(prevemitTime)) * opt.sim.speedupFactor;
+			const deltaSecs = (hrsecs(emitTime) - hrsecs(prevemitTime)) * simulationSpeed;
 			let deltaPulses = (pulsesPerSec * deltaSecs);
 			//count is the cumulative number of pulses
 			flows[flowId].count += deltaPulses;

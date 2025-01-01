@@ -31,10 +31,12 @@ cause the system to be highly sensitive to noise.
 
 const broker = require('../broker.js');
 const therm = require('./temp-service.js');
-const kettle = require('./kettle-service.js');
+const kettle = require('./kettle-service.js'); 
 
 const NanoTimer = require('nanotimer');
 const brewlog = require('../brewstack/common/brewlog.js');
+
+let _simulationSpeed = 1;
 const mashTimer = new NanoTimer();
 
 //Periodically re-examine temp
@@ -114,7 +116,7 @@ function pause(){
 	mashTimer.clearInterval();
 }
 
-function init(P, I, D, sim) {
+function init(P, I, D) {
 	return new Promise((resolve, reject) => {  
 		brewlog.info("init PID",`${P},${I},${D}`);		
 		//Set the PID parameters
@@ -124,9 +126,8 @@ function init(P, I, D, sim) {
 		brewlog.debug(currentThermName);	
 		kettle.setPower(0);
 	
-		if (sim.simulate){
-			speedupFactor = sim.speedupFactor;
-			calculationInterval = CALCULATION_INTERVAL_MS / speedupFactor;
+		if (_simulationSpeed !== 1){
+			calculationInterval = CALCULATION_INTERVAL_MS / _simulationSpeed;
 		}
 		//Force a temperature reading
 		brewlog.info("getTemp", currentThermName);
@@ -236,14 +237,16 @@ module.exports = {
 
 	pause,
 		
-	start: (brewOptions) => {
+	start: (simulationSpeed) => {
+		_simulationSpeed = simulationSpeed;
 		brewlog.info("temp-controller-service", "Start");
 		currentThermName = kettle.KETTLE_TEMPNAME;
 		tempListener = broker.subscribe(currentThermName, tempHandler);
-		return init(1000, 5, 100, brewOptions.sim);
+		return init(1000, 5, 100);
 	},
 
 	stop: () => {
+		_simulationSpeed = 1;
 		brewlog.info("temp-controller-service", "Stop");
 		pause();
 		broker.unSubscribe(tempListener);

@@ -24,7 +24,6 @@
  * 4) Vessel cooling
  * 5) Vessel evaporation
  */
-const path = require('path');
 
 const broker = require('../broker.js');
 const pump = require('../services/pump-service.js');
@@ -32,7 +31,6 @@ const valve = require('../services/valve-service.js');
 const ds18x20 = require('./ds18x20.js');
 const flow = require('../services/flow-service.js');
 const brewdefs = require('../brewstack/common/brewdefs.js');
-const temp = require('../services/temp-service.js');
 const brewlog = require('../brewstack/common/brewlog.js');
 
 const CHILLER_OUTPUT_TEMP = 20;
@@ -42,7 +40,8 @@ const MASHTUN_TEMP = "TempMash";
 const FERMENTER_TEMP = "TempFermenter";
 const SIM_UPDATE_INTERVAL = 1000;
 
-let _opt = null;
+let _speedupFactor = brewdefs.isRaspPi() ? 1 : 10;
+const ambientTemp = 10;
 
 let simState = {
     PumpMash:           "OFF",
@@ -144,7 +143,7 @@ function simFlowRate(id, mLPerSec){
     }
     
     if (mLPerSec !== 0){
-        toggleInterval[id] = flow.simToggleInterval(id, mLPerSec, _opt);
+        toggleInterval[id] = flow.simToggleInterval(id, mLPerSec);
     }
 }
 
@@ -169,7 +168,7 @@ function simPowerChange(){
     let deltaSecs = ds;
 
     if (simState.KettleVolume > 0){    
-        let dTemp =  (simState.power * deltaSecs * _opt.sim.speedupFactor) / ((simState.KettleVolume) * C);
+        let dTemp =  (simState.power * deltaSecs * _speedupFactor) / ((simState.KettleVolume) * C);
         if (dTemp > 0){
             let t = dTemp + ds18x20.getByName(KETTLE_TEMP);
             t = (t > 100) ? 100 : t;
@@ -201,7 +200,7 @@ function heatTransferKettleToFermenter(deltaSecs){
     const COIL_CONDUCTION = 0.001;
     const COIL_VOLUME = 2;
 
-    const heatFlow = COIL_CONDUCTION * COIL_VOLUME * (kettleTemp-fermenterTemp) * deltaSecs * _opt.sim.speedupFactor;
+    const heatFlow = COIL_CONDUCTION * COIL_VOLUME * (kettleTemp-fermenterTemp) * deltaSecs * _speedupFactor;
     const deltaFermenterTemp = simState.FermenterVolume ? (heatFlow / (simState.FermenterVolume)) : 0;
     fermenterTemp +=  deltaFermenterTemp
 
@@ -337,10 +336,10 @@ function simStateChange(){
 }
 
 const delay = (delaySecs, name="") => new Promise((resolve, reject) => {
-    const reportSecs = 60 / _opt.sim.speedupFactor;
+    const reportSecs = 60 / _speedupFactor;
     const secs2mins = secs => Math.ceil((secs / 60));
 
-    let toGoSecs = delaySecs / _opt.sim.speedupFactor;
+    let toGoSecs = delaySecs / _speedupFactor;
     brewlog.info(`${name} delay for ${secs2mins(delaySecs)} mins`);
  
     const report =  setInterval(() => {
@@ -351,7 +350,7 @@ const delay = (delaySecs, name="") => new Promise((resolve, reject) => {
     setTimeout(() => {
         clearInterval(report);
         resolve();
-    }, delaySecs*1000 / _opt.sim.speedupFactor);
+    }, delaySecs*1000 / _speedupFactor);
 });
 
 module.exports = {
@@ -359,25 +358,25 @@ module.exports = {
     setKettleTemp: temp => ds18x20.set(KETTLE_TEMP, temp),
     getKettleVolume: () => simState.KettleVolume,
     setKettleVolume: vol => simState.KettleVolume = vol,
-    getSimulationSpeed: () => _opt.sim.speedupFactor,
-    setSimulationSpeed: factor => _opt.sim.speedupFactor = factor,
-    start(opt) {
+    getSimulationSpeed: () => _speedupFactor,
+    setSimulationSpeed: (factor) => _speedupFactor = brewdefs.isRaspPi() ? 1 : factor,
+    start(speedupFactor) {
         return new Promise((resolve, reject) => {
             brewlog.debug("Sim Service", "Start");
 
-           _opt = opt;
+            _speedupFactor = speedupFactor;
            //Do nothing if we're not simulating
-           if (_opt.sim.simulate === false){
-                resolve(_opt);
+           if (_speedupFactor === 1){
+                resolve();
                 return;
            }
 
-            simState.ambientTemp     = _opt.sim.ambientTemp;
-            //simState.TempKettle      = _opt.sim.ambientTemp;
-            //simState.TempMash        = _opt.sim.ambientTemp;
-            simState.TempFermentIn   = _opt.sim.ambientTemp;
-            simState.TempFermenter   = _opt.sim.ambientTemp;
-            simState.coil.temperature= _opt.sim.ambientTemp;
+            simState.ambientTemp     = ambientTemp;
+            //simState.TempKettle      = ambientTemp;
+            //simState.TempMash        = ambientTemp;
+            simState.TempFermentIn   = ambientTemp;
+            simState.TempFermenter   = ambientTemp;
+            simState.coil.temperature= ambientTemp;
 
             mashPumpListener = broker.subscribe(pump.mashPumpName,     mashPumpChange);
             kettlePumpListener = broker.subscribe(pump.kettlePumpName,   kettlePumpChange);
@@ -402,19 +401,19 @@ module.exports = {
 
             const cooling = (factor, sensor) => {
                 let temp = ds18x20.getByName(sensor);
-                const deltaTemp = _opt.sim.speedupFactor * factor * (temp - _opt.sim.ambientTemp);
+                const deltaTemp = _speedupFactor * factor * (temp - ambientTemp);
                 const newTemp = temp - deltaTemp;
                 return (deltaTemp > 0)
-                    ? (newTemp > _opt.sim.ambientTemp) 
+                    ? (newTemp > ambientTemp) 
                         ? newTemp 
-                        : _opt.sim.ambientTemp
+                        : ambientTemp
                     : temp;
             };
             
             /**
              * Every simulated minute, reduce temps
              */
-            const intervalSecs = 60 / _opt.sim.speedupFactor;
+            const intervalSecs = 60 / _speedupFactor;
             coolingTimer = setInterval(() => {
                 let isKettleEmpty = (simState.KettleVolume <= 0);
                 
@@ -442,8 +441,8 @@ module.exports = {
                         
             }, intervalSecs * 1000);
            
-            return temp.getStatus(true).then(() => resolve(opt));
-            
+            // return tempService.getStatus(true).then(() => resolve());
+            resolve();
         });
     },
 

@@ -44,15 +44,15 @@ module.exports = {
 	/* Upon initialisation, check that all temperature sensors are found.
 	* If not then subsequent temperature measurements will report a fail
 	*/
-	start(brewOptions) {
-		brewlog.info("temp.js","start");
-		return new Promise((resolve, reject) => {
+	start: (simulationSpeed) => 
+		 new Promise((resolve, reject) => {
+			brewlog.info("temp.js","start");
 			if (started === true){
-				resolve(brewOptions);
+				resolve();
 				return;
 			}
 			
-			if (brewOptions.sim.simulate){
+			if (simulationSpeed !== 1){
 				ds18x20 = require('../sim/ds18x20.js');
 			}else{
 				// @ts-ignore
@@ -80,21 +80,21 @@ module.exports = {
 									}else{
 										PROBES.forEach(probe => {
 											probe.publishTemp = broker.create(probe.name);
-											if (brewOptions.sim.simulate){
-												ds18x20.set(probe.name, brewOptions.sim.ambientTemp);
+											if (simulationSpeed !== 1){
+												ds18x20.set(probe.name, 9.9);
 											}
 										});
 										
-										if (brewOptions.sim.simulate){
-											setSampleInterval(60 / brewOptions.sim.speedupFactor);
-											brewOptions.ambientTemp = brewOptions.sim.ambientTemp;
+										if (simulationSpeed !== 1){
+											// setSampleInterval(60 / simulationSpeed);
+											ambientTemp = 9.9;
 										}else{
-											setSampleInterval(10);
-											// const ambientId = PROBES.find(probe => probe.name === 'TempGlycol').id; 
-											// brewOptions.ambientTemp = tempObj[ambientId];
+											// setSampleInterval(10);
+											const ambientId = PROBES.find(probe => probe.name === 'TempMash').id; 
+											ambientTemp = tempObj[ambientId];
 										}
 										started = true;
-										done(brewOptions);
+										done(ambientTemp);
 									}
 								});
 							}
@@ -102,8 +102,7 @@ module.exports = {
 					}
 				});	
 			}//timer null
-		});
-	},
+		}),
 	
 	/**
 	* Stop the temperature service.

@@ -8,56 +8,47 @@ const temp 		= require('./services/temp-service.js');
 const glycolHeater = require('./services/glycol-heater-service.js');
 const glycol 	= require('./services/glycol-service.js');
 const fill 		= require('./services/fill-service.js');
-const heater 	= require('./services/heater-service.js');
+const kettleHeater 	= require('./services/kettle-heater-service.js');
 const tempController 	= require('./services/temp-controller-service.js');
-const brewfather = require('./services/brewfather-service.js');
 const mysql		 = require('./services/mysql-service.js');
-const brewdata 	= require('./brewstack/common/brewdata.js');
+const {getSimulationSpeed} = require('./sim/sim.js');
 
 const sim 		= require('./sim/sim.js');
-const brewlog 	= require('./brewstack/common/brewlog.js');
 const broker 	= require('./broker.js');
 
-let publishLog;
-let currentOptions;
+async function start() {
 
-/**
- * Starts the brewing process with the provided options.
- *
- * @param {Object} [brewOptions=brewdata.defaultOptions()] - The options for the brewing process.
- * @returns {Promise<Object>} The brewing options used to start the process.
- */
-async function start(brewOptions = brewdata.defaultOptions()) {
-	currentOptions = brewOptions;
-	
 	publishLog = broker.create('log'); 
-	brewlog.startSync(brewOptions, publishLog);
 
-	await i2c.start(brewOptions)//sim.simulate
-	brewOptions.ambientTemp = await temp.start(brewOptions)//sim.speedupFactor, sim.ambientTemp => ambientTemp
+	const simulationSpeed = getSimulationSpeed();
 
-	await brewfather.start(brewOptions) // recipeName //must come after temp.start
-	await mysql.start(brewOptions.brewname);
-	await pump.start(brewOptions)//
-	await fan.start(brewOptions)//
-	await valves.start(brewOptions)//valveSwitchDelay
-	await wdog.start(brewOptions)//
-	await flow.start(brewOptions)// sim.simulate, sim.speedupFactor, flowReportSecs
-	await heater.start(brewOptions);
-	await glycolHeater.start(brewOptions)//
-	await glycol.start(brewOptions)//
-	await fill.start(brewOptions)
-	await temp.start(brewOptions)
-	await tempController.start(brewOptions)
-	await sim.start(brewOptions)
+	await i2c.start();
+	await temp.start()
 
-	return 	brewOptions;
+	//This only needs to be done during fermentation 
+	//and should a client api be created for this?
+	// await brewfather.start(recipeName);//must come after temp.start
+
+	await pump.start();
+	await fan.start();
+	await valves.start(simulationSpeed);
+	await wdog.start();
+	await flow.start(simulationSpeed);
+	await kettleHeater.start(simulationSpeed);
+	await glycolHeater.start();
+	await glycol.start(simulationSpeed);
+	await fill.start(simulationSpeed);
+	await temp.start(simulationSpeed);
+	await tempController.start(simulationSpeed);
+	await sim.start(simulationSpeed);
+
+	return ;
 }
 
-async function stop(options) {
+async function stop() {
 	broker.destroy('log');
 
-	brewfather.stop();
+	// brewfather.stop();
 
 	await mysql.stop();
 	await pump.stop();
@@ -66,7 +57,7 @@ async function stop(options) {
 	await valves.stop();
 	await wdog.stop();
 	await flow.stop();
-	await heater.stop();
+	await kettleHeater.stop();
 	await glycolHeater.stop();
 	await glycol.stop();
 	await fill.stop();
@@ -78,7 +69,7 @@ async function stop(options) {
 module.exports = {
 	restart: async () => {
 		await stop();
-		await start(currentOptions);
+		await start();
 	},
 	/**
  	 * @desc Start entire system

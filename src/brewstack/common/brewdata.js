@@ -14,25 +14,6 @@ const temp = require('../../services/temp-service.js');
 
 const FLOW_TIMEOUT_SECS = 2;
 /**
- * Brewing options
- * @typedef {Object} brewOptions
- * @property {string} filename - Name to use in logs
- * @property {string} brewname - 
- * @property {number} strikeLitres - Initial fill of kettle
- * @property {number} strikeTemp - Liquor temp pre mash
- * @property {string} sparge		- "batch" or "none"
- * @property {number} spargeLitres - Sparge water volume.
- * @property {number} spargeTemp - Sparge water temperature.
- * @property {number} mashMins - Duration of the mash
- * @property {number} boilMins - Duration of the boil
- * @property {number} fermentTempC - Temperature to maintain during fermentation
- * @property {number} fermentDays - Duration of the fermentation
- * @property {number} whirlpoolMins - delay post boil, pre chill.
- * @property {number} valveSwitchDelay - time allowed to verify a valve state change.
- * @property {number} numBrews		- Number of brews/mash cycles
- */
-
-/**
  * Json Brew data
  * @desc JSON representation of a brew
  * @typedef {Object} jsonData
@@ -178,11 +159,6 @@ module.exports = {
 		return options;
     },
 
-    /**
-	 * @param {string} filename - Name of the brew.
-	 * @returns {Promise} brewOptions brewOptions -
-	 * @param {any} speedupFactor
-	 */
     readJSON(filename, speedupFactor) {
 		let options = readBrewfatherJSONSync(filename, speedupFactor);
 		brewlog.startSync(options);

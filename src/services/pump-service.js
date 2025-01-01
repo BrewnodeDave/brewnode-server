@@ -20,7 +20,6 @@
 const brewdefs = require('../brewstack/common/brewdefs.js');
 const brewlog  = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
-// const i2c = require('../../nodeDrivers/i2c/i2c_mraa.js');
 const i2c = require('./i2c_raspi-service.js');
 
 let started = false;
@@ -62,7 +61,11 @@ function Pump(name, requestPin){
   this.publishState = null;
   this.name = name;
 
-  i2c.init({number:requestPin, dir:i2c.DIR_OUTPUT, value:OFF});
+  i2c.init({
+	number:requestPin, 
+	dir:i2c.DIR_OUTPUT, 
+	value:OFF
+});
 	
   this.state = OFF;
   this.requestPin = requestPin;

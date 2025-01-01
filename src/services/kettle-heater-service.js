@@ -24,13 +24,9 @@ const path = require('path');
  
 const brewdefs = require('../brewstack/common/brewdefs.js');
 const broker = require('../broker.js');
-// const i2c = require('../../nodeDrivers/i2c/i2c_mraa.js');
 const i2c = require('./i2c_raspi-service.js');
 const pwm = require('../pwm.js');
 const brewlog = require('../brewstack/common/brewlog.js');
-const { getStatus } = require('./pump-service.js');
-const { set } = require('../sim/ds18x20.js');
-const { name } = require('./wdog-service.js');
 
 const MAX_POWER_W = 3000;
 const POWER = "Power";
@@ -90,7 +86,6 @@ const HEATER_DEF = {
 //Report power every so often
 const UPDATE_INTERVAL = 60 * 1000;
 
-let _simOptions = null; 
 let _updateInterval = 1;//Nominally no speed up
 
 /** 
@@ -186,14 +181,13 @@ module.exports = {
 	getPower,
 	setPower,
 		
-	start(brewOptions) {
-		return new Promise((resolve, reject) => {
-			brewlog.info("heater-service", "Start");	
+	start: (simulationSpeed) =>
+		new Promise((resolve, reject) => {
+			brewlog.info("kettle-heater-service", "Start");	
 
 			energy.get();
 			
-			_simOptions = brewOptions.sim;
-			if (brewOptions.sim.simulate){
+			if (simulationSpeed !== 1){
 				ds18x20 = require('../sim/ds18x20.js');
 			}
 			i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_OFF});
@@ -207,7 +201,7 @@ module.exports = {
 			//Define callbacks for PWM mark and space functions
 			pwm.init(powerOn, powerOff);
 	
-			_updateInterval = UPDATE_INTERVAL / _simOptions.speedupFactor;
+			_updateInterval = UPDATE_INTERVAL / simulationSpeed;
 			
 			const J2KWHr = j => j / (3600000);
 			//Emit the current power to all listeners every 1 minute
@@ -217,9 +211,8 @@ module.exports = {
 			// 	energy.add(J2KWHr(currentPower * (_updateInterval / 1000)));
 			// }, _updateInterval);
 	
-			resolve(brewOptions);
-		});
-	},
+			resolve();
+		}),
 
 	off: powerOff,
 	
@@ -227,7 +220,7 @@ module.exports = {
 	
 	stop() {
 		return new Promise((resolve, reject) => {	
-			brewlog.info("heater-service", "stopped");	
+			brewlog.info("kettle-heater-service", "stopped");	
 
 			pwm.stop();
 			powerOff();

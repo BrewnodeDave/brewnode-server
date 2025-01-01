@@ -32,6 +32,27 @@ paths:
           description: Success
       x-swagger-router-controller: brewnode
 
+  /brewname:
+    put:
+      tags:
+      - Brewnode
+      summary: Set the brew name
+      operationId: setBrewName
+      parameters:
+      - name: name
+        in: query
+        description: Name of the brew
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: "My Brew"
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
   /sensorStatus:
     get:
       tags:
@@ -114,7 +135,7 @@ paths:
         in: query
         description: Mash Steps E.g. [{"tempC":65,"mins":60}]
         schema:
-          $ref: '#/components/schemas/TemperatureProfile'
+          $ref: '#/components/schemas/MashProfile'
         required: true
       responses:
         "200":
@@ -469,6 +490,7 @@ paths:
         "200":
           description: Success
       x-swagger-router-controller: brewnode
+
   /ferment:
     put:
       tags:
@@ -477,14 +499,13 @@ paths:
       description: Maintain fermenation temperature using heated glycol
       operationId: ferment
       parameters:
-      - name: profile
+      - name: step
         in: query
-        description: List of temperature steps
-        required: true
-        style: form
-        explode: true
+        description: Ferment Steps E.g. [{"tempC":20,"days":6}]
         schema:
-          $ref: '#/components/schemas/TemperatureProfile'
+          $ref: '#/components/schemas/FermentationProfile'
+        required: true
+
       responses:
         "200":
           description: Success
@@ -504,7 +525,7 @@ paths:
         style: form
         explode: true
         schema:
-          $ref: '#/components/schemas/TemperatureProfile'
+          $ref: '#/components/schemas/MashProfile'
       responses:
         "200":
           description: Success
@@ -562,7 +583,7 @@ paths:
       - Simulator
       summary: Get the simulation speed factor
       description: During simulation time is sped up by the factor.
-      operationId: getSimulationSpeed
+      operationId: getSimSpeed
       responses:
         "200":
           description: Success
@@ -1837,7 +1858,19 @@ components:
       type: http
       scheme: basic
   schemas:
-    ProfileStep:
+    TemperatureStep:
+      type: object
+      properties:
+        tempC:
+          type: number
+          description: Temperature in Celsius
+        mins:
+          type: number
+          description: Duration in minutes
+      required:
+        - tempC
+        - mins
+    MashStep:
       properties:
         tempC:
           maximum: 100
@@ -1854,10 +1887,31 @@ components:
       required:
         - mins
         - tempC
-    TemperatureProfile:
+    FermentStep:
+      properties:
+        tempC:
+          maximum: 100
+          minimum: 0
+          type: integer
+          description: Degrees Celsius
+          example: 10
+        days:
+          maximum: 30
+          minimum: 0
+          type: integer
+          description: Duration in days
+          example: 10
+      required:
+        - days
+        - tempC
+    MashProfile:
       type: array
       items:
-        $ref: '#/components/schemas/ProfileStep'
+        $ref: '#/components/schemas/MashStep'
+    FermentationProfile:
+      type: array
+      items:
+        $ref: '#/components/schemas/FermentStep'
     Bool:
       type: boolean
     

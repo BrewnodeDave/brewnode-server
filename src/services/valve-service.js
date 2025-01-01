@@ -22,11 +22,6 @@ const broker   = require('../broker.js');
 
 // @ts-ignore
 let i2c = require('./i2c_raspi-service.js');
-let valveSwitchDelay = null;
-let opt = null;
-
-const ACTIVE = 1;
-const INACTIVE = 0;
 
 /** 
  @const {number} 
@@ -81,7 +76,7 @@ let _valves = [];
 
 //Set input pins during simulation only
 function simSetInputs(thisValve, requested) {
-	if (opt.sim.simulate !== true) {
+	if (_simulationSpeed === 1) {
 		return;
 	}
 
@@ -96,21 +91,21 @@ function simSetInputs(thisValve, requested) {
 /**
  * @class Valve
  * @classdesc A pump can be switched on and off. It emits an event every time the state changes to/from on and off. 
- * @param {{name:string, i2cPinOut:number, pinClosed:number, pinOpened:number}} opt - Pump name, I2C output & GPIO input pin numbers.
+ * @param {{name:string, i2cPinOut:number, pinClosed:number, pinOpened:number}} valveDef - Pump name, I2C output & GPIO input pin numbers.
  */
-function Valve(opt) {
+function Valve(valveDef) {
     this.requestPin = null;
 	this.name = null;
 
 	const thisValve = this;
 	thisValve.status = brewdefs.VALVE_STATUS.CLOSED;
 	thisValve.timeout = null;
-	thisValve.name = opt.name;
+	thisValve.name = valveDef.name;
 
-	thisValve.requestPin = opt.i2cPinOut;
-	i2c.setDir(opt.i2cPinOut, i2c.DIR_OUTPUT);
+	thisValve.requestPin = valveDef.i2cPinOut;
+	i2c.setDir(valveDef.i2cPinOut, i2c.DIR_OUTPUT);
 
-	thisValve.publish = broker.create(opt.name);
+	thisValve.publish = broker.create(valveDef.name);
 
 	thisValve.openOrClose = (requested) => {
 		i2c.writeBit(thisValve.requestPin, requested);
@@ -186,15 +181,14 @@ module.exports = {
 	/**
 	* Initialize the valve driver and close it. 8 valves are created from initial values.
 	*/
-	start(brewOptions) {
-		return new Promise((resolve, reject) => {
-			opt = brewOptions;
+	start: (simulationSpeed) =>
+		 new Promise((resolve, reject) => {
+			_simulationSpeed = simulationSpeed;
 			if (_started === true) {
-				resolve(brewOptions);
+				resolve();
 				return;
 			}
 
-			valveSwitchDelay = brewOptions.valveSwitchDelay;
 			const initValue = { dir: i2c.DIR_OUTPUT, value: VALVE_CLOSE_REQUEST };
 			
 			//i2c must have been started
@@ -212,11 +206,10 @@ module.exports = {
 			});
 			
 			_started = true;
-			resolve(brewOptions);
-		});
-	},
+			resolve();
+		}),
 
-	stop(opt) {
+	stop() {
 		return new Promise((resolve, reject) => {
 			//remove all timeouts
 			timeouts.forEach(timeout => {
@@ -235,7 +228,7 @@ module.exports = {
 				brewlog.info("valve.js", "stopped");
 
 				_valves = [];
-				resolve(opt);
+				resolve();
 			});
 		});
 	},
