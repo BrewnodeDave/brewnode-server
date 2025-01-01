@@ -68,7 +68,7 @@ function create(sensorName) {
 	   }
 	   if (emit){
 		   sensor.emit(sensorName, value);
-		   mysql.insert(sensorName, value);
+		   mysql.brewData(sensorName, value);
 	   }
 	   
 	   clients.forEach(client => {

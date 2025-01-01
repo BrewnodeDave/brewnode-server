@@ -8,27 +8,15 @@
 
 const mysql  = require('mysql');
 
-let connection;
+let _connection;
 let _session;
 
+const setSession = brewname => _session = `${brewname ? brewname : "none"}`;
+const getSession = () => _session;
 
-/**
- * Creates a table in the MySQL database if it does not already exist.
- *
- * @param {string} tableName - The name of the table to be created.
- */
-function createBrewTable(tableName) {
-    const createTableQuery = `
-		CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, value JSON NOT NULL, timestamp TIMESTAMP  DEFAULT CURRENT_TIMESTAMP)`;
+const setConnection = c => _connection = c;
+const getConnection = () => _connection;
 
-    connection.query(createTableQuery, (err, results) => {
-        if (err) {
-            console.error('Error creating table:', err);
-        } else {
-            console.log(`Table ${tableName} created or already exists.`);
-        }
-    });
-}
 
 /**
  * Sanitizes a brew name by replacing any character that is not a letter, number, or underscore with an underscore.
@@ -45,44 +33,59 @@ function sanitizeBrewName(brewname) {
     return sanitized.substring(0, 64);
 }
 
+function setBrewname(name){
+	const connection = getConnection();
+	const result = {};
 
-/**
- * Establishes a connection to the MySQL database and creates a session-specific table.
- * 
- * @param {string} name - The name of the brew session.
- * @returns {Promise<number>} - A promise that resolves with the MySQL connection thread ID.
- * @throws {Error} - If there is an error connecting to the MySQL database.
- */
-function start(name){
+	if (connection){
+		const brewname = sanitizeBrewName(name);
+
+		setSession(brewname);
+		
+		const tableName = getSession();
+
+		const createTableQuery = `
+			CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, value JSON NOT NULL, timestamp TIMESTAMP  DEFAULT CURRENT_TIMESTAMP)`;
+
+		connection.query(createTableQuery, (err, results) => {
+			result.err = err 
+				? `Error creating table: ${err}`
+				: `Table ${tableName} created or already exists.`;
+    	});
+
+		return `Brewname set to ${name}`
+	}else{
+		result.err = "Can't set brewname, no connection";
+	}
+
+	return result;
+}
+
+
+function start(){
 	return new Promise((resolve, reject) => {
-		connection = mysql.createConnection({
+		const c = mysql.createConnection({
 			host     : '192.185.20.89',
-			user     : 'dleitch_brewnode',
-			password : 'CIG)74&C}xBd',
+			// user     : 'dleitch_brewnode',
+			user     : 'dleitch_temp',
+			// password : 'CIG)74&C}xBd',
+			password : 'Brewnode.co.uk',
 			database : 'dleitch_brewnode'
 		});
-	
 
-		connection.connect((err) => {
+		setConnection(c);
+	
+		c.connect((err) => {
 			if (err) {
 				reject(err);
 			}else{
 				console.log('MySQL Connected');
-
-				const date = new Date();
-				const formattedDate = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-	
-				const brewname = sanitizeBrewName(name);
-
-				_session = `brew_${brewname ? brewname : "none"}_${formattedDate}`;
-	
-				createBrewTable(_session);
         
-				resolve(connection.threadId);
+				resolve(_connection.threadId);
 			}
 		});
 
-		connection.on('error', (err) => {
+		getConnection().on('error', (err) => {
 			console.error('MySQL error:', err.code);
 			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
 				start(opt); // Reconnect on connection loss
@@ -100,18 +103,19 @@ function start(name){
  * @param {any} value - The value to be inserted, which will be stringified.
  * @returns {Promise} - A promise that resolves if the insertion is successful or if certain conditions are met, and rejects if there is an error during the query execution.
  */
-function insert(name, value){
+function brewData(name, value){
 	 return new Promise((resolve, reject) => {
-		if (_session === undefined || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
+		const tablename = getSession();
+		if (tablename === undefined || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
 			resolve();
 			return;
 		}
 
-		const query = `INSERT INTO ${_session} (name, value) VALUES (?, ?)`;
+		const query = `INSERT INTO ${tablename} (name, value) VALUES (?, ?)`;
 		const values = [name, JSON.stringify(value)];
 		
-		if (connection != undefined){
-			connection.query(query, values, function (error, results, fields) {
+		if (_connection != undefined){
+			_connection.query(query, values, function (error, results, fields) {
 				if (error) {
 					reject(error);
 				}else{
@@ -131,7 +135,7 @@ function insert(name, value){
  */
 function stop(){
 	return new Promise((resolve, reject) => {
-		connection.end((err) => {
+		_connection.end((err) => {
 			if (err) {
 				reject(err);
 			}
@@ -141,7 +145,8 @@ function stop(){
 }
 
 module.exports = {
-	insert,
+	brewData,
+	setBrewname,
 	start,
 	stop
 }

@@ -37,7 +37,7 @@ paths:
       tags:
       - Brewnode
       summary: Set the brew name
-      operationId: setBrewName
+      operationId: setBrewname
       parameters:
       - name: name
         in: query
@@ -51,6 +51,8 @@ paths:
       responses:
         "200":
           description: Success
+        "500":
+          description: Mysql error
       x-swagger-router-controller: brewnode
 
   /sensorStatus:

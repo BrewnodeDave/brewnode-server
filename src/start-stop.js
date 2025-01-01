@@ -23,12 +23,13 @@ async function start() {
 	const simulationSpeed = getSimulationSpeed();
 
 	await i2c.start();
-	await temp.start()
+	await temp.start(simulationSpeed)
 
 	//This only needs to be done during fermentation 
 	//and should a client api be created for this?
 	// await brewfather.start(recipeName);//must come after temp.start
 
+	await mysql.start();
 	await pump.start();
 	await fan.start();
 	await valves.start(simulationSpeed);

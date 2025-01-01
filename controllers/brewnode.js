@@ -582,9 +582,9 @@ async function fill (req, res, next, litres) {
 };
 
 function setBrewname (req, res, next, name) {
-  mysqlService.start(name);
-  res.status(200);
-  res.send(`Brewname set to ${name}`);
+  const result = mysqlService.setBrewname(name);
+  res.err ? res.status(500) : res.status(200);
+  res.err ? res.send(res.err) : res.send(result);
 } 
 
 module.exports = {
