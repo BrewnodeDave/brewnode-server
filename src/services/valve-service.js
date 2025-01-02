@@ -22,11 +22,6 @@ const broker   = require('../broker.js');
 
 // @ts-ignore
 let i2c = require('./i2c_raspi-service.js');
-let valveSwitchDelay = null;
-let opt = null;
-
-const ACTIVE = 1;
-const INACTIVE = 0;
 
 /** 
  @const {number} 
@@ -52,49 +47,36 @@ const VALVE_DEFS = [{
 	name: "ValveFermentIn",//2
 	pinOpened: brewdefs.GPIO_VALVE1_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE1_CLOSED,
-	i2cPinOut: brewdefs.ValveFermentIn
+	i2cPinOut: brewdefs.I2C_FERMENTER_VALVE_IN
 }, {
 	name: "ValveChillWortIn",//3	
 	pinOpened: brewdefs.GPIO_VALVE2_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE2_CLOSED,
-	i2cPinOut: brewdefs.ValveChillWortIn
-}, {
-	name: "ValveChillCleanOut",//4
-	pinOpened: brewdefs.GPIO_VALVE3_OPENED,
-	pinClosed: brewdefs.GPIO_VALVE3_CLOSED,
-	i2cPinOut: brewdefs.ValveChillCleanOut
-}, {
-	name: "ValveChillColdIn",//5
-	pinOpened: brewdefs.GPIO_VALVE4_OPENED,
-	pinClosed: brewdefs.GPIO_VALVE4_CLOSED,
-	i2cPinOut: brewdefs.ValveChillColdIn
+	i2cPinOut: brewdefs.I2C_CHILL_WORT_VALVE_IN
 }, {
 	name: "ValveKettleIn",//6	
 	pinOpened: brewdefs.GPIO_VALVE5_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE5_CLOSED,
-	i2cPinOut: brewdefs.ValveKettleIn
+	i2cPinOut: brewdefs.I2C_KETTLE_VALVE_IN
 }, {
 	name: "ValveMashIn",	//7
 	pinOpened: brewdefs.GPIO_VALVE6_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE6_CLOSED,
-	i2cPinOut: brewdefs.ValveMashIn
-}, {
-	name: "ValveFermentTempIn",//8
-	pinOpened: brewdefs.GPIO_VALVE7_OPENED,
-	pinClosed: brewdefs.GPIO_VALVE7_CLOSED,
-	i2cPinOut: brewdefs.ValveFermentTempIn
+	i2cPinOut: brewdefs.I2C_MASH_IN_VALVE
 }
 ];
 
-const valves = [];
 const valveNames = [];
 
 let timeouts = [];
 let _started = false;
+let _valves = [];
+
+
 
 //Set input pins during simulation only
 function simSetInputs(thisValve, requested) {
-	if (opt.sim.simulate !== true) {
+	if (_simulationSpeed === 1) {
 		return;
 	}
 
@@ -109,19 +91,21 @@ function simSetInputs(thisValve, requested) {
 /**
  * @class Valve
  * @classdesc A pump can be switched on and off. It emits an event every time the state changes to/from on and off. 
- * @param {{name:string, i2cPinOut:number, pinClosed:number, pinOpened:number}} opt - Pump name, I2C output & GPIO input pin numbers.
+ * @param {{name:string, i2cPinOut:number, pinClosed:number, pinOpened:number}} valveDef - Pump name, I2C output & GPIO input pin numbers.
  */
-function Valve(opt) {
+function Valve(valveDef) {
     this.requestPin = null;
 	this.name = null;
 
 	const thisValve = this;
 	thisValve.status = brewdefs.VALVE_STATUS.CLOSED;
 	thisValve.timeout = null;
-	thisValve.name = opt.name;
+	thisValve.name = valveDef.name;
 
-	thisValve.requestPin = opt.i2cPinOut;
-	i2c.setDir(opt.i2cPinOut, i2c.DIR_OUTPUT);
+	thisValve.requestPin = valveDef.i2cPinOut;
+	i2c.setDir(valveDef.i2cPinOut, i2c.DIR_OUTPUT);
+
+	thisValve.publish = broker.create(valveDef.name);
 
 	thisValve.openOrClose = (requested) => {
 		i2c.writeBit(thisValve.requestPin, requested);
@@ -132,25 +116,42 @@ function Valve(opt) {
 	/**
 	 * Open the valve and verify if it has after a few seconds. 
 	 */
-	thisValve.open = () => thisValve.openOrClose(VALVE_OPEN_REQUEST);
+	thisValve.open = () => {
+		thisValve.openOrClose(VALVE_OPEN_REQUEST);
+		thisValve.status = brewdefs.VALVE_STATUS.OPENED;
+		thisValve.publish(thisValve.status);
+	}
 
 	/**
 	 * Close the valve and verify if it has after a few seconds.
 	 */
-	thisValve.close = () => thisValve.openOrClose(VALVE_CLOSE_REQUEST);
+	thisValve.close = () => {
+		thisValve.openOrClose(VALVE_CLOSE_REQUEST);
+		thisValve.status = brewdefs.VALVE_STATUS.CLOSED;
+		thisValve.publish(thisValve.status);
+	}
 }
 
+
 module.exports = {
+	isStarted: () => _started,
 	names: valveNames,
 
-	getStatus: () => valves.map(({ name, status }) => ({ name, state: status })),
+	getStatus: () => _valves.map(valve => {
+//Why publish!!!!? To update the UI?
+		// valve.publish(valve.status);
+		return { 
+			name :valve.name, 
+			value: valve.status 
+		};
+	}),
 		/**
 	 * Open a valve by name
 	 * @param {string} name - Valve name
 	 */
 	open(name) {
 		brewlog.info("OPEN", name);
-	    const v = valves.find(valve => (valve.name === name));	
+	    const v = _valves.find(valve => (valve.name === name));	
 		if (v) {
 		  v.open();
 		} else {
@@ -165,7 +166,7 @@ module.exports = {
 	 */
 	close(name) {
 		brewlog.info("CLOSE", name);
-	    const v = valves.find(valve => (valve.name === name));	
+	    const v = _valves.find(valve => (valve.name === name));	
 		if (v) {
 		  v.close();
 		} else {
@@ -180,36 +181,35 @@ module.exports = {
 	/**
 	* Initialize the valve driver and close it. 8 valves are created from initial values.
 	*/
-	start(brewOptions) {
-		return new Promise((resolve, reject) => {
-			opt = brewOptions;
+	start: (simulationSpeed) =>
+		 new Promise((resolve, reject) => {
+			_simulationSpeed = simulationSpeed;
 			if (_started === true) {
-				resolve(brewOptions);
+				resolve();
 				return;
 			}
 
-			valveSwitchDelay = brewOptions.valveSwitchDelay;
 			const initValue = { dir: i2c.DIR_OUTPUT, value: VALVE_CLOSE_REQUEST };
-			let c = [];
-			VALVE_DEFS.forEach(valveDef => {
+			
+			//i2c must have been started
+			_valves = VALVE_DEFS.map(valveDef => {
 				const v = new Valve(valveDef);
 				valveNames.push(valveDef.name);
-
+			
 				initValue.number = v.requestPin;
 				i2c.init(initValue);
-
+			
 				simSetInputs(v, VALVE_CLOSE_REQUEST);
-
-				c.push(v.close);
-				valves.push(v);
+			
+				v.close();
+				return v;
 			});
-
+			
 			_started = true;
-			resolve(brewOptions);
-		});
-	},
+			resolve();
+		}),
 
-	stop(opt) {
+	stop() {
 		return new Promise((resolve, reject) => {
 			//remove all timeouts
 			timeouts.forEach(timeout => {
@@ -218,23 +218,24 @@ module.exports = {
 			});
 			timeouts = [];
 
-			const allClosed = valves.map(({ close }) => close)
+			const allClosed = _valves.map(({ close }) => close)
 	
 			Promise.all(allClosed).then(() => {
-				valves.forEach(({ name }) => {
+				_valves.forEach(({ name }) => {
 					broker.destroy(name);
 				});
 				_started = false;
 				brewlog.info("valve.js", "stopped");
 
-				resolve(opt);
+				_valves = [];
+				resolve();
 			});
 		});
 	},
 
 	selfTest() {
 		return new Promise((resolve, reject) => {
-			const testAll = valves.map(valve => valve.selfTest());
+			const testAll = _valves.map(valve => valve.selfTest());
 			Promise.all(testAll).then(resolve, reject).catch(console.log);
 		});
 	}

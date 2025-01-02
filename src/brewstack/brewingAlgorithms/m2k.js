@@ -12,46 +12,38 @@ const flow = require('../../services/flow-service.js');
 const pump = require('../../services/pump-service.js');
 
 const startCond = v => v>0;
-const stopCond = v => v==0;
-
+const stopCond = v => v == 0;
 
 //Transfer contents of mash tun to kettle
 module.exports = {	
-	transfer(options) {
+	transfer: async function(options) {
 		const flowName = "FlowMashOut";
 		const flowStart = () => flow.wait(flowName, startCond, options.flowTimeoutSecs);
 		const flowStop = () => flow.wait(flowName, stopCond, options.flowTimeoutSecs);
 		
-		return new Promise((resolve, reject) => {
-			brewlog.info("Begin Mash-to-Kettle transfer ");
+		brewlog.info("Begin Mash-to-Kettle transfer ");
 	
-			pump.mashOnSync();
-			flowStart()
-		    .then(flowStop)
-			.then(() => {
-				pump.mashOffSync();
-				resolve(options);
-			})
-		});
+		pump.mashOnSync();
+		await flowStart()
+		await flowStop()
+		pump.mashOffSync();
+		return options;
 	},
 
-	min(options) {
+	min: async function (options) {
 		const secs = 116;
-		return new Promise((resolve, reject) => {
-			let opt = options;
-			brewlog.info("Begin MINIMUM Mash-to-Kettle TRANSFER ");
-			pump.mashOn()
-			.then(timeout)
-			.then(pump.mashOff)
-			.then(resolve.bind(null,opt));
-		});
+		let opt = options;
+		brewlog.info("Begin MINIMUM Mash-to-Kettle TRANSFER ");
 
-		function timeout(){
-			return new Promise((resolve, reject)=>{
-				setTimeout(() => {
-					resolve(options)
-				},secs * 1000)
-			});
+		await pump.mashOn();
+		await timeout();
+		await pump.mashOff();
+		return opt;
+	
+		async function timeout(){
+			setTimeout(() => {
+				return options;
+			},secs * 1000)
 		}
 	}
 }

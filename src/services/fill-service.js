@@ -15,8 +15,7 @@ const {remainingFillLitres} = require('../broker.js');
 const INTERVAL_SECS = 10;
 
 let _intervalSecs = INTERVAL_SECS;
-let _speedupFactor = 1;
-let opt = null;
+let _simulationSpeed = null;
 
 function waitUntilFilled(targetVolume) {
 	/** Volume that gets through while the vqlve is closing */
@@ -35,40 +34,35 @@ function waitUntilFilled(targetVolume) {
 }
 
 module.exports = {
-	start(brewOptions) {
-		return new Promise((resolve, reject) => {
-			opt = brewOptions;
-			if (brewOptions.sim.simulate) {
-				_speedupFactor = brewOptions.sim.speedupFactor;
-				_intervalSecs = _intervalSecs / brewOptions.sim.speedupFactor;
-			}
-
-			resolve(brewOptions);
-		});
-	},
+	start: (simulationSpeed) =>  
+		new Promise((resolve, reject) => {
+			_simulationSpeed = simulationSpeed;
+			_intervalSecs = _intervalSecs / _simulationSpeed;
+			resolve();
+		}
+	),
 	stop() {
 		return new Promise((resolve, reject) => {
 			brewlog.info("fill.js", "stopped");
 			resolve();
 		})
 	},
-	/** 
-	 * @desc Fill the kettle based upon time tyhe input valve is open.
-	 * @param {object} opt - Brew Options
-	 * @param {function} progress - Phase progress
-	 */
-	timedFill(opt) {
+
+	timedFill(strikeLitres) {
 		return new Promise((resolve, reject) => {
 			const FILL_VALVE_NAME = 'ValveKettleIn';
-			const mLPerSec = 200;
-			//128 from garden hose	
-			//196 from blue hose
+			const mLPerSec = 190;
 
+			//The time it takes to open/close, 0.5L pass.
+			
 			//If delay is too short then no flow pulses will be registered.
-			let t = (opt.strikeLitres * 1000 / mLPerSec) / _speedupFactor;
+			const mLPerL = 	1000;
+			let tSecs = (mLPerL * strikeLitres / mLPerSec) / _simulationSpeed;
 
 			//valveSwitchDelay is in mS
-			if (t * 1000 < opt.valveSwitchDelay) {
+			const valveSwitchDelay = 5000;
+			const msPerSec = 1000;
+			if ((tSecs * msPerSec) < valveSwitchDelay) {
 				//bypass pulses and simply update kettle volume
 				//				kettle.updateVolume(litres);
 				resolve();
@@ -76,17 +70,20 @@ module.exports = {
 				valves.open(FILL_VALVE_NAME);
 
 				//Update progress every litre
-				let msPerLitre = 1000 * (1000 / mLPerSec) / _speedupFactor;
+				let msPerLitre = msPerSec * (mLPerL / mLPerSec) / _simulationSpeed;
 				let n = 1;
 				const progressInterval = setInterval(() => {
-					remainingFillLitres(opt.strikeLitres - n);
+					remainingFillLitres(strikeLitres - n);
+					console.log({n})
 					n++;	
 				}, msPerLitre);
 			
 				//t must be in secs.
-				return delay(t, "Fill")
+				return delay(tSecs, "Fill")
 					.then(() => {
 						clearInterval(progressInterval);
+						console.log(0)
+						remainingFillLitres(0);
 						valves.close(FILL_VALVE_NAME);
 						resolve();
 					});

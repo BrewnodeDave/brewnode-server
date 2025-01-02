@@ -62,20 +62,12 @@ function setState(state){
 	i2c.writeBit(FAN_DEF.i2cPinOut, currentState);
 	
 	if (publishFanState){
-		if (currentState == FAN_ON){
-			publishFanState("ON");
-		}else{
-			publishFanState("OFF");
-		}
+		const newState = (currentState === FAN_ON) ? "On" : "Off";
+		publishFanState(newState);
 	}
 }
 
-/** 
-* @returns {boolean} currentState. 
-*/
-function isOn() {
-    return (currentState === FAN_ON);
-}
+const isOn = () => (currentState === FAN_ON);
 
 /**
  * Automatically switch on/off fan with temperature
@@ -126,7 +118,7 @@ module.exports = {
 			i2c.init({number:FAN_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:FAN_OFF});
 			
 			publishFanState = broker.create(FAN_DEF.name);
-			publishFanState("OFF");
+			publishFanState("Off");
 			
 			tempKettleListener = broker.subscribe("TempKettle", tempKettleHandler);
 			
@@ -149,13 +141,6 @@ module.exports = {
 	},
 	
 	getStatus() {
-		setState(currentState);
-		if (currentState === FAN_OFF){
-			return "OFF";
-		}else if (currentState === FAN_ON){
-			return "ON";
-		}else{
-			return "?";
-		}
+		return  (currentState === FAN_ON) ? "On" : "Off";
 	}
 }

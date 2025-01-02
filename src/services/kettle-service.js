@@ -7,15 +7,15 @@
  */
 
 
-const heater = require('./heater-service.js');
+const kettleHeater = require('./kettle-heater-service.js');
 
 module.exports = {
-	getEnergy: heater.getEnergy,
+	getEnergy: kettleHeater.getEnergy,
 	getStatus: () => {},
 	
-	setPower: heater.setPower,
+	setPower: kettleHeater.setPower,
 	
-	MAX_W: heater.MAX_W,
+	MAX_W: kettleHeater.MAX_W,
 	
 	KETTLE_TEMPNAME: 'TempKettle'
 }

@@ -29,7 +29,7 @@ const broker = require('../broker.js');
 /**
  * @const {integer} Watchdog interval
  */
-const HEARTBEAT_INTERVAL = 2000;
+const HEARTBEAT_INTERVAL = 1000;
 const WATCHDOG_EVENT_NAME = "Watchdog";
 
 let heartbeat;
@@ -61,9 +61,9 @@ module.exports = {
 	
 			heartbeat = setInterval(() => {
 				//Heartbeat
-				i2c.toggleBit(brewDefs.I2C_WATCHDOG_LED_BIT);
+				const newState = i2c.toggleBit(brewDefs.I2C_WATCHDOG_LED_BIT);
 				error = false;
-				bark("ALIVE");
+				bark(newState);
 			
 				//Halt upon a button press
 				const result = i2c.readBit(brewDefs.I2C_WATCHDOG_HALT_BIT);	
@@ -110,6 +110,6 @@ module.exports = {
 	},
 	
 	getStatus() {	
-		return error;	
+		return ""
 	}
 }

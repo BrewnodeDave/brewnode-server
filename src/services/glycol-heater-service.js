@@ -7,12 +7,6 @@
  */
 
 
-/**
- * Extractor Fan Driver
- * @module fan
- * @desc Simple on/off control of the extractor fan. Every time the state changes (on/off) an event is emitted to all listeners.
- */
-
 const brewdefs  = require('../brewstack/common/brewdefs.js');
 const brewlog   = require('../brewstack/common/brewlog.js');
 const i2c       = require('./i2c_raspi-service.js');

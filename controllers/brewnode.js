@@ -7,42 +7,33 @@
  */
 
 'use strict';
-
+const { KETTLE_TEMPNAME } = require('../src/services/kettle-service.js');
+const tempService = require('../src/services/temp-service.js');
 const glycol = require('../src/services/glycol-service.js');
-
 const brewdata = require('../src/brewstack/common/brewdata.js');
-
-const {promiseSerial} = require('../src/brewstack/common/brew-pub.js');
 const k2m = require('../src/brewstack/brewingAlgorithms/k2m.js');
 const m2k = require('../src/brewstack/brewingAlgorithms/m2k.js');
 const k2f = require('../src/brewstack/brewingAlgorithms/k2f.js');
 const sim = require('../src/sim/sim.js');
-
-const heater = require('../src/services/heater-service.js');  
+const kettleHeater = require('../src/services/kettle-heater-service.js');  
 const fillService = require('../src/services/fill-service.js');
 const therm = require('../src/services/temp-service.js');
-const pump = require('../src/services/pump-service.js');
+const pumps = require('../src/services/pump-service.js');
 const flow = require('../src/services/flow-service.js');
 const wdog = require('../src/services/wdog-service.js');
 const fan = require('../src/services/fan-service.js');
 const temp = require('../src/services/temp-service.js');
 const valves = require('../src/services/valve-service.js');
-
 const tempController = require('../src/services/temp-controller-service.js');
-
 const startStop = require('../src/start-stop.js');
-
 const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/broker.js');
 
 const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
+const mysqlService = require('../src/services/mysql-service.js');
+const {getSimulationSpeed} = require('../src/sim/sim.js');
 
-//Add these to an API?
-const brewOptions = brewdata.defaultOptions();
-const debug = true;
 const flowTimeoutSecs = 5;
-
-startStop.start(brewOptions, debug).then(x=>console.log("started"));
 
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
@@ -55,13 +46,27 @@ async function whatsBrewing (req, res, next) {
   const response = await axios.get(`${brewfatherV2}/batches`, config);
   const numBrewing = response.data.length;
     if (numBrewing === 0) {
-    res.status(500);
-    res.send("No brews in progress!");
+      const params = {
+        "complete": true, 
+        "status": 'Fermenting'
+      }; 
+      const config = { params, auth};  
+      const response = await axios.get(`${brewfatherV2}/batches`, config);
+      const numBrewing = response.data.length;
+      if (numBrewing === 0) {
+        res.status(400);
+        res.send("No brews in progress!");
+      }else {
+        progressPublish(response.data[0].recipe.name);
+        res.status(200);
+        res.send(response.data[0].recipe);
+      }
   }else if (numBrewing === 1) {
+    progressPublish(response.data[0].recipe.name);
     res.status(200);
     res.send(response.data[0].recipe);
   }else {
-    res.status(500);
+    res.status(400);
     res.send(`Multiple brews in progress!`);
   }
 }
@@ -94,13 +99,11 @@ async function getInventory (req, res, next) {
 }; 
 
 async function boil (req, res, next, mins) {
-  const brewOptions = brewdata.defaultOptions();
-
-  await tempController.init(600, 0.3, 100, brewOptions);
+  await tempController.init(600, 0.3, 100);
   await tempController.setTemp(
     100, 
-    brewOptions.sim.simulate 
-      ? (mins / brewOptions.sim.speedupFactor) 
+    (getSimulationSpeed() !== 1)
+      ? (mins / getSimulationSpeed()) 
       : mins,
     remainingBoilMinutes
   );
@@ -111,21 +114,20 @@ async function boil (req, res, next, mins) {
 };
 
 async function chill (req, res, next, profile) {
-  await glycol.start()
-  await glycol.doSteps(true, [{tempC:temp, mins:hours/24}]);
-  await glycol.stop();
+  progressPublish(`Chilling`);
+
+  await glycol.doSteps(profile);
 
   res.status(200);
-  res.send("Chilling Complete");
+  progressPublish(``);
+  res.send("Chill Complete");
 };
 
 async function ferment (req, res, next, profile) {
-
   progressPublish(`Fermenting`);
 
-  await glycol.start();
-  await glycol.doSteps(false, profile);
-  await glycol.stop();
+  await glycol.doSteps(profile);
+
   res.status(200);
   progressPublish(``);
   res.send("Ferment Complete");
@@ -164,11 +166,11 @@ async function mash2kettle (req, res, next, flowTimeoutSecs) {
  */
 async function setKettleTemp (req, res, next, tempC, mins) {
   // progressPublish(`Setting kettle to ${tempC}C for ${mins} mins`);
-  await tempController.init(800, 0.3, 100, brewOptions);
+  await tempController.init(800, 0.3, 100);
   await tempController.setTemp(
     tempC, 
-    brewOptions.sim.simulate 
-      ? (mins / brewOptions.sim.speedupFactor) 
+    (getSimulationSpeed() !== 1)  
+      ? (mins / getSimulationSpeed()) 
       : mins,
     remainingKettleMinutes
   );
@@ -178,9 +180,6 @@ async function setKettleTemp (req, res, next, tempC, mins) {
   res.send(`Kettle reached ${tempC}`);
 };
 
-
-const { KETTLE_TEMPNAME } = require('../src/services/kettle-service.js');
-const tempService = require('../src/services/temp-service.js');
 
 async function getKettleTemp (req, res, next) {
   const result = await tempService.getTemp(KETTLE_TEMPNAME);
@@ -200,7 +199,7 @@ async function setKettleVolume (req, res, next, litres) {
   res.send(`Simulated kettle volume set to ${litres} litres`);
 };
 
-async function getSimulationSpeed (req, res, next) {
+async function getSimSpeed (req, res, next) {
   const factor = sim.getSimulationSpeed();
   res.status(200);
   res.send(`${factor}`);
@@ -219,29 +218,231 @@ async function restart (req, res, next) {
 };
 
 
-async function getStatus (req, res, next) {
-  const tempStatus = await temp.getStatus(true);
-  const result = {
-    pumpStatus: pump.getStatus(),
-    flowStatus: flow.getStatus(),
-    wdogStatus: wdog.getStatus(),
-    fanStatus: fan.getStatus(),
-    heaterStatus: heater.getStatus(),
-    tempStatus,
-    valveStatus: valves.getStatus()
+async function sensorStatus(req, res, next) {
+  try {
+    let result = [];
+    let f;
+
+    switch(req.query.name){
+      case "ValveKettleIn":
+        result = valves.getStatus().find(v => v.name === "ValveKettleIn").value;
+        break; 
+      case "ValveMashIn": 
+        result = valves.getStatus().find(v => v.name === "ValveMashIn").value;
+        break;
+      case "ValveChillWortIn":
+        result = valves.getStatus().find(v => v.name === "ValveChillWortIn").value;
+        break;
+      case "ValveFermentIn":
+        result = valves.getStatus().find(v => v.name === "ValveFermentIn").value;
+        break;
+      case "PumpKettle":
+        result = pumps.getStatus().find(p => p.name === "PumpKettle").value;
+        break;
+      case "PumpMash":
+        result = pumps.getStatus().find(p => p.name === "PumpMash").value;
+        break;
+      case "PumpGlycol":
+        result = pumps.getStatus().find(p => p.name === "PumpGlycol").value;
+        break;
+      case "Watchdog":
+        result = wdog.getStatus();
+        break;
+      case "Fan":
+        result = fan.getStatus();
+        break;
+      case "Heater":
+        result = kettleHeater.getStatus();
+        break;
+      case "Pumps":
+        result = pumps.getStatus().flat();
+        break;
+      case "Valves":
+        result = valves.getStatus().flat();
+        break;
+      case "Temperatures":
+        result = await temp.getStatus();
+        break;
+      case "TempKettle":
+        f = await temp.getStatus();
+        result = f.find(t => t.name === "TempKettle").value;
+        break;
+      case "TempMash":
+        f = await temp.getStatus();
+        result = f.find(t => t.name === "TempMash").value;
+        break;    
+      case "TempFermenter":
+        f = await temp.getStatus();
+        result = f.find(t => t.name === "TempFermenter").value;
+        break;
+      case "TempGlycol":
+        f = await temp.getStatus();
+        result = f.find(t => t.name === "TempGlycol").value;
+        break
+      case "All":
+        const tempStatus = await temp.getStatus();
+        result.push(tempStatus.flat());
+        result.push(pumps.getStatus().flat());
+        result.push(flow.getStatus().flat());
+        result.push(wdog.getStatus());
+        result.push(fan.getStatus());
+        result.push(kettleHeater.getStatus());
+        result.push(valves.getStatus().flat());
+
+        result = result.flat();
+        break;
+      default:
+        console.error(`Unknown sensor name: ${req.query.name}`);
+        res.status(400).send(`Unknown sensor name: ${req.query.name}`);
+        return;
+    }
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error getting status:', error);
+    res.status(500).send('Internal Server Error');
   }
+}
 
-  res.status(200);
-  res.send(result);
-};
+/**
+ * Handles the request to get the status of the pumps.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @returns {Promise<void>} - A promise that resolves when the status is sent.
+ */
+async function pumpsStatus(req, res, next) {
+  try {
+    res.status(200).json(pumps.getStatus().flat());
+  } catch (error) {
+    console.error('Error getting status:', error);
+    res.status(500).send('Internal Server Error');
+  }
+}
 
+/**
+ * Handles the request to get the status of the valves.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @returns {Promise<void>} - A promise that resolves when the status is sent.
+ */
+async function valvesStatus(req, res, next) {
+  try {
+    res.status(200).json(valves.getStatus().flat());
+  } catch (error) {
+    console.error('Error getting status:', error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+/**
+ * Handles the request to get the status of the fan.
+ *
+ * @async
+ * @function fanStatus
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @returns {Promise<void>} - A promise that resolves when the status is sent.
+ * @throws {Error} - If there is an error getting the fan status.
+ */
+async function fanStatus(req, res, next) {
+  try {
+    res.status(200).json(fan.getStatus());
+  } catch (error) {
+    console.error('Error getting status:', error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+
+/**
+ * Controls the heater by turning it on or off based on the provided parameter.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {string} onOff - A string indicating whether to turn the heater 'On' or 'Off'.
+ * @returns {void}
+ */
 async function heat (req, res, next, onOff) {
-  (onOff === 'On') ? heater.forceOn() : heater.forceOff(); 
+  (onOff === 'On') ? kettleHeater.forceOn() : kettleHeater.forceOff(); 
   res.status(200);
   res.send(onOff);
 };
 
-//Temp loss for a fixed flow rate
+/**
+ * Controls the state of the fan based on the onOff parameter and sends the response.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {string} onOff - The state to set the fan to, either 'On' or 'Off'.
+ * @returns {void}
+ */
+async function extractor (req, res, next, onOff) {
+  (onOff === 'On') ? fan.switchOn() : fan.switchOff(); 
+  res.status(200);
+  res.send(onOff);
+};
+
+/**
+ * Controls the state of a specified valve.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {string} valveName - The name of the valve to control.
+ * @param {string} openClose - The action to perform on the valve ('Open' or 'Close').
+ */
+async function valve(req, res, next, valveName, openClose) {
+  (openClose === 'Open') ? valves.open(valveName) : valves.close(valveName); 
+  res.status(200);
+  res.send(openClose);
+}
+
+/**
+ * Controls the state of a specified pump.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {string} pumpName - The name of the pump to control.
+ * @param {string} onOff - The desired state of the pump ('On' or 'Off').
+ * @returns {void}
+ */
+async function pump(req, res, next, pumpName, onOff) {
+  (onOff === 'On') ? pumps.on(pumpName) : pumps.off(pumpName); 
+  res.status(200);
+  res.send(onOff);
+} 
+
+/**
+ * Returns an asynchronous middleware function to handle valve operations.
+ *
+ * @param {string} name - The name of the valve.
+ * @returns {Function} An asynchronous middleware function that takes req, res, next, and openClose parameters.
+ */
+const getValve = (name) => async (req, res, next, openClose) => valve(req, res, next, name, openClose);
+
+/**
+ * Returns an asynchronous function that handles a request to control a pump.
+ *
+ * @param {string} name - The name of the pump.
+ * @returns {Function} - An asynchronous function that takes in req, res, next, and onOff parameters and calls the pump function.
+ */
+const getPump = (name) => async (req, res, next, onOff) => pump(req, res, next, name, onOff);   
+
+/**
+ * Calculates the heat loss in a pipe and returns the temperature difference.
+ *
+ * @param {number} tempFluid - The temperature of the fluid inside the pipe.
+ * @param {string} tempSensorName - The name of the temperature sensor to get the ambient temperature.
+ * @returns {Promise<number>} - The temperature difference due to heat loss.
+ */
 async function pipeHeatLoss(tempFluid, tempSensorName) {
   const tempAmbient = await therm.getTemp(tempSensorName)
   const k = 16;// W/mC the heat transfer coefficient of stainless steel
@@ -285,8 +486,8 @@ function doMashStep(step){
       const temp = tempC + deltaT;
       await tempController.setTemp(
         temp, 
-        brewOptions.sim.simulate 
-          ? (mins / brewOptions.sim.speedupFactor) 
+        (getSimulationSpeed() !== 1)
+          ? (mins / getSimulationSpeed()) 
           : mins,
         remainingMashMinutes);
 
@@ -307,6 +508,17 @@ function doMashStep(step){
   }
 }
 
+/**
+ * Handles the mash process by executing a series of mash steps.
+ *
+ * @async
+ * @function mash
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {string} steps - A JSON string representing an array of mash steps.
+ * @returns {Promise<void>} Sends a response indicating the result of the mash process.
+ */
 async function mash (req, res, next, steps) {
   const stepRequests = JSON.parse(steps).map(doMashStep);
   
@@ -324,34 +536,60 @@ async function mash (req, res, next, steps) {
   }
 };
 
+/**
+ * Fills the specified amount of litres using the fill service and sends a response.
+ *
+ * @async
+ * @function fill
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @param {number} litres - The amount of litres to fill.
+ * @returns {Promise<void>} - A promise that resolves when the fill is complete.
+ */
 async function fill (req, res, next, litres) {
-  await fillService.timedFill({
-    strikeLitres: litres, 
-    valveSwitchDelay: 5000
-  });
+  await fillService.timedFill(litres);
   res.status(200);
   res.send("Fill Complete");
 };
 
+function setBrewname (req, res, next, name) {
+  const result = mysqlService.setBrewname(name);
+  progressPublish(name);
+  res.err ? res.status(500) : res.status(200);
+  res.err ? res.send(res.err) : res.send(result);
+} 
 
 module.exports = {
   boil,
   chill,
+  chillWortInValve: getValve("ValveChillWortIn"),
+  extractor,
+  fanStatus,
   ferment,
+  fermentInValve: getValve("ValveFermentIn"),
   fill,
   getInventory,
-  getStatus,
-  heat,
   getKettleTemp,
-  setKettleTemp,
-  getSimulationSpeed,
-  setSimulationSpeed,
-  mash,
-  m2k: mash2kettle,
+  getKettleVolume,
+  getSimSpeed,
+  glycolPump: getPump("PumpGlycol"),
+  heat,
   k2f: kettle2fermenter,
   k2m: kettle2mashtun,
+  kettleInValve: getValve("ValveKettleIn"),
+  kettlePump: getPump("PumpKettle"),
+  m2k: mash2kettle,
+  mash,
+  mashInValve: getValve("ValveMashIn"),
+  mashPump: getPump("PumpMash"),
+  pumpsStatus,
   restart,
-  getKettleVolume,
+  sensorStatus,
+  setBrewname,
+  setKettleTemp,
   setKettleVolume,
+  setSimulationSpeed,
+  valvesStatus,
   whatsBrewing
 }

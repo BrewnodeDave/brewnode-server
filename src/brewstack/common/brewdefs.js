@@ -15,6 +15,16 @@
 
 const fs = require('fs');
 
+/**
+ * Checks if the current platform is a Raspberry Pi.
+ *
+ * This function determines if the current platform is running on a Raspberry Pi
+ * by first checking if the operating system is Linux. If it is, it reads the
+ * contents of the '/etc/os-release' file to check for specific identifiers
+ * ('Raspbian' or 'bullseye') that indicate a Raspberry Pi.
+ *
+ * @returns {boolean} True if the platform is a Raspberry Pi, false otherwise.
+ */
 function isRaspPi(){
 	const isLinux = /^linux/.test(process.platform);
 	if (isLinux){
@@ -68,20 +78,24 @@ module.exports = {
 	I2C_KETTLE_OUTPUT_BIT:	26,
 	
 	I2C_WATCHDOG_HALT_BIT:	23,
+
+	I2C_RELAY_3:	 		1,	//unused
+	I2C_HEAT_OUTPUT_BIT:	2, 		
+    I2C_MASH_PUMP: 			3, 
+	I2C_FERMENTER_PUMP: 	4,
+	I2C_KETTLE_VALVE_IN: 	5,
+	I2C_RELAY_12:	 		6,
+	I2C_FERMENTER_VALVE_IN: 7, 
+	I2C_GLYCOL_PUMP: 		8, 
+	I2C_CHILL_WORT_VALVE_IN:9, //valve 3
+	I2C_RELAY_13:	 		10, 
+	I2C_MASH_IN_VALVE: 		11, 
+	I2C_KETTLE_PUMP: 		12, 
+	I2C_FAN_OUTPUT_BIT:		13,	
+	I2C_RELAY_4:	 		14,
+	I2C_RELAY_2:	 		15,
 	I2C_WATCHDOG_LED_BIT: 	22,
 
-	I2C_FAN_OUTPUT_BIT:		13,		
-	I2C_PUMP0_BIT: 			12,
-	ValveMashIn: 			11,
-	ValveChillColdIn: 		10,
-	ValveChillWortIn: 		9,
-	I2C_CHILL_PUMP: 		8,
-	ValveFermentIn: 		7,
-	ValveChillCleanOut: 	6,
-	ValveKettleIn: 			5,
-	ValveFermentTempIn: 	4,
-	I2C_HEAT_OUTPUT_BIT:	2,//14,15,		
-    I2C_PUMP1_BIT: 			3,
 	
 	//GPIO Numbers
 	GPIO_VALVE0_CLOSED:		40,
@@ -116,9 +130,6 @@ module.exports = {
 		CLOSED: "Closed",
 		OPENING:"Opening",
 		OPENED: "Opened",
-		CLOSING:"Closing",
-		ERROR_OPEN_AND_CLOSED:"Opened & Closed",
-		ERROR_NOT_OPEN_NOR_CLOSED:"Not Open & Not Closed"
 	},	
 };
 

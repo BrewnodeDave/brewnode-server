@@ -21,6 +21,7 @@
     "ds18x20": "^0.2.0",
     "ftp-client": "^0.2.2",
     "js-yaml": "^3.3.0",
+    "mysql": "^2.18.1",
     "nanotimer": "^0.3.15",
     "oas3-tools": "^2.2.3",
     "rollbar": "^2.26.4",
@@ -28,8 +29,8 @@
     "socket.io": "^4.8.0"
   },
   "optionalDependencies": {
-    "raspi-i2c": "^6.2.4",
-    "raspi": "^6.0.1"
+    "raspi": "^6.0.1",
+    "raspi-i2c": "^6.2.4"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",

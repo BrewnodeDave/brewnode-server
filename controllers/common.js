@@ -22,7 +22,7 @@ const brewfatherV2 = 'https://api.brewfather.app/v2';
  * @returns {Object} An object containing the username and password.
  */
 function getAuth(req){
-  const authHeader = req.headers.authorization;
+  const authHeader = req?.headers?.authorization;
   if (!authHeader) {
     return { 
       username : process.env.BREWFATHER_USERNAME, 

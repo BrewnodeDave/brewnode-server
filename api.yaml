@@ -26,27 +26,79 @@ paths:
       description: Fetch the all my ingredients from Brewfather
       operationId: getInventory
       tags:
-      - Brewnode
+      - Brewfather
       responses:
         '200':
           description: Success
       x-swagger-router-controller: brewnode
 
-  /status:
-    get:
-      tags:
-      - Brewnode
-      summary: Get current status
-      description: Return the values of all sensors etc.
-      operationId: getStatus
-      responses:
-        "200":
-          description: Success
-      x-swagger-router-controller: brewnode
-  /fill:
+  /brewname:
     put:
       tags:
       - Brewnode
+      summary: Set the brew name
+      operationId: setBrewname
+      parameters:
+      - name: name
+        in: query
+        description: Name of the brew
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          example: "My Brew"
+      responses:
+        "200":
+          description: Success
+        "500":
+          description: Mysql error
+      x-swagger-router-controller: brewnode
+
+  /sensorStatus:
+    get:
+      tags:
+      - Sensors
+      summary: Get current status
+      description: Return the values of all sensors etc.
+      operationId: sensorStatus
+      parameters:
+      - name: name
+        in: query
+        description: Name of sensor status to fetch
+        required: false
+        style: form
+        schema:
+          type: string
+          enum:
+          - All
+          - Temperatures
+          - PumpKettle
+          - PumpMash
+          - PumpGlycol
+          - TempKettle
+          - TempMash
+          - TempWort
+          - TempFermenter
+          - ValveKettleIn
+          - ValveMashIn
+          - ValveChillWortIn
+          - ValveFermentIn
+          - Heater
+          - Fan
+          - Watchdog
+          default: All
+      responses:
+        200:
+          description: Success
+        500:
+          description: Error
+      x-swagger-router-controller: brewnode
+      
+  /fill:
+    put:
+      tags:
+      - Process
       summary: Fill the kettle
       operationId: fill
       parameters:
@@ -59,7 +111,7 @@ paths:
         schema:
           maximum: 49
           minimum: 1
-          type: integer
+          type: number
           example: 10
       responses:
         200:
@@ -71,7 +123,7 @@ paths:
   /mash:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Mash
       description: Perform a series of mash steps
       operationId: mash
@@ -80,7 +132,7 @@ paths:
         in: query
         description: Mash Steps E.g. [{"tempC":65,"mins":60}]
         schema:
-          $ref: '#/components/schemas/TemperatureProfile'
+          $ref: '#/components/schemas/MashProfile'
         required: true
       responses:
         "200":
@@ -90,13 +142,214 @@ paths:
   /heat:
     put:
       tags:
-      - Brewnode
+      - Sensors
       summary: Turn on or off kettle heater
       operationId: heat
       parameters:
       - name: onOff
         in: query
         description: Heater state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /fan:
+    put:
+      tags:
+      - Sensors
+      summary: Turn on or off kettle extractor fan
+      operationId: extractor
+      parameters:
+      - name: onOff
+        in: query
+        description: Fan state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /fan/status:
+    get:
+      tags:
+      - Sensors
+      summary: Get fan status
+      operationId: fanStatus
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /valves/status:
+    get:
+      tags:
+      - Sensors
+      summary: Get status of all valves
+      operationId: valvesStatus
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /valve/kettlein:
+    put:
+      tags:
+      - Sensors
+      summary: Open or close the kettle in valve
+      operationId: kettleInValve
+      parameters:
+      - name: onOff
+        in: query
+        description: Valve state
+        schema:
+          type: string
+          enum:
+          - Open
+          - Close
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /valve/mashin:
+    put:
+      tags:
+      - Sensors
+      summary: Open or close the mash in valve
+      operationId: mashInValve
+      parameters:
+      - name: onOff
+        in: query
+        description: Valve state
+        schema:
+          type: string
+          enum:
+          - Open
+          - Close
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /valve/chillwortin:
+    put:
+      tags:
+      - Sensors
+      summary: Open or close the wort into the chiller valve
+      operationId: chillWortInValve
+      parameters:
+      - name: onOff
+        in: query
+        description: Valve state
+        schema:
+          type: string
+          enum:
+          - Open
+          - Close
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /valve/fermentin:
+    put:
+      tags:
+      - Sensors
+      summary: Open or close the chiller to fermenter valve
+      operationId: fermentInValve
+      parameters:
+      - name: onOff
+        in: query
+        description: Valve state
+        schema:
+          type: string
+          enum:
+          - Open
+          - Close
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /pumps/status:
+    get:
+      tags:
+      - Sensors
+      summary: Get status of all pumps
+      operationId: pumpsStatus
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /pump/kettle:
+    put:
+      tags:
+      - Sensors
+      summary: Turn on or off kettle pump
+      operationId: kettlePump
+      parameters:
+      - name: onOff
+        in: query
+        description: Fan state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /pump/mash:
+    put:
+      tags:
+      - Sensors
+      summary: Turn on or off mash pump
+      operationId: mashPump
+      parameters:
+      - name: onOff
+        in: query
+        description: Fan state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /pump/glycol:
+    put:
+      tags:
+      - Sensors
+      summary: Turn on or off the glycol pump
+      operationId: glycolPump
+      parameters:
+      - name: onOff
+        in: query
+        description: Pump state
         schema:
           type: string
           enum:
@@ -122,7 +375,7 @@ paths:
   /kettleTemp:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Set kettle temperature and time
       operationId: setKettleTemp
       parameters:
@@ -155,7 +408,7 @@ paths:
   /k2m:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Transfer kettle contents to the mash tun
       operationId: k2m
       parameters:
@@ -175,7 +428,7 @@ paths:
   /m2k:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Transfer Mash tun contents to the kettle
       operationId: m2k
       parameters:
@@ -195,7 +448,7 @@ paths:
   /k2f:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Transfer kettle contents to the fermenter
       operationId: k2f
       parameters:
@@ -215,7 +468,7 @@ paths:
   /boil:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Boil the kettle for a number of minutes
       operationId: boil
       parameters:
@@ -234,22 +487,22 @@ paths:
         "200":
           description: Success
       x-swagger-router-controller: brewnode
+
   /ferment:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Ferment
       description: Maintain fermenation temperature using heated glycol
       operationId: ferment
       parameters:
-      - name: profile
+      - name: step
         in: query
-        description: List of temperature steps
-        required: true
-        style: form
-        explode: true
+        description: Ferment Steps E.g. [{"tempC":20,"days":6}]
         schema:
-          $ref: '#/components/schemas/TemperatureProfile'
+          $ref: '#/components/schemas/FermentationProfile'
+        required: true
+
       responses:
         "200":
           description: Success
@@ -257,7 +510,7 @@ paths:
   /chill:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Chill
       description: Maintain fermenation temperature using chilled glycol
       operationId: chill
@@ -269,7 +522,7 @@ paths:
         style: form
         explode: true
         schema:
-          $ref: '#/components/schemas/TemperatureProfile'
+          $ref: '#/components/schemas/MashProfile'
       responses:
         "200":
           description: Success
@@ -327,7 +580,7 @@ paths:
       - Simulator
       summary: Get the simulation speed factor
       description: During simulation time is sped up by the factor.
-      operationId: getSimulationSpeed
+      operationId: getSimSpeed
       responses:
         "200":
           description: Success
@@ -336,7 +589,7 @@ paths:
   /inventory/yeasts/{id}:
     get:
       tags:
-      - Brewfather Yeasts
+      - Brewfather
       summary: Get Yeast
       description: This endpoint allows you to fetch a specific item.
       operationId: getYeast
@@ -363,7 +616,7 @@ paths:
       x-swagger-router-controller: brewfather-yeasts
     patch:
       tags:
-      - Brewfather Yeasts
+      - Brewfather
       summary: Update Yeast
       description: This endpoint allows you to update specific fields of a specific
         item.
@@ -403,7 +656,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Yeasts
+      - Brewfather
       summary: Get Yeasts
       description: "This endpoint allows you to list your inventory items. It will\
         \ only list items you have added manually or edited the default values for,\
@@ -495,7 +748,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Miscs
+      - Brewfather
       summary: Get Miscs
       description: "This endpoint allows you to list your inventory items. It will\
         \ only list items you have added manually or edited the default values for,\
@@ -586,7 +839,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Miscs
+      - Brewfather
       summary: Get Misc
       description: This endpoint allows you to fetch a specific item.
       operationId: getMisc
@@ -613,7 +866,7 @@ paths:
       x-swagger-router-controller: brewfather-miscs
     patch:
       tags:
-      - Brewfather Miscs
+      - Brewfather
       summary: Update Misc
       description: This endpoint allows you to update specific fields of a specific
         item.
@@ -653,7 +906,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Hops
+      - Brewfather
       summary: Get Hops
       description: "This endpoint allows you to list your inventory items. It will\
         \ only list items you have added manually or edited the default values for,\
@@ -745,7 +998,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Hops
+      - Brewfather
       summary: Get Hop
       description: This endpoint allows you to fetch a specific item.
       operationId: getHop
@@ -774,7 +1027,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Hops
+      - Brewfather
       summary: Update Hop
       description: This endpoint allows you to update specific fields of a specific
         item.
@@ -814,7 +1067,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Fermentables
+      - Brewfather
       summary: Get Fermentables
       description: "This endpoint allows you to list your inventory items. It will\
         \ only list items you have added manually or edited the default values for,\
@@ -917,7 +1170,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Fermentables
+      - Brewfather
       summary: Get Fermentable
       description: This endpoint allows you to fetch a specific item.
       operationId: getFermentable
@@ -946,7 +1199,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Fermentables
+      - Brewfather
       summary: Update Fermentable
       description: This endpoint allows you to update specific fields of a specific
         item.
@@ -985,7 +1238,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Recipes
+      - Brewfather
       summary: Get Recipe
       description: This endpoint allows you to fetch a specific recipe.
       operationId: getRecipe
@@ -1015,7 +1268,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Recipes
+      - Brewfather
       summary: Get Recipes
       description: This endpoint allows you to list your recipes.
       operationId: getRecipes
@@ -1089,7 +1342,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Batches
+      - Brewfather
       summary: Get Batch Brew Tracker
       description: "This endpoint allows you to fetch the latest stored status of\
         \ the brewtracker. Brew tracker does not get updated every second, position\
@@ -1113,7 +1366,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Batches
+      - Brewfather
       summary: Get All Batch Readings
       description: This endpoint allows you to fetch all readings stored in a batch.
       operationId: getAllBatchReadings
@@ -1134,7 +1387,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Batches
+      - Brewfather
       summary: Get Batch Last Reading
       description: This endpoint allows you to fetch the latest reading recieved
       operationId: getLastBatchReading
@@ -1155,7 +1408,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Batches
+      - Brewfather
       summary: Get batch readings
       description: This endpoint allows you to list your batches. By default it returns
         batches with all statuses. Use the query parameter "status" to query for a
@@ -1249,7 +1502,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Batches
+      - Brewfather
       summary: Get batch
       description: This endpoint allows you to fetch a specific batch.
       operationId: batch
@@ -1415,7 +1668,7 @@ paths:
   /stream/{id}:
     post:
       tags:
-      - Brewfather Stream
+      - Brewfather
       summary: Post data to a Brewfather custom stream
       description: Integrate any custom devices by posting data to Brewfather.
       operationId: stream
@@ -1602,7 +1855,19 @@ components:
       type: http
       scheme: basic
   schemas:
-    ProfileStep:
+    TemperatureStep:
+      type: object
+      properties:
+        tempC:
+          type: number
+          description: Temperature in Celsius
+        mins:
+          type: number
+          description: Duration in minutes
+      required:
+        - tempC
+        - mins
+    MashStep:
       properties:
         tempC:
           maximum: 100
@@ -1619,11 +1884,32 @@ components:
       required:
         - mins
         - tempC
-    TemperatureProfile:
+    FermentStep:
+      properties:
+        tempC:
+          maximum: 100
+          minimum: 0
+          type: integer
+          description: Degrees Celsius
+          example: 10
+        days:
+          maximum: 30
+          minimum: 0
+          type: integer
+          description: Duration in days
+          example: 10
+      required:
+        - days
+        - tempC
+    MashProfile:
       type: array
       items:
-        $ref: '#/components/schemas/ProfileStep'
-    
+        $ref: '#/components/schemas/MashStep'
+    FermentationProfile:
+      type: array
+      items:
+        $ref: '#/components/schemas/FermentStep'
+
   responses:
     NotFound:
       description: The resource is not found.
