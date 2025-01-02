@@ -27,6 +27,7 @@ const broker = require('../broker.js');
 const i2c = require('./i2c_raspi-service.js');
 const pwm = require('../pwm.js');
 const brewlog = require('../brewstack/common/brewlog.js');
+const { hrtime } = require('process');
 
 const MAX_POWER_W = 3000;
 const POWER = "Power";
@@ -46,6 +47,10 @@ let prevHeater;
 
 let publishPower;
 let publishHeater;
+let publishEnergy;
+
+let prevOnTime;
+
 const energy = function(){
 	const filename = path.join(brewdefs.installDir, "energy.txt");
 	let currentEnergy = 0;
@@ -91,13 +96,21 @@ const UPDATE_INTERVAL = 60 * 1000;
 
 let _updateInterval = 1;//Nominally no speed up
 
+function reportEnergy(onTime) {
+	const diff = process.hrtime(onTime);
+    const onDuration = diff[0] + diff[1] / 1e9; // Convert to seconds
+    const joules = 3000 * onDuration;
+	const kWHr = joules / 3600000;
+	if (publishEnergy) publishEnergy(kWHr);
+}
 /** 
 * Turn off the heater.
 * @fires heatEvent
 */
 const powerOff = () => {
 	i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
-	
+	reportEnergy(prevOnTime);
+
 	//Need to stop timer on final 
 	pwm.stop();	
 	
@@ -118,6 +131,7 @@ const powerOff = () => {
 */
 const powerOn = () => {
 	i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
+	prevOnTime = hrtime();
 
 	if (publishHeater != null){
 		currentHeater = 'ON';
@@ -207,15 +221,17 @@ module.exports = {
 	
 			publishPower = broker.create(POWER);
 			publishHeater = broker.create("Heater");
+			publishEnergy = broker.create("KWHr");
 
 			//Define callbacks for PWM mark and space functions
 			pwm.init(powerOn, powerOff);
 	
 			_updateInterval = UPDATE_INTERVAL / simulationSpeed;
 			
-			const J2KWHr = j => j / (3600000);
+			// const J2KWHr = j => j / (3600000);
 			//Emit the current power to all listeners every 1 minute
-			timer = setInterval(getPower.bind(null, false), _updateInterval);
+			// timer = setInterval(getPower.bind(null, false), _updateInterval);
+			
 			// timer = setInterval(() => {
 			// 	currentPower = getPower(true);
 			// 	energy.add(J2KWHr(currentPower * (_updateInterval / 1000)));

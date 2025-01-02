@@ -126,6 +126,37 @@ function brewData(name, value){
 	});		
 }
 
+
+function getBrewData(name){
+	return new Promise((resolve, reject) => {
+		const tablename = sanitizeBrewName(name);
+
+		const query = `SELECT * FROM ${tablename}`;
+		const values = [];
+		
+		if (_connection != undefined){
+			_connection.query(query, values, function (error, results, fields) {
+				if (error) {
+					reject(error);
+				}else{
+					// Transform the results into a series of arrays
+                    const timeSeries = {};
+                    results.forEach(row => {
+						const name = row.name;
+						timeSeries[name] = timeSeries[name] ? timeSeries[name] : [];
+						timeSeries[name].push({
+							value: JSON.parse(row.value),
+							timestamp: row.timestamp
+						});
+                    });
+                    resolve(timeSeries);
+				}
+			});
+		}else{
+			resolve();
+		}
+	});		
+}	
 /**
  * Stops the MySQL connection.
  * 
@@ -144,6 +175,7 @@ function stop(){
 
 module.exports = {
 	brewData,
+	getBrewData,
 	setBrewname,
 	start,
 	stop

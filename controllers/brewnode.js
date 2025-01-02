@@ -71,6 +71,17 @@ async function whatsBrewing (req, res, next) {
   }
 }
 
+async function getBrewData (req, res, next) {
+  try {
+    const response = await mysqlService.getBrewData(req.query.brewname);
+    res.status(200);
+    res.send(response);
+  }catch (err) {
+    res.status(500);
+    res.send(err.message);
+  }
+}
+
 async function getInventory (req, res, next) {
   const auth = getAuth(req);
   const params = {
@@ -569,6 +580,7 @@ module.exports = {
   ferment,
   fermentInValve: getValve("ValveFermentIn"),
   fill,
+  getBrewData,
   getInventory,
   getKettleTemp,
   getKettleVolume,
