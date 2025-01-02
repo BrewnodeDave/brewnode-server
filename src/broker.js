@@ -163,11 +163,11 @@ function create(sensorName) {
         }
 
 
-// Catch socket disconnect
-_socket.on('disconnect', () => {
-    console.log(`Socket ${_socket.id} disconnected`);
-    // Perform any necessary cleanup or logging here
-});
+		// Catch socket disconnect
+		_socket.on('disconnect', () => {
+			console.log(`Socket ${_socket.id} disconnected`);
+			// Perform any necessary cleanup or logging here
+		});
     },
 		
 	/**

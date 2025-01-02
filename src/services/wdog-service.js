@@ -29,7 +29,7 @@ const broker = require('../broker.js');
 /**
  * @const {integer} Watchdog interval
  */
-const HEARTBEAT_INTERVAL = 2000;
+const HEARTBEAT_INTERVAL = 1000;
 const WATCHDOG_EVENT_NAME = "Watchdog";
 
 let heartbeat;

@@ -65,12 +65,10 @@ function setBrewname(name){
 function start(){
 	return new Promise((resolve, reject) => {
 		const c = mysql.createConnection({
-			host     : '192.185.20.89',
-			// user     : 'dleitch_brewnode',
-			user     : 'dleitch_temp',
-			// password : 'CIG)74&C}xBd',
-			password : 'Brewnode.co.uk',
-			database : 'dleitch_brewnode'
+			host     : process.env.DB_HOST,
+			user     : process.env.DB_USER,
+			password : process.env.DB_PASSWORD,
+			database : process.env.DB_NAME
 		});
 
 		setConnection(c);
@@ -88,7 +86,7 @@ function start(){
 		getConnection().on('error', (err) => {
 			console.error('MySQL error:', err.code);
 			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-				start(opt); // Reconnect on connection loss
+				start(); // Reconnect on connection loss
 			} else {
 				throw err;
 			}

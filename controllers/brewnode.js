@@ -35,35 +35,6 @@ const {getSimulationSpeed} = require('../src/sim/sim.js');
 
 const flowTimeoutSecs = 5;
 
-async function foo(){
-  const brewOptions = brewdata.defaultOptions();
-  const recipe = await getBatch();
-  if (recipe?.data !== undefined) {
-    brewOptions.brewname = recipe.name;
-  }
-
-  await startStop.start().then(x=>console.log("started"));
-}
-
-// foo();
-
-async function getBatch () {
-  const auth = getAuth();
-  const params = {
-    "complete": true, 
-    "status": 'Brewing',
-  };  
-  
-  const config = { params, auth};  
-  const response = await axios.get(`${brewfatherV2}/batches`, config);
-  const numBrewing = response.data.length;
-  if (numBrewing === 1) {
-    return response.data[0].recipe;
-  }else {
-    return brewdata.defaultOptions()  
-  }
-}
-
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
   const params = {
@@ -86,10 +57,12 @@ async function whatsBrewing (req, res, next) {
         res.status(400);
         res.send("No brews in progress!");
       }else {
+        progressPublish(response.data[0].recipe.name);
         res.status(200);
         res.send(response.data[0].recipe);
       }
   }else if (numBrewing === 1) {
+    progressPublish(response.data[0].recipe.name);
     res.status(200);
     res.send(response.data[0].recipe);
   }else {
@@ -247,7 +220,6 @@ async function restart (req, res, next) {
 
 async function sensorStatus(req, res, next) {
   try {
-    const force = req.query.force === true;
     let result = [];
     let f;
 
@@ -289,26 +261,26 @@ async function sensorStatus(req, res, next) {
         result = valves.getStatus().flat();
         break;
       case "Temperatures":
-        result = await temp.getStatus(force);
+        result = await temp.getStatus();
         break;
       case "TempKettle":
-        f = await temp.getStatus(force);
+        f = await temp.getStatus();
         result = f.find(t => t.name === "TempKettle").value;
         break;
       case "TempMash":
-        f = await temp.getStatus(force);
+        f = await temp.getStatus();
         result = f.find(t => t.name === "TempMash").value;
         break;    
       case "TempFermenter":
-        f = await temp.getStatus(force);
+        f = await temp.getStatus();
         result = f.find(t => t.name === "TempFermenter").value;
         break;
       case "TempGlycol":
-        f = await temp.getStatus(force);
+        f = await temp.getStatus();
         result = f.find(t => t.name === "TempGlycol").value;
         break
       case "All":
-        const tempStatus = await temp.getStatus(force);
+        const tempStatus = await temp.getStatus();
         result.push(tempStatus.flat());
         result.push(pumps.getStatus().flat());
         result.push(flow.getStatus().flat());
@@ -583,6 +555,7 @@ async function fill (req, res, next, litres) {
 
 function setBrewname (req, res, next, name) {
   const result = mysqlService.setBrewname(name);
+  progressPublish(name);
   res.err ? res.status(500) : res.status(200);
   res.err ? res.send(res.err) : res.send(result);
 } 

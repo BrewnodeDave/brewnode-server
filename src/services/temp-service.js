@@ -24,20 +24,56 @@ const brewlog = require("../brewstack/common/brewlog.js");
 const broker = require("../broker.js");
 let PROBES = require('./probes-service.js');
 
-let sampleInterval = null;
-
+let pollInterval = null;
+let prevSensorValues = [];
 let started = false;
 
-function setSampleInterval(secs){
+function setPollInterval(secs){
 	brewlog.info("setSampleInterval", `${secs} secs`);
-	if (sampleInterval !== null){
-		clearInterval(sampleInterval);
-		sampleInterval = null;
+	if (pollInterval !== null){
+		clearInterval(pollInterval);
+		pollInterval = null;
 	}
 
-	module.exports.getStatus(true);//.then(console.log);
+	module.exports.getStatus(true);
 	
-	sampleInterval = setInterval(() => module.exports.getStatus(false)/*.then(console.log)*/, secs * 1000);										
+	pollInterval = setInterval(pollTemperatures, secs * 1000)								
+}
+
+async function getAllTemps() {
+	let result = [];
+	ds18x20.getAll((err, tempObj) => {
+		if(err){
+			brewlog.error("Failed to get all temperatures", err);
+		}else{
+			PROBES.forEach(probe => {
+				for (const key in tempObj){
+					if (key == probe.id){					
+						const value = tempObj[key];
+						result.push({name:probe.name, value, publish:probe.publishTemp});									
+					}
+				}
+			});
+		}//else
+	});//getAll
+
+	return result;
+}
+
+async function pollTemperatures(){
+	const sensors = await getAllTemps();
+	const sensorValues =  sensors.map(sensor => sensor.value);
+
+	// Find sensors with different values
+	const changedSensors = sensors.filter((sensor, index) => sensor.value !== prevSensorValues[index]);
+
+	// Publish changes for sensors with different values
+	changedSensors.forEach(sensor => {
+		sensor?.publish(sensor.value);
+	});
+
+	// Update previous sensor values
+	prevSensorValues = sensorValues;
 }
 
 module.exports = { 	
@@ -45,7 +81,9 @@ module.exports = {
 	* If not then subsequent temperature measurements will report a fail
 	*/
 	start: (simulationSpeed) => 
-		 new Promise((resolve, reject) => {
+		
+		 new Promise(async (resolve, reject) => {
+	
 			brewlog.info("temp.js","start");
 			if (started === true){
 				resolve();
@@ -60,7 +98,7 @@ module.exports = {
 			}
 	
 			const done = resolve;
-			if (sampleInterval === null){
+			if (pollInterval === null){
 				ds18x20.isDriverLoaded((err, isLoaded) => {
 					if (err){
 						brewlog.critical("Temperature driver is not loaded.", err);
@@ -73,7 +111,8 @@ module.exports = {
 								reject(err);
 							}
 							else{
-								ds18x20.getAll((err, tempObj) => {
+								getAllTemps();
+								ds18x20.getAll(async (err, tempObj) => {
 									if(err){
 										brewlog.error("Failed to get all temperatures", err);
 										reject(err);
@@ -86,14 +125,15 @@ module.exports = {
 										});
 										
 										if (simulationSpeed !== 1){
-											// setSampleInterval(60 / simulationSpeed);
+											setPollInterval(60 / simulationSpeed);
 											ambientTemp = 9.9;
 										}else{
-											// setSampleInterval(10);
+											setPollInterval(10);
 											const ambientId = PROBES.find(probe => probe.name === 'TempMash').id; 
 											ambientTemp = tempObj[ambientId];
 										}
 										started = true;
+
 										done(ambientTemp);
 									}
 								});
@@ -110,10 +150,10 @@ module.exports = {
 	stop() {
 		return new Promise((resolve, reject) => {
 			if (started === true){
-				if (sampleInterval !== null){
-					clearInterval(sampleInterval);
+				if (pollInterval !== null){
+					clearInterval(pollInterval);
 				}
-				sampleInterval = null;
+				pollInterval = null;
 				
 				started = false;
 				PROBES.forEach(({name}) => {
@@ -126,7 +166,7 @@ module.exports = {
 		});
 	},
 	
-	setSampleInterval,
+	setSampleInterval: setPollInterval,
 	
 	/**
 	* Emit the current temperature.
@@ -134,9 +174,8 @@ module.exports = {
 	* @param {boolean} force - Force a status reading regardless of value.
 	* @fires temp
 	*/
-	getStatus(force = false) {
+	getStatus() {
 		return new Promise((resolve, reject) => {		
-			//brewlog.info("temp.getStatus", `${force}`)
 			ds18x20.getAll((err, tempObj) => {
 				let result = [];
 				if(err){
@@ -153,7 +192,7 @@ module.exports = {
 									//85 can be indiciative of an error but not always
 									// brewlog.warning(`${probe.name} has maybe failed (85)`);
 								}else{
-									if ((force === true) || (Math.abs(delta) > 0.5))
+									if ((Math.abs(delta) > 0.5))
 									{
 										if (probe.publishTemp){
 											probe.publishTemp(value);

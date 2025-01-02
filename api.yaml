@@ -26,7 +26,7 @@ paths:
       description: Fetch the all my ingredients from Brewfather
       operationId: getInventory
       tags:
-      - Brewnode
+      - Brewfather
       responses:
         '200':
           description: Success
@@ -58,7 +58,7 @@ paths:
   /sensorStatus:
     get:
       tags:
-      - Brewnode
+      - Sensors
       summary: Get current status
       description: Return the values of all sensors etc.
       operationId: sensorStatus
@@ -88,11 +88,6 @@ paths:
           - Fan
           - Watchdog
           default: All
-      - name: force
-        in: query
-        description: Force a sensor update
-        schema:
-          $ref: '#/components/schemas/Bool'
       responses:
         200:
           description: Success
@@ -103,7 +98,7 @@ paths:
   /fill:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Fill the kettle
       operationId: fill
       parameters:
@@ -128,7 +123,7 @@ paths:
   /mash:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Mash
       description: Perform a series of mash steps
       operationId: mash
@@ -147,7 +142,7 @@ paths:
   /heat:
     put:
       tags:
-      - Brewnode
+      - Sensors
       summary: Turn on or off kettle heater
       operationId: heat
       parameters:
@@ -168,7 +163,7 @@ paths:
   /fan:
     put:
       tags:
-      - Brewnode
+      - Sensors
       summary: Turn on or off kettle extractor fan
       operationId: extractor
       parameters:
@@ -189,7 +184,7 @@ paths:
   /fan/status:
     get:
       tags:
-      - Brewnode
+      - Sensors
       summary: Get fan status
       operationId: fanStatus
       responses:
@@ -200,7 +195,7 @@ paths:
   /valves/status:
     get:
       tags:
-      - Brewnode
+      - Sensors
       summary: Get status of all valves
       operationId: valvesStatus
       responses:
@@ -211,7 +206,7 @@ paths:
   /valve/kettlein:
     put:
       tags:
-      - Brewnode
+      - Sensors
       summary: Open or close the kettle in valve
       operationId: kettleInValve
       parameters:
@@ -232,7 +227,7 @@ paths:
   /valve/mashin:
     put:
       tags:
-      - Brewnode
+      - Sensors
       summary: Open or close the mash in valve
       operationId: mashInValve
       parameters:
@@ -253,7 +248,7 @@ paths:
   /valve/chillwortin:
     put:
       tags:
-      - Brewnode
+      - Sensors
       summary: Open or close the wort into the chiller valve
       operationId: chillWortInValve
       parameters:
@@ -274,7 +269,7 @@ paths:
   /valve/fermentin:
     put:
       tags:
-      - Brewnode
+      - Sensors
       summary: Open or close the chiller to fermenter valve
       operationId: fermentInValve
       parameters:
@@ -295,7 +290,7 @@ paths:
   /pumps/status:
     get:
       tags:
-      - Brewnode
+      - Sensors
       summary: Get status of all pumps
       operationId: pumpsStatus
       responses:
@@ -306,7 +301,7 @@ paths:
   /pump/kettle:
     put:
       tags:
-      - Brewnode
+      - Sensors
       summary: Turn on or off kettle pump
       operationId: kettlePump
       parameters:
@@ -327,7 +322,7 @@ paths:
   /pump/mash:
     put:
       tags:
-      - Brewnode
+      - Sensors
       summary: Turn on or off mash pump
       operationId: mashPump
       parameters:
@@ -348,7 +343,7 @@ paths:
   /pump/glycol:
     put:
       tags:
-      - Brewnode
+      - Sensors
       summary: Turn on or off the glycol pump
       operationId: glycolPump
       parameters:
@@ -380,7 +375,7 @@ paths:
   /kettleTemp:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Set kettle temperature and time
       operationId: setKettleTemp
       parameters:
@@ -413,7 +408,7 @@ paths:
   /k2m:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Transfer kettle contents to the mash tun
       operationId: k2m
       parameters:
@@ -433,7 +428,7 @@ paths:
   /m2k:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Transfer Mash tun contents to the kettle
       operationId: m2k
       parameters:
@@ -453,7 +448,7 @@ paths:
   /k2f:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Transfer kettle contents to the fermenter
       operationId: k2f
       parameters:
@@ -473,7 +468,7 @@ paths:
   /boil:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Boil the kettle for a number of minutes
       operationId: boil
       parameters:
@@ -496,7 +491,7 @@ paths:
   /ferment:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Ferment
       description: Maintain fermenation temperature using heated glycol
       operationId: ferment
@@ -515,7 +510,7 @@ paths:
   /chill:
     put:
       tags:
-      - Brewnode
+      - Process
       summary: Chill
       description: Maintain fermenation temperature using chilled glycol
       operationId: chill
@@ -594,7 +589,7 @@ paths:
   /inventory/yeasts/{id}:
     get:
       tags:
-      - Brewfather Yeasts
+      - Brewfather
       summary: Get Yeast
       description: This endpoint allows you to fetch a specific item.
       operationId: getYeast
@@ -621,7 +616,7 @@ paths:
       x-swagger-router-controller: brewfather-yeasts
     patch:
       tags:
-      - Brewfather Yeasts
+      - Brewfather
       summary: Update Yeast
       description: This endpoint allows you to update specific fields of a specific
         item.
@@ -661,7 +656,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Yeasts
+      - Brewfather
       summary: Get Yeasts
       description: "This endpoint allows you to list your inventory items. It will\
         \ only list items you have added manually or edited the default values for,\
@@ -753,7 +748,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Miscs
+      - Brewfather
       summary: Get Miscs
       description: "This endpoint allows you to list your inventory items. It will\
         \ only list items you have added manually or edited the default values for,\
@@ -844,7 +839,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Miscs
+      - Brewfather
       summary: Get Misc
       description: This endpoint allows you to fetch a specific item.
       operationId: getMisc
@@ -871,7 +866,7 @@ paths:
       x-swagger-router-controller: brewfather-miscs
     patch:
       tags:
-      - Brewfather Miscs
+      - Brewfather
       summary: Update Misc
       description: This endpoint allows you to update specific fields of a specific
         item.
@@ -911,7 +906,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Hops
+      - Brewfather
       summary: Get Hops
       description: "This endpoint allows you to list your inventory items. It will\
         \ only list items you have added manually or edited the default values for,\
@@ -1003,7 +998,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Hops
+      - Brewfather
       summary: Get Hop
       description: This endpoint allows you to fetch a specific item.
       operationId: getHop
@@ -1032,7 +1027,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Hops
+      - Brewfather
       summary: Update Hop
       description: This endpoint allows you to update specific fields of a specific
         item.
@@ -1072,7 +1067,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Fermentables
+      - Brewfather
       summary: Get Fermentables
       description: "This endpoint allows you to list your inventory items. It will\
         \ only list items you have added manually or edited the default values for,\
@@ -1175,7 +1170,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Fermentables
+      - Brewfather
       summary: Get Fermentable
       description: This endpoint allows you to fetch a specific item.
       operationId: getFermentable
@@ -1204,7 +1199,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Fermentables
+      - Brewfather
       summary: Update Fermentable
       description: This endpoint allows you to update specific fields of a specific
         item.
@@ -1243,7 +1238,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Recipes
+      - Brewfather
       summary: Get Recipe
       description: This endpoint allows you to fetch a specific recipe.
       operationId: getRecipe
@@ -1273,7 +1268,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Recipes
+      - Brewfather
       summary: Get Recipes
       description: This endpoint allows you to list your recipes.
       operationId: getRecipes
@@ -1347,7 +1342,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Batches
+      - Brewfather
       summary: Get Batch Brew Tracker
       description: "This endpoint allows you to fetch the latest stored status of\
         \ the brewtracker. Brew tracker does not get updated every second, position\
@@ -1371,7 +1366,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Batches
+      - Brewfather
       summary: Get All Batch Readings
       description: This endpoint allows you to fetch all readings stored in a batch.
       operationId: getAllBatchReadings
@@ -1392,7 +1387,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Batches
+      - Brewfather
       summary: Get Batch Last Reading
       description: This endpoint allows you to fetch the latest reading recieved
       operationId: getLastBatchReading
@@ -1413,7 +1408,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Batches
+      - Brewfather
       summary: Get batch readings
       description: This endpoint allows you to list your batches. By default it returns
         batches with all statuses. Use the query parameter "status" to query for a
@@ -1507,7 +1502,7 @@ paths:
       security:
       - basicAuth: []
       tags:
-      - Brewfather Batches
+      - Brewfather
       summary: Get batch
       description: This endpoint allows you to fetch a specific batch.
       operationId: batch
@@ -1673,7 +1668,7 @@ paths:
   /stream/{id}:
     post:
       tags:
-      - Brewfather Stream
+      - Brewfather
       summary: Post data to a Brewfather custom stream
       description: Integrate any custom devices by posting data to Brewfather.
       operationId: stream
@@ -1914,9 +1909,7 @@ components:
       type: array
       items:
         $ref: '#/components/schemas/FermentStep'
-    Bool:
-      type: boolean
-    
+
   responses:
     NotFound:
       description: The resource is not found.
