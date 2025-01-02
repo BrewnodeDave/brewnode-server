@@ -126,7 +126,6 @@ function brewData(name, value){
 	});		
 }
 
-
 function getBrewData(name){
 	return new Promise((resolve, reject) => {
 		const tablename = sanitizeBrewName(name);
@@ -140,7 +139,7 @@ function getBrewData(name){
 					reject(error);
 				}else{
 					// Transform the results into a series of arrays
-                    const timeSeries = {};
+                    const timeSeries = [];
                     results.forEach(row => {
 						const name = row.name;
 						timeSeries[name] = timeSeries[name] ? timeSeries[name] : [];
@@ -149,7 +148,13 @@ function getBrewData(name){
 							timestamp: row.timestamp
 						});
                     });
-                    resolve(timeSeries);
+
+					// Get key and value of each object in timeSeries
+    				const highcharts = Object.entries(timeSeries).map(([key, value]) => ({
+        				name: key,
+						data: value.map(({value, timestamp}) => ([timestamp, value]))
+    				}));
+	                resolve(highcharts);
 				}
 			});
 		}else{
@@ -157,6 +162,7 @@ function getBrewData(name){
 		}
 	});		
 }	
+
 /**
  * Stops the MySQL connection.
  * 
