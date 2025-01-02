@@ -41,6 +41,9 @@ const MAX_WATTS = MAX_POWER_W - MIN_WATTS;
 let currentPower;
 let prevPower = 0;
 
+let currentHeater;
+let prevHeater;
+
 let publishPower;
 let publishHeater;
 const energy = function(){
@@ -99,7 +102,11 @@ const powerOff = () => {
 	pwm.stop();	
 	
 	if (publishHeater != null){
-		publishHeater('OFF');
+		currentHeater = 'OFF';
+		if (prevHeater != currentHeater){
+			prevHeater = currentHeater;
+			publishHeater(currentHeater);
+		}
 	} else{
 		console.error("heater powerOff but service not started?");
 	}	
@@ -113,11 +120,14 @@ const powerOn = () => {
 	i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
 
 	if (publishHeater != null){
-		publishHeater('ON');
+		currentHeater = 'ON';
+		if (prevHeater != currentHeater){
+			prevHeater = currentHeater;
+			publishHeater(currentHeater);
+		}
 	} else{
 		console.error("heater powerOn but service not started?");
 	}	
-
 };
 
 function getPower(force = false){
@@ -205,7 +215,7 @@ module.exports = {
 			
 			const J2KWHr = j => j / (3600000);
 			//Emit the current power to all listeners every 1 minute
-			timer = setInterval(getPower.bind(null, true), _updateInterval);
+			timer = setInterval(getPower.bind(null, false), _updateInterval);
 			// timer = setInterval(() => {
 			// 	currentPower = getPower(true);
 			// 	energy.add(J2KWHr(currentPower * (_updateInterval / 1000)));
@@ -240,7 +250,11 @@ module.exports = {
 		setPower(MAX_POWER_W);
 
 		if (publishHeater != null){
-			publishHeater('ON');
+			currentHeater = 'ON';
+			if (prevHeater != currentHeater){
+				prevHeater = currentHeater;
+				publishHeater(currentHeater);
+			}
 		} else{
 			console.error("heater forceOn but service not started?");
 		}	
@@ -251,7 +265,11 @@ module.exports = {
 
 		setPower(0);
 		if (publishHeater != null){
-			publishHeater('OFF');
+			currentHeater = 'OFF';
+			if (prevHeater != currentHeater){
+				prevHeater = currentHeater;
+				publishHeater(currentHeater);
+			}
 		} else{
 			console.error("heater forceOff but service not started?");
 		}	
@@ -259,22 +277,15 @@ module.exports = {
 
 	getStatus: () => {
 		const heater = i2c.readBit(HEATER_DEF.i2cPinOut);
-		const power = currentPower;
+		currentHeater = heater === HEATER_ON ? 'ON' : 'OFF';
 		if (publishHeater != null){
-			publishHeater(heater === HEATER_ON ? 'ON' : 'OFF');
+			publishHeater(currentHeater);
 		}
 		if (publishPower != null){
-			publishPower(power);
+			publishPower(currentPower);
 		}	
 
-		return heater === HEATER_ON ? 'ON' : 'OFF';
-		// return [{
-		// 	name	: "Heater", 
-		// 	value	: heater === HEATER_ON ? 'ON' : 'OFF'
-		// },{
-		// 	name	: "Power",		
-		// 	value	: power
-		// }]
+		return currentHeater;
 	}
 }
 
