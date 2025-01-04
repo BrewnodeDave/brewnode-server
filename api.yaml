@@ -50,6 +50,17 @@ paths:
       responses:
         '200':
           description: Success
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Too many requests. Please retry after 60 seconds.
+        
       x-swagger-router-controller: brewnode
 
   /brewname:
@@ -633,6 +644,16 @@ paths:
       responses:
         "200":
           description: Brewfather JSON
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Too many requests. Please retry after 60 seconds.
       x-swagger-router-controller: brewfather-yeasts
     patch:
       tags:
@@ -761,7 +782,17 @@ paths:
       responses:
         "200":
           description: Array of Brewfather JSON
-      x-swagger-router-controller: brewfather-yeasts
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Too many requests. Please retry after 60 seconds.
+        x-swagger-router-controller: brewfather-yeasts
       
   /inventory/miscs:
     get:
@@ -853,7 +884,17 @@ paths:
       responses:
         "200":
           description: Array of Brewfather JSON
-      x-swagger-router-controller: brewfather-miscs
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Too many requests. Please retry after 60 seconds.
+        x-swagger-router-controller: brewfather-miscs
   /inventory/miscs/{id}:
     get:
       security:
@@ -919,7 +960,17 @@ paths:
       responses:
         "200":
           description: OK
-      x-swagger-router-controller: brewfather-miscs
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Too many requests. Please retry after 60 seconds.
+        x-swagger-router-controller: brewfather-miscs
   
   /inventory/hops:
     get:
@@ -1011,7 +1062,17 @@ paths:
       responses:
         "200":
           description: Array of Brewfather JSON
-      x-swagger-router-controller: brewfather-hops
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Too many requests. Please retry after 60 seconds.
+        x-swagger-router-controller: brewfather-hops
 
   /inventory/hops/{id}:
     get:
@@ -1042,7 +1103,17 @@ paths:
       responses:
         "200":
           description: Brewfather JSON
-      x-swagger-router-controller: brewfather-hops
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Too many requests. Please retry after 60 seconds.
+        x-swagger-router-controller: brewfather-hops
     patch:
       security:
       - basicAuth: []
@@ -1080,7 +1151,17 @@ paths:
       responses:
         "200":
           description: OK
-      x-swagger-router-controller: brewfather-hops
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Too many requests. Please retry after 60 seconds.
+        x-swagger-router-controller: brewfather-hops
 
   /inventory/fermentables:
     get:
@@ -1183,7 +1264,17 @@ paths:
       responses:
         "200":
           description: Array of Brewfather JSON
-      x-swagger-router-controller: brewfather-fermentables
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Too many requests. Please retry after 60 seconds.
+        x-swagger-router-controller: brewfather-fermentables
       
   /inventory/fermentables/{id}:
     get:
@@ -1252,7 +1343,17 @@ paths:
       responses:
         "200":
           description: OK
-      x-swagger-router-controller: brewfather-fermentables
+        '429':
+          description: Too Many Requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Too many requests. Please retry after 60 seconds.
+        x-swagger-router-controller: brewfather-fermentables
   /recipes/{id}:
     get:
       security:
