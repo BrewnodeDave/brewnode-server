@@ -159,18 +159,6 @@ module.exports = {
 		return options;
     },
 
-    readJSON(filename, speedupFactor) {
-		let options = readBrewfatherJSONSync(filename, speedupFactor);
-		brewlog.startSync(options);
-			
-		return new Promise((resolve, reject) => {
-			temp.start(brewlog.startSync(options))
-			.then(() => {
-				resolve(options);
-			});
-		});
-    },
-
 	//These are used only when there is no brew data from json or xml files.
 	defaultOptions() {	
 		let options = {
