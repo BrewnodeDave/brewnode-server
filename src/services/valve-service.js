@@ -47,22 +47,26 @@ const VALVE_DEFS = [{
 	name: "ValveFermentIn",//2
 	pinOpened: brewdefs.GPIO_VALVE1_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE1_CLOSED,
-	i2cPinOut: brewdefs.I2C_FERMENTER_VALVE_IN
+	i2cPinOut: brewdefs.I2C_FERMENTER_VALVE_IN,
+	power: 25
 }, {
 	name: "ValveChillWortIn",//3	
 	pinOpened: brewdefs.GPIO_VALVE2_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE2_CLOSED,
-	i2cPinOut: brewdefs.I2C_CHILL_WORT_VALVE_IN
+	i2cPinOut: brewdefs.I2C_CHILL_WORT_VALVE_IN,
+	power: 25
 }, {
 	name: "ValveKettleIn",//6	
 	pinOpened: brewdefs.GPIO_VALVE5_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE5_CLOSED,
-	i2cPinOut: brewdefs.I2C_KETTLE_VALVE_IN
+	i2cPinOut: brewdefs.I2C_KETTLE_VALVE_IN,
+	power: 10
 }, {
 	name: "ValveMashIn",	//7
 	pinOpened: brewdefs.GPIO_VALVE6_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE6_CLOSED,
-	i2cPinOut: brewdefs.I2C_MASH_IN_VALVE
+	i2cPinOut: brewdefs.I2C_MASH_IN_VALVE,
+	power: 25
 }
 ];
 
@@ -72,21 +76,6 @@ let timeouts = [];
 let _started = false;
 let _valves = [];
 
-
-
-//Set input pins during simulation only
-function simSetInputs(thisValve, requested) {
-	if (_simulationSpeed === 1) {
-		return;
-	}
-
-	//set inputs
-	if (requested === VALVE_OPEN_REQUEST) {
-		thisValve.status = brewdefs.VALVE_STATUS.OPENED;
-	} else if (requested === VALVE_CLOSE_REQUEST) {
-		thisValve.status = brewdefs.VALVE_STATUS.CLOSED;
-	}
-};
 
 /**
  * @class Valve
@@ -98,7 +87,9 @@ function Valve(valveDef) {
 	this.name = null;
 
 	const thisValve = this;
-	thisValve.status = brewdefs.VALVE_STATUS.CLOSED;
+
+	thisValve.power = valveDef.power;
+	thisValve.status = 0;
 	thisValve.timeout = null;
 	thisValve.name = valveDef.name;
 
@@ -110,26 +101,24 @@ function Valve(valveDef) {
 	thisValve.openOrClose = (requested) => {
 		i2c.writeBit(thisValve.requestPin, requested);
 		brewlog.info(`thisValve.openOrClose ${thisValve.name}=`, `${requested}`);
-		simSetInputs(thisValve, requested);
+		if (requested === VALVE_OPEN_REQUEST) {
+			thisValve.status = thisValve.power;
+		} else if (requested === VALVE_CLOSE_REQUEST) {
+			thisValve.status = 0;
+		}
+	
+		thisValve.publish(thisValve.status);
 	};
 
 	/**
 	 * Open the valve and verify if it has after a few seconds. 
 	 */
-	thisValve.open = () => {
-		thisValve.openOrClose(VALVE_OPEN_REQUEST);
-		thisValve.status = brewdefs.VALVE_STATUS.OPENED;
-		thisValve.publish(thisValve.status);
-	}
+	thisValve.open = () => thisValve.openOrClose(VALVE_OPEN_REQUEST);
 
 	/**
 	 * Close the valve and verify if it has after a few seconds.
 	 */
-	thisValve.close = () => {
-		thisValve.openOrClose(VALVE_CLOSE_REQUEST);
-		thisValve.status = brewdefs.VALVE_STATUS.CLOSED;
-		thisValve.publish(thisValve.status);
-	}
+	thisValve.close = () => thisValve.openOrClose(VALVE_CLOSE_REQUEST);
 }
 
 
@@ -157,7 +146,7 @@ module.exports = {
 		} else {
 		  brewlog.error(`Failed to open ${name}`);
 		}
-		return (v !== undefined);
+		return v.status;
 	},
 
 	/** 
@@ -172,11 +161,8 @@ module.exports = {
 		} else {
 		  brewlog.error(`Failed to close ${name}`);
 		}
-		return (v !== undefined);
+		return v.status;
 	},
-
-	OPENED: brewdefs.VALVE_STATUS.OPENED,
-	CLOSED: brewdefs.VALVE_STATUS.CLOSED,
 
 	/**
 	* Initialize the valve driver and close it. 8 valves are created from initial values.
@@ -197,10 +183,7 @@ module.exports = {
 				valveNames.push(valveDef.name);
 			
 				initValue.number = v.requestPin;
-				i2c.init(initValue);
-			
-				simSetInputs(v, VALVE_CLOSE_REQUEST);
-			
+				i2c.init(initValue);			
 				v.close();
 				return v;
 			});

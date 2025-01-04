@@ -238,14 +238,17 @@ function Flow(flowDef){
 	};
 }//flow
 
+let _simulationSpeed;
+
 module.exports = {
 	ID_FLOW_KETTLE_OUT,
 	ID_FLOW_MASH_OUT,
 	ID_FLOW_FERMENT_IN,
 	ID_FLOW_KETTLE_IN,//????????
 
-	start(simulationSpeed) { 
+	start(factor) { 
 		return new Promise((resolve, reject) => {
+			_simulationSpeed = factor;
 			samplePeriodTooSmall = 0;
 			//only start once
 			if (started === true){
@@ -253,7 +256,7 @@ module.exports = {
 				return;
 			}
 			
-			simInterval = 500 / simulationSpeed;
+			simInterval = 500 / _simulationSpeed;
 			let initValue = {number:undefined, dir:i2c.DIR_INPUT, value:undefined};
 
 			FLOW_DEFS.forEach(flowDef => {
@@ -270,7 +273,7 @@ module.exports = {
 			}
 			active = false;
 			
-			if (simulationSpeed === 1){
+			if (_simulationSpeed === 1){
 				timeoutSecs = TIMEOUT_SECS;
 				pulseTimer = setInterval(() => {
 					//Make this as fast as possible
@@ -290,7 +293,7 @@ module.exports = {
 					}
 				}, SAMPLE_PERIOD);
 			}else{
-				timeoutSecs = TIMEOUT_SECS / simulationSpeed;
+				timeoutSecs = TIMEOUT_SECS / _simulationSpeed;
 			}
 			started = true;
 			resolve();
@@ -353,7 +356,7 @@ module.exports = {
 		let prevemitTime = process.hrtime();
 		return setInterval(() => {
 			emitTime =  process.hrtime();
-			const deltaSecs = (hrsecs(emitTime) - hrsecs(prevemitTime)) * simulationSpeed;
+			const deltaSecs = (hrsecs(emitTime) - hrsecs(prevemitTime)) * _simulationSpeed;
 			let deltaPulses = (pulsesPerSec * deltaSecs);
 			//count is the cumulative number of pulses
 			flows[flowId].count += deltaPulses;

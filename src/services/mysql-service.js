@@ -112,6 +112,8 @@ function brewData(name, value){
 		const query = `INSERT INTO ${tablename} (name, value) VALUES (?, ?)`;
 		const values = [name, JSON.stringify(value)];
 		
+		_connection = getConnection();
+
 		if (_connection != undefined){
 			_connection.query(query, values, function (error, results, fields) {
 				if (error) {
@@ -142,10 +144,13 @@ function getBrewData(name){
                     const timeSeries = [];
                     results.forEach(row => {
 						const name = row.name;
+						const timestamp = new Date(row.timestamp); // Convert MySQL TIMESTAMP to JavaScript Date
+                        timestamp.setHours(timestamp.getHours() + 6);
+
 						timeSeries[name] = timeSeries[name] ? timeSeries[name] : [];
 						timeSeries[name].push({
 							value: JSON.parse(row.value),
-							timestamp: row.timestamp
+							timestamp
 						});
                     });
 

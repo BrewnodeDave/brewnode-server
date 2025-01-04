@@ -22,6 +22,8 @@ const broker 	= require('../broker.js');
 const TEMP_FAN_ON = 50;
 const TEMP_FAN_OFF = 30;
 
+const POWER = 1000;
+
 /** 
  @const {number} 
  @desc I2C value used to switch OFF the pump.
@@ -62,8 +64,7 @@ function setState(state){
 	i2c.writeBit(FAN_DEF.i2cPinOut, currentState);
 	
 	if (publishFanState){
-		const newState = (currentState === FAN_ON) ? "On" : "Off";
-		publishFanState(newState);
+		publishFanState((currentState === FAN_ON) ? POWER : 0);
 	}
 }
 
@@ -97,6 +98,7 @@ module.exports = {
 		if (!isOn()) {
 			setState(FAN_ON);
 	    }
+		return POWER;
     },
 
     /** Turn off the fan.
@@ -106,6 +108,7 @@ module.exports = {
 		if (isOn()) {
 			setState(FAN_OFF);
 	    }
+		return 0;
     },
 	
 	/**
@@ -118,7 +121,7 @@ module.exports = {
 			i2c.init({number:FAN_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:FAN_OFF});
 			
 			publishFanState = broker.create(FAN_DEF.name);
-			publishFanState("Off");
+			publishFanState(0);
 			
 			tempKettleListener = broker.subscribe("TempKettle", tempKettleHandler);
 			
@@ -140,7 +143,5 @@ module.exports = {
 		});
 	},
 	
-	getStatus() {
-		return  (currentState === FAN_ON) ? "On" : "Off";
-	}
+	getStatus: () => (currentState === FAN_ON) ? POWER : 0
 }

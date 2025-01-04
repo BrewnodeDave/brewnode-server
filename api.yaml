@@ -327,7 +327,7 @@ paths:
       parameters:
       - name: onOff
         in: query
-        description: Fan state
+        description: Pump state
         schema:
           type: string
           enum:
@@ -348,7 +348,7 @@ paths:
       parameters:
       - name: onOff
         in: query
-        description: Fan state
+        description: Pump state
         schema:
           type: string
           enum:
@@ -378,7 +378,7 @@ paths:
         required: true
       responses:
         "200":
-          description: Success
+          description: Watts being consumed
       x-swagger-router-controller: brewnode
 
   /restart:

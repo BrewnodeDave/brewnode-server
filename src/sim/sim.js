@@ -44,19 +44,19 @@ let _speedupFactor = brewdefs.isRaspPi() ? 1 : 10;
 const ambientTemp = 10;
 
 let simState = {
-    PumpMash:           "OFF",
-    PumpKettle:         "OFF",
+    PumpMash:           0,
+    PumpKettle:         0,
     TempKettle:         0,
     TempMash:           0,
     TempFermentIn:      0,
     TempFermenter:      0,
     TempKettleOut:      0,
     TempFermenterTemp:  0,//=TempKettleOut when valveFermentTempIn is open
-    valveFermentTempIn: brewdefs.VALVE_STATUS.CLOSED,
-    valveMashIn:        brewdefs.VALVE_STATUS.CLOSED,
-    valveFermentIn:     brewdefs.VALVE_STATUS.CLOSED,
-    valveChillWortIn:   brewdefs.VALVE_STATUS.CLOSED,
-    valveKettleIn:      brewdefs.VALVE_STATUS.CLOSED,
+    ValveFermentTempIn: 0,
+    ValveMashIn:        0,
+    ValveFermentIn:     0,
+    ValveChillWortIn:   0,
+    ValveKettleIn:      0,
     power:              0,
     prevPower:          0,
     KettleVolume:       10,
@@ -73,19 +73,19 @@ let simState = {
 }
 
 function simStateReset(){
-    simState.PumpMash=           "OFF";
-    simState.PumpKettle=         "OFF";
+    simState.PumpMash=           0;
+    simState.PumpKettle=         0;
     simState.TempKettle=         0;
     simState.TempMash=           0;
     simState.TempFermentIn=      0;
     simState.TempFermenter=      0;
     simState.TempKettleOut=      0;
     simState.TempFermenterTemp=  0;//=TempKettleOut when valveFermentTempIn is open
-    simState.valveFermentTempIn= brewdefs.VALVE_STATUS.CLOSED;
-    simState.valveMashIn=        brewdefs.VALVE_STATUS.CLOSED;
-    simState.valveFermentIn=     brewdefs.VALVE_STATUS.CLOSED;
-    simState.valveChillWortIn=   brewdefs.VALVE_STATUS.CLOSED;
-    simState.valveKettleIn=      brewdefs.VALVE_STATUS.CLOSED;
+    simState.ValveFermentTempIn= 0;
+    simState.ValveMashIn=        0;
+    simState.ValveFermentIn=     0;
+    simState.ValveChillWortIn=   0;
+    simState.valveKettleIn=      0;
     simState.power=              0;
     simState.prevPower=          0;
     simState.KettleVolume=       10;
@@ -113,8 +113,8 @@ let kettlePumpChange            = change(pump.kettlePumpName);
 let kettleTempChange            = change(KETTLE_TEMP);
 let glycolTempChange            = change("TempGlycol");
 let fermenterTempChange         = change("TempFermenter");
-let valveMashInChange           = change("ValveMashIn");
-let valveKettleInChange         = change("ValveKettleIn");
+let kettleInValveChange         = change("ValveKettleIn");
+let mashInValveChange           = change("ValveMashIn");
 let powerChange                 = change("Power");
 let progressChange              = change("Progress");
 let heaterChange                = change("Heater");
@@ -208,19 +208,19 @@ function heatTransferKettleToFermenter(deltaSecs){
 }
 
 function simStateChange(){
-    simState.power = (simState.Heater === 'ON') ? 3000 : 0;
+    simState.power = simState.Heater;
 
     simPowerChange();
     
     simState.prevPower = simState.power;
 
-    const isPumpKettleOn            = (simState.PumpKettle          === "ON");
-    const isPumpMashOn              = (simState.PumpMash            === "ON");
-    const isValveKettleInOpen       = (simState.valveKettleIn       === brewdefs.VALVE_STATUS.OPENED);
-    const isValveMashInOpen         = (simState.valveMashIn         === brewdefs.VALVE_STATUS.OPENED);
-    const isValveFermentTempInOpen  = (simState.valveFermentTempIn  === brewdefs.VALVE_STATUS.OPENED);
-    const isValveFermentInOpen      = (simState.valveFermentIn      === brewdefs.VALVE_STATUS.OPENED);
-    const isValveChillWortInOpen    = (simState.valveChillWortIn    === brewdefs.VALVE_STATUS.OPENED);
+    const isPumpKettleOn            = (simState.PumpKettle          > 0);
+    const isPumpMashOn              = (simState.PumpMash            > 0);
+    const isValveKettleInOpen       = (simState.ValveKettleIn       > 0);
+    const isValveMashInOpen         = (simState.ValveMashIn         > 0);
+    const isValveFermentTempInOpen  = (simState.ValveFermentTempIn  > 0);
+    const isValveFermentInOpen      = (simState.ValveFermentIn      > 0);
+    const isValveChillWortInOpen    = (simState.ValveChillWortIn    > 0);
     const isKettleEmpty             = (simState.KettleVolume        <= 0);
     const isMashEmpty               = (simState.MashVolume          <= 0);
 
@@ -386,18 +386,21 @@ module.exports = {
             powerListener = broker.subscribe("Power",      powerChange);
             heaterListener = broker.subscribe("Heater",      heaterChange);
             
+            kettleInValveListener = broker.subscribe("ValveKettleIn",  kettleInValveChange);
+            mashInValveListener = broker.subscribe("ValveMashIn",  mashInValveChange);
+            
 
             const foo = (valveStatii, name) => valveStatii.find(status => status.name === name);
                 
-            // Every so often call ...
-            simInterval = setInterval(() => {
-                if (valve.isStarted() === false) {
-                    return;
-                }
-                const valveStatii = valve.getStatus();
-                valveKettleInChange(foo(valveStatii, 'ValveKettleIn').state);
-                valveMashInChange(foo(valveStatii, 'ValveMashIn').state);
-            }, SIM_UPDATE_INTERVAL);
+            // // Every so often call ...
+            // simInterval = setInterval(() => {
+            //     if (valve.isStarted() === false) {
+            //         return;
+            //     }
+            //     const valveStatii = valve.getStatus();
+            //     kettleInValveChange(foo(valveStatii, 'ValveKettleIn').value);
+            //     mashInValveChange(foo(valveStatii, 'ValveMashIn').value);
+            // }, SIM_UPDATE_INTERVAL);
 
             const cooling = (factor, sensor) => {
                 let temp = ds18x20.getByName(sensor);
@@ -426,8 +429,8 @@ module.exports = {
                 ds18x20.set(KETTLE_TEMP,  cooling(KETTLE_COOLING_FACTOR,   KETTLE_TEMP));
                 ds18x20.set(MASHTUN_TEMP, cooling(MASH_TUN_COOLING_FACTOR, MASHTUN_TEMP));
                 
-                let isValveFermentTempInOpen  = (simState.valveFermentTempIn === brewdefs.VALVE_STATUS.OPENED);
-                let isPumpKettleOn            = (simState.PumpKettle === "ON");
+                let isValveFermentTempInOpen  = (simState.valveFermentTempIn > 0);
+                let isPumpKettleOn            = (simState.PumpKettle > 0);
                 if (isValveFermentTempInOpen && 
                     isPumpKettleOn && 
                     !isKettleEmpty &&

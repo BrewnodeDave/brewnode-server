@@ -115,7 +115,7 @@ const powerOff = () => {
 	pwm.stop();	
 	
 	if (publishHeater != null){
-		currentHeater = 'OFF';
+		currentHeater = 0;
 		if (prevHeater != currentHeater){
 			prevHeater = currentHeater;
 			publishHeater(currentHeater);
@@ -134,7 +134,7 @@ const powerOn = () => {
 	prevOnTime = hrtime();
 
 	if (publishHeater != null){
-		currentHeater = 'ON';
+		currentHeater = MAX_POWER_W;
 		if (prevHeater != currentHeater){
 			prevHeater = currentHeater;
 			publishHeater(currentHeater);
@@ -266,7 +266,7 @@ module.exports = {
 		setPower(MAX_POWER_W);
 
 		if (publishHeater != null){
-			currentHeater = 'ON';
+			currentHeater = MAX_POWER_W;
 			if (prevHeater != currentHeater){
 				prevHeater = currentHeater;
 				publishHeater(currentHeater);
@@ -274,26 +274,29 @@ module.exports = {
 		} else{
 			console.error("heater forceOn but service not started?");
 		}	
+		return MAX_POWER_W;
 	},
 	forceOff() {
 		// i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_OFF});
 		i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
 
 		setPower(0);
+		
 		if (publishHeater != null){
-			currentHeater = 'OFF';
+			currentHeater = 0;
 			if (prevHeater != currentHeater){
 				prevHeater = currentHeater;
 				publishHeater(currentHeater);
 			}
 		} else{
 			console.error("heater forceOff but service not started?");
-		}	
+		}
+		return 0;	
 	},
 
 	getStatus: () => {
 		const heater = i2c.readBit(HEATER_DEF.i2cPinOut);
-		currentHeater = heater === HEATER_ON ? 'ON' : 'OFF';
+		currentHeater = heater === HEATER_ON ? MAX_POWER_W : 0;
 		if (publishHeater != null){
 			publishHeater(currentHeater);
 		}

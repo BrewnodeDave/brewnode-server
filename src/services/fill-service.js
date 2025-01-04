@@ -60,7 +60,7 @@ module.exports = {
 			let tSecs = (mLPerL * strikeLitres / mLPerSec) / _simulationSpeed;
 
 			//valveSwitchDelay is in mS
-			const valveSwitchDelay = 5000;
+			const valveSwitchDelay = 5000 / _simulationSpeed;
 			const msPerSec = 1000;
 			if ((tSecs * msPerSec) < valveSwitchDelay) {
 				//bypass pulses and simply update kettle volume

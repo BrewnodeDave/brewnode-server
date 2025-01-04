@@ -22,6 +22,7 @@ const brewlog  = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
 const i2c = require('./i2c_raspi-service.js');
 
+const POWER = 15;
 let started = false;
 
 /** 
@@ -76,49 +77,51 @@ function Pump(name, requestPin){
     thisPump.state = ON;
     i2c.writeBit(thisPump.requestPin, ON);
 	brewlog.info(this.name,"ON");
-    thisPump.publishState("ON");
-    resolve();
+    thisPump.publishState(POWER);
+    resolve(POWER);
   });
 
   this.onSync = (dutyCycle) => {
 	thisPump.state = ON;
 	i2c.writeBit(thisPump.requestPin, ON);
 	brewlog.info(this.name,"ON");
-	thisPump.publishState("ON");
+	thisPump.publishState(POWER);
+	return POWER;
   }
 
   this.off = () => new Promise((resolve, reject) => {	
 	thisPump.state = OFF;
 	brewlog.info(this.name,"OFF");
-	thisPump.publishState("OFF");
-	resolve();
+	thisPump.publishState(0);
+	resolve(0);
 	});
 
   this.offSync = () => {	
 	thisPump.state = OFF;
 	i2c.writeBit(thisPump.requestPin, OFF);
 	brewlog.info(this.name,"OFF Sync");
-	thisPump.publishState("OFF");
+	thisPump.publishState(0);
+	return 0;
   }
 }
 
 function on(name){
 	if (name === MASH_PUMP){
-		mashPump.onSync();
+		return mashPump.onSync();
 	}else if (name === KETTLE_PUMP){
-		kettlePump.onSync();
+		return kettlePump.onSync();
 	}else if (name === GLYCOL_PUMP){
-		chillPump.onSync();
+		return chillPump.onSync();
   	};
 }
 
 function off(name){
 	if (name === MASH_PUMP){
-		mashPump.offSync();
+		return mashPump.offSync();
 	}else if (name === KETTLE_PUMP){
-		kettlePump.offSync();
+		return kettlePump.offSync();
 	}else if (name === GLYCOL_PUMP){
-		chillPump.offSync();
+		return chillPump.offSync();
   	};
 }	
 
@@ -188,12 +191,12 @@ module.exports = {
 		if (mashPump){
 			mashState = mashPump.state;
 			if (mashState === OFF){
-				mashPump.publishState("OFF");
-				result.push({name:mashPump.name, value:"OFF"});
+				mashPump.publishState(0);
+				result.push({name:mashPump.name, value:0});
 			}
 			else if (mashState === ON){
-				mashPump.publishState("ON");
-				result.push({name:mashPump.name, value:"ON"});
+				mashPump.publishState(POWER);
+				result.push({name:mashPump.name, value:POWER});
 			}
 		}else{
 			brewlog.error("getStatus: Mash pump has not been started")
@@ -203,12 +206,12 @@ module.exports = {
 		if( kettlePump){
 			kettleState = kettlePump.state;		
 			if (kettleState === OFF){
-				kettlePump.publishState("OFF");
-				result.push({name:kettlePump.name, value:"OFF"});
+				kettlePump.publishState(0);
+				result.push({name:kettlePump.name, value:0});
 			}
 			else if (kettleState === ON){
-				kettlePump.publishState("ON");
-				result.push({name:kettlePump.name, value:"ON"});
+				kettlePump.publishState(POWER);
+				result.push({name:kettlePump.name, value:POWER});
 			}
 		}else{
 			brewlog.error("getStatus: Kettle pump has not been started")
@@ -218,12 +221,12 @@ module.exports = {
 		if(chillPump){
 			chillState = chillPump.state;		
 			if (chillState === OFF){
-				chillPump.publishState("OFF");
-				result.push({name:chillPump.name, value:"OFF"});
+				chillPump.publishState(0);
+				result.push({name:chillPump.name, value:0});
 			}
 			else if (chillState === ON){
-				chillPump.publishState("ON");
-				result.push({name:chillPump.name, value:"ON"});
+				chillPump.publishState(POWER);
+				result.push({name:chillPump.name, value:POWER});
 			}
 		}else{
 			brewlog.error("getStatus: Chill pump has not been started")

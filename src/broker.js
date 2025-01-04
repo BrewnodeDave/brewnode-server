@@ -60,7 +60,7 @@ function create(sensorName) {
    sensorNames.push(sensorName);	
    
    //return a publish function
-   return (value, emit=true) => {    
+   return async (value, emit=true) => {    
 	//    brewlog.sensorLog(sensorName, value);
 	   if (_socket){
 		   _socket.broadcast.emit(sensorName,  value);
@@ -68,7 +68,11 @@ function create(sensorName) {
 	   }
 	   if (emit){
 		   sensor.emit(sensorName, value);
-		   mysql.brewData(sensorName, value);
+		   try{
+		   		await mysql.brewData(sensorName, value);
+		   }catch(e){
+			   console.log(e);
+		   }
 	   }
 	   
 	   clients.forEach(client => {
