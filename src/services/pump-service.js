@@ -22,7 +22,7 @@ const brewlog  = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
 const i2c = require('./i2c_raspi-service.js');
 
-const POWER = 15;
+const POWER = 18;
 let started = false;
 
 /** 

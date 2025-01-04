@@ -48,25 +48,25 @@ const VALVE_DEFS = [{
 	pinOpened: brewdefs.GPIO_VALVE1_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE1_CLOSED,
 	i2cPinOut: brewdefs.I2C_FERMENTER_VALVE_IN,
-	power: 25
+	power: 20
 }, {
 	name: "ValveChillWortIn",//3	
 	pinOpened: brewdefs.GPIO_VALVE2_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE2_CLOSED,
 	i2cPinOut: brewdefs.I2C_CHILL_WORT_VALVE_IN,
-	power: 25
+	power: 20
 }, {
 	name: "ValveKettleIn",//6	
 	pinOpened: brewdefs.GPIO_VALVE5_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE5_CLOSED,
 	i2cPinOut: brewdefs.I2C_KETTLE_VALVE_IN,
-	power: 10
+	power: 0
 }, {
 	name: "ValveMashIn",	//7
 	pinOpened: brewdefs.GPIO_VALVE6_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE6_CLOSED,
 	i2cPinOut: brewdefs.I2C_MASH_IN_VALVE,
-	power: 25
+	power: 20
 }
 ];
 

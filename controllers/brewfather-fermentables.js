@@ -13,15 +13,13 @@ const {get, patch} = require('./common.js');
 async function getFermentables (req, res, next, inventory_negative, include, complete, inventory_exists, limit, start_after, order_by, order_by_direction) {
   const params = {inventory_negative,include,complete,inventory_exists,limit,start_after,order_by,order_by_direction};
   const response = await get(req, `inventory/fermentables`, params);
-  res.status(response.status);
-  res.send(response.data);
+  res.status(response.status).send(response.data);
 };
 
 async function getFermentable  (req, res, next, include, id) {
   const params = {include};
   const response = await get(req, `inventory/fermentables/${id}`, params);
-  res.status(response.status);
-  res.send(response.data);
+  res.status(response.status).send(response.data);
 };
 
 /**
@@ -38,8 +36,7 @@ async function getFermentable  (req, res, next, include, id) {
 async function updateFermentable  (req, res, next, inventory_adjust, inventory, id) {
   const params = {inventory_adjust, inventory, id};
   const response = await patch(req, `inventory/fermentables/${id}`, params);
-  res.status(response.status);
-  res.send(response.data);
+  res.status(response.status).send(response.data);
 };
 
 module.exports = { 

@@ -28,8 +28,7 @@ const {get} = require('./common.js');
 async function getYeasts(req, res, next, include, complete, inventory_exists, limit, start_after, order_by, order_by_direction) {
   const params = {include,complete,inventory_exists,limit,start_after,order_by,order_by_direction};
   const response = await get(req, `inventory/yeasts`, params);
-  res.status(response.status);
-  res.send(response.data);
+  res.status(response.status).send(response.data);
 };
 
 
@@ -48,8 +47,7 @@ async function getYeasts(req, res, next, include, complete, inventory_exists, li
 async function getYeast (req, res, next, include, id) {
   const params = {include};
   const response = await get(req, `inventory/yeasts/${id}`, params);
-  res.status(response.status);
-  res.send(response.data);
+  res.status(response.status).send(response.data);
 };
 
 
@@ -67,8 +65,7 @@ async function getYeast (req, res, next, include, id) {
 async function updateYeast (req, res, next, inventory_adjust, inventory, id) {
   const params = {inventory_adjust, inventory, id};
   const response = await patch(req, `inventory/yeasts/${id}`, params);res.status(response.status);
-  res.status(response.status);
-  res.send(response.data);
+  res.status(response.status).send(response.data);
 };
 
 module.exports = {

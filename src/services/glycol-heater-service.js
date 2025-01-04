@@ -18,6 +18,7 @@ const broker 	= require('../broker.js');
 */
 const HEAT_ON = 0;//i2c.LOW;
 
+const POWER = 120;
 /** 
  @const {number} 
  @desc I2C value used to switch ON the pump.
@@ -50,11 +51,7 @@ function setState(state){
 	currentState = state;
 	i2c.writeBit(HEAT_DEF.i2cPinOut, currentState);
 	
-	const statefoo = currentState == HEAT_ON ? "ON" : 'OFF';
-
-	brewlog.info("glycol-heater: setState =", `${statefoo}`);
-
-	publishState(statefoo);
+	publishState(currentState == HEAT_ON ? POWER : 0);
 }
 
 
@@ -94,11 +91,9 @@ module.exports = {
 	getStatus() {
 		setState(currentState);
 		if (currentState === HEAT_OFF){
-			return "OFF";
+			return 0;
 		}else if (currentState === HEAT_ON){
-			return "ON";
-		}else{
-			return "?";
+			return POWER;
 		}
 	}
 }
