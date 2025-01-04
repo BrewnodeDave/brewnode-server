@@ -54,27 +54,25 @@ async function whatsBrewing (req, res, next) {
       const response = await axios.get(`${brewfatherV2}/batches`, config);
       const numBrewing = response.data.length;
       if (numBrewing === 0) {
-        res.status(400);
-        res.send("No brews in progress!");
+        res.status(400).send("No brews in progress!");
       }else {
         progressPublish(response.data[0].recipe.name);
-        res.send(200, response.data[0].recipe);
+        res.status(200).send(response.data[0].recipe);
       }
   }else if (numBrewing === 1) {
     progressPublish(response.data[0].recipe.name);
-    res.send(200, response.data[0].recipe);
+    res.status(200).send(response.data[0].recipe);
   }else {
-    res.status(400);
-    res.send(`Multiple brews in progress!`);
+    res.status(400).send(`Multiple brews in progress!`);
   }
 }
 
 async function getBrewData (req, res, next) {
   try {
     const response = await mysqlService.getBrewData(req.query.brewname);
-    res.send(200, response);
+    res.status(200).send(response);
   }catch (err) {
-    res.send(500, err.message);
+    res.status(500).send(err.message);
   }
 }
 
@@ -92,14 +90,14 @@ async function getInventory (req, res, next) {
     const hops = await axios.get(`${brewfatherV2}/inventory/hops`, config);
     const miscs = await axios.get(`${brewfatherV2}/inventory/miscs`, config);
     
-    res.send(200, {
+    res.status(200).send({
       fermentables:fermentables.data,
       hops: hops.data,
       yeasts:yeasts.data,
       miscs:miscs.data
     });
   } catch (error) { 
-    res.send(error.status, error.message);
+    res.status(error.status).send(error.message);
   };
 }; 
 
@@ -114,7 +112,7 @@ async function boil (req, res, next, mins) {
   );
   tempController.stop();
 
-  res.send(200, `Boil Complete`);
+  res.status(200).send(`Boil Complete`);
 };
 
 async function chill (req, res, next, profile) {
@@ -123,7 +121,7 @@ async function chill (req, res, next, profile) {
   await glycol.doSteps(profile);
 
   progressPublish(``);
-  res.send(200, "Chill Complete");
+  res.status(200).send("Chill Complete");
 };
 
 async function ferment (req, res, next, profile) {
@@ -132,28 +130,28 @@ async function ferment (req, res, next, profile) {
   await glycol.doSteps(profile);
 
   progressPublish(``);
-  res.send(200, "Ferment Complete");
+  res.status(200).send("Ferment Complete");
 };
 
 async function kettle2fermenter (req, res, next, flowTimeoutSecs) {
   progressPublish(`Transferring to fermenter`);
   const result = await k2f.transfer({flowTimeoutSecs});
   progressPublish(``);
-  res.send(200, result);
+  res.status(200).send(result);
 };
 
 async function kettle2mashtun (req, res, next, flowTimeoutSecs) {
   progressPublish(`Transferring to mashtun`);
   const result = await k2m.transfer({flowTimeoutSecs});
   progressPublish(``);
-  res.send(200, result);
+  res.status(200).send(result);
 };
 
 async function mash2kettle (req, res, next, flowTimeoutSecs) {
   progressPublish(`Transferring to kettle`);
   const result = await m2k.transfer({flowTimeoutSecs});
   progressPublish(``);
-  res.send(200, result);
+  res.status(200).send(result);
 };
 
 /**
@@ -178,38 +176,38 @@ async function setKettleTemp (req, res, next, tempC, mins) {
   );
   tempController.stop();
   
-  res.send(200, `Kettle reached ${tempC}`);
+  res.status(200).send(`Kettle reached ${tempC}`);
 };
 
 
 async function getKettleTemp (req, res, next) {
   const result = await tempService.getTemp(KETTLE_TEMPNAME);
-  res.send(200, `${result}`);
+  res.status(200).send(`${result}`);
 };
 
 async function getKettleVolume (req, res, next) {
   const litres = sim.getKettleVolume();
-  res.send(200, `${litres}`);
+  res.status(200).send(`${litres}`);
 };
 
 async function setKettleVolume (req, res, next, litres) {
   sim.setKettleVolume(litres);
-  res.send(200, `Simulated kettle volume set to ${litres} litres`);
+  res.status(200).send(`Simulated kettle volume set to ${litres} litres`);
 };
 
 async function getSimSpeed (req, res, next) {
   const factor = sim.getSimulationSpeed();
-  res.send(200, `${factor}`);
+  res.status(200).send(`${factor}`);
 };
 
 async function setSimulationSpeed (req, res, next, factor) {
   sim.setSimulationSpeed(factor);
-  res.send(200, `Simulated speed factor = ${factor}.`);
+  res.status(200).send(`Simulated speed factor = ${factor}.`);
 };
 
 async function restart (req, res, next) {
   await startStop.restart();
-  res.send(200, "Restarted server");
+  res.status(200).send("Restarted server");
 };
 
 
@@ -365,7 +363,7 @@ async function fanStatus(req, res, next) {
  */
 async function heat (req, res, next, onOff) {
   const watts = (onOff === 'On') ? kettleHeater.forceOn() : kettleHeater.forceOff(); 
-  res.send(200, watts);
+  res.status(200).send(watts);
 };
 
 /**
@@ -379,7 +377,7 @@ async function heat (req, res, next, onOff) {
  */
 async function extractor (req, res, next, onOff) {
   const watts = (onOff === 'On') ? fan.switchOn() : fan.switchOff(); 
-  res.send(200, watts);
+  res.status(200).send(watts);
 };
 
 /**
@@ -393,7 +391,7 @@ async function extractor (req, res, next, onOff) {
  */
 async function valve(req, res, next, valveName, openClose) {
   const watts = (openClose === 'Open') ? valves.open(valveName) : valves.close(valveName); 
-  res.send(200, watts);
+  res.status(200).send(watts);
 }
 
 /**
@@ -408,7 +406,7 @@ async function valve(req, res, next, valveName, openClose) {
  */
 async function pump(req, res, next, pumpName, onOff) {
   const watts = (onOff === 'On') ? pumps.on(pumpName) : pumps.off(pumpName); 
-  res.send(200, watts);
+  res.status(200).send(watts);
 } 
 
 /**
@@ -518,10 +516,10 @@ async function mash (req, res, next, steps) {
   const errs = stepResponses.filter((val) => val.status === 500);
 
   if (errs.length > 0) {
-    res.send(500, errs[0].response.message);
+    res.status(500).send(errs[0].response.message);
     return;
   }else{
-    res.send(200, "Mash Complete");
+    res.status(200).send("Mash Complete");
   }
 };
 
@@ -538,13 +536,13 @@ async function mash (req, res, next, steps) {
  */
 async function fill (req, res, next, litres) {
   await fillService.timedFill(litres);
-  res.send(200, "Fill Complete");
+  res.status(200).send("Fill Complete");
 };
 
 function setBrewname (req, res, next, name) {
   const result = mysqlService.setBrewname(name);
   progressPublish(name);
-  result.err ? res.send(500, res.err) : res.send(200, result);
+  result.err ? res.status(500).send(res.err) : res.status(200).send(result);
 } 
 
 module.exports = {
