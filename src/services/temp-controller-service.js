@@ -149,7 +149,6 @@ module.exports = {
 	* @param {number} D - Derivative constant.
 	*/	
 	init, 	
-	getEnergy: kettle.getEnergy,
 	
 	/**
 	* @desc Get current temp of the controller.

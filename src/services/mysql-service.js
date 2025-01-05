@@ -8,14 +8,10 @@
 
 const mysql  = require('mysql');
 
-let _connection;
 let _session;
 
 const setSession = brewname => _session = `${brewname ? brewname : "none"}`;
 const getSession = () => _session;
-
-const setConnection = c => _connection = c;
-const getConnection = () => _connection;
 
 
 /**
@@ -33,8 +29,9 @@ function sanitizeBrewName(brewname) {
     return sanitized.substring(0, 64);
 }
 
-function setBrewname(name){
-	const connection = getConnection();
+async function setBrewname(name){
+	const connection = await connect();//getConnection();
+	
 	const result = {};
 
 	if (connection){
@@ -53,16 +50,51 @@ function setBrewname(name){
 				: `Table ${tableName} created or already exists.`;
     	});
 
+		connection.end();
+				
 		return `Brewname set to ${name}`
 	}else{
+		c.end();
+					
 		result.err = "Can't set brewname, no connection";
 	}
 
 	return result;
 }
 
+function connect(){
+	return new Promise((resolve, reject) => {
+		const connection = mysql.createConnection({
+			host     : process.env.DB_HOST,
+			user     : process.env.DB_USER,
+			password : process.env.DB_PASSWORD,
+			database : process.env.DB_NAME
+		});
 
-function start(){
+		connection.on('error', async (err) => {
+			console.error('MySQL error:', err.code);
+			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+				//
+			} else {
+				throw err;
+			}
+		});
+
+		connection.connect((err) => {
+			if (err) {
+				reject(err);
+			}else{
+				resolve(connection);
+			}
+		});
+
+	
+	});
+}
+
+
+async function start(){
+	return;
 	return new Promise((resolve, reject) => {
 		const c = mysql.createConnection({
 			host     : process.env.DB_HOST,
@@ -101,31 +133,42 @@ function start(){
  * @param {any} value - The value to be inserted, which will be stringified.
  * @returns {Promise} - A promise that resolves if the insertion is successful or if certain conditions are met, and rejects if there is an error during the query execution.
  */
-function brewData(name, value){
-	 return new Promise((resolve, reject) => {
-		const tablename = getSession();
+async function brewData(name, value){
+	 	const tablename = getSession();
 		if (tablename === undefined || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
-			resolve();
 			return;
 		}
 
 		const query = `INSERT INTO ${tablename} (name, value) VALUES (?, ?)`;
 		const values = [name, JSON.stringify(value)];
 		
-		_connection = getConnection();
+		const connection = await connect();
+		connection.on('error', (err) => {
+			console.error('MySQL error:', err.code);
+			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+				connect(); // Reconnect on connection loss
+			} else {
+				throw err;
+			}
+		});
 
-		if (_connection != undefined){
-			_connection.query(query, values, function (error, results, fields) {
-				if (error) {
-					reject(error);
-				}else{
-					resolve(results);
-				}
-			});
-		}else{
-			resolve();
+
+		if (connection != undefined){
+			try{
+				connection.query(query, values, function (error, results, fields) {
+					if (error) {
+						connection.end();
+						throw(error);
+					}else{
+						connection.end();
+						return results;
+					}
+				});
+			}catch(err){
+				connection.end();
+				throw(err);
+			}
 		}
-	});		
 }
 
 function getBrewData(name){
@@ -135,37 +178,39 @@ function getBrewData(name){
 		const query = `SELECT * FROM ${tablename}`;
 		const values = [];
 		
-		if (_connection != undefined){
-			_connection.query(query, values, function (error, results, fields) {
-				if (error) {
-					reject(error);
-				}else{
-					// Transform the results into a series of arrays
-                    const timeSeries = [];
-                    results.forEach(row => {
-						const name = row.name;
-						const timestamp = new Date(row.timestamp); // Convert MySQL TIMESTAMP to JavaScript Date
-                        timestamp.setHours(timestamp.getHours() + 6);
+		connect().then(connection => {
+			if (connection != undefined){
+				connection.query(query, values, function (error, results, fields) {
+					if (error) {
+						reject(error);
+					}else{
+						// Transform the results into a series of arrays
+						const timeSeries = [];
+						results.forEach(row => {
+							const name = row.name;
+							const timestamp = new Date(row.timestamp); // Convert MySQL TIMESTAMP to JavaScript Date
+							timestamp.setHours(timestamp.getHours() + 6);
 
-						timeSeries[name] = timeSeries[name] ? timeSeries[name] : [];
-						timeSeries[name].push({
-							value: JSON.parse(row.value),
-							timestamp
+							timeSeries[name] = timeSeries[name] ? timeSeries[name] : [];
+							timeSeries[name].push({
+								value: JSON.parse(row.value),
+								timestamp
+							});
 						});
-                    });
 
-					// Get key and value of each object in timeSeries
-    				const highcharts = Object.entries(timeSeries).map(([key, value]) => ({
-        				name: key,
-						data: value.map(({value, timestamp}) => ([timestamp, value]))
-    				}));
-	                resolve(highcharts);
-				}
-			});
-		}else{
-			resolve();
-		}
-	});		
+						// Get key and value of each object in timeSeries
+						const highcharts = Object.entries(timeSeries).map(([key, value]) => ({
+							name: key,
+							data: value.map(({value, timestamp}) => ([timestamp, value]))
+						}));
+
+						connection.end();
+						resolve(highcharts);
+					}
+				});
+			}
+		});
+	});
 }	
 
 /**
@@ -173,15 +218,14 @@ function getBrewData(name){
  * 
  * @returns {Promise<void>} A promise that resolves when the connection is successfully closed, or rejects with an error if the connection could not be closed.
  */
-function stop(){
-	return new Promise((resolve, reject) => {
-		_connection.end((err) => {
+async function stop(){
+	return;
+		const c = connect();
+		c.end((err) => {
 			if (err) {
-				reject(err);
+				throw(err);
 			}
-			else resolve();
 		});
-	});
 }
 
 module.exports = {

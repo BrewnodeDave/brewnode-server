@@ -47,8 +47,6 @@ let currentHeater = 0;
 let publishPower;
 let publishHeater;
 
-let prevOnTime;
-
 const energy = function(){
 	const filename = path.join(brewdefs.installDir, "energy.txt");
 	let currentEnergy = 0;
@@ -102,17 +100,17 @@ const powerOff = () => {
 	i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
 
 	//Need to stop timer on final 
-	pwm.stop();	
+	// pwm.stop();	
 	
 	if (publishHeater != null){
 		if (currentHeater !== 0){
 			publishHeater(currentHeater);
-			currentHeater = 0;
-			publishHeater(currentHeater);
+			publishHeater(0);
 		}
 	} else{
 		console.error("heater powerOff but service not started?");
-	}	
+	}
+	currentHeater = 0;
 };
 	
 /** 
@@ -121,17 +119,15 @@ const powerOff = () => {
 */
 const powerOn = () => {
 	i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
-	prevOnTime = hrtime();
-
 	if (publishHeater != null){
-		if (currentHeater !== 0){
+		if (currentHeater !== MAX_POWER_W){
 			publishHeater(currentHeater);
-			currentHeater = MAX_POWER_W;
-			publishHeater(currentHeater);
+			publishHeater(MAX_POWER_W);
 		}
 	} else{
 		console.error("heater powerOn but service not started?");
 	}	
+	currentHeater = MAX_POWER_W;
 };
 
 function getPower(force = false){
@@ -239,6 +235,8 @@ module.exports = {
 	},
 	
 	forceOn() {
+		setPower(MAX_POWER_W);
+		return;
 		const desiredPower = MAX_POWER_W;
 		if (publishHeater != null){
 			if (currentHeater !== desiredPower){
@@ -257,6 +255,8 @@ module.exports = {
 	},
 
 	forceOff() {
+		setPower(0);
+		return;
 		const desiredPower = 0;
 		if (publishHeater != null){
 			if (currentHeater !== desiredPower){
@@ -275,8 +275,8 @@ module.exports = {
 	},
 
 	getStatus: () => {
-		// const heater = i2c.readBit(HEATER_DEF.i2cPinOut);
-		// currentHeater = heater === HEATER_ON ? MAX_POWER_W : 0;
+		const heater = i2c.readBit(HEATER_DEF.i2cPinOut);
+		currentHeater = heater === HEATER_ON ? MAX_POWER_W : 0;
 		return currentHeater;
 	}
 }

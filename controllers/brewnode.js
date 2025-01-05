@@ -545,8 +545,8 @@ async function fill (req, res, next, litres) {
   res.send(200, "Fill Complete");
 };
 
-function setBrewname (req, res, next, name) {
-  const result = mysqlService.setBrewname(name);
+async function setBrewname (req, res, next, name) {
+  const result = await mysqlService.setBrewname(name);
   progressPublish(name);
   result.err ? res.status(500).send(res.err) : res.send(200, result);
 } 

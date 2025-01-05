@@ -68,11 +68,7 @@ function create(sensorName) {
 	   }
 	   if (emit){
 		   sensor.emit(sensorName, value);
-		   try{
-		   		await mysql.brewData(sensorName, value);
-		   }catch(e){
-			   console.log(e);
-		   }
+		   	await mysql.brewData(sensorName, value);
 	   }
 	   
 	   clients.forEach(client => {
