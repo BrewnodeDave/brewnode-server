@@ -42,12 +42,10 @@ const MAX_WATTS = MAX_POWER_W - MIN_WATTS;
 let currentPower;
 let prevPower = 0;
 
-let currentHeater;
-let prevHeater;
+let currentHeater = 0;
 
 let publishPower;
 let publishHeater;
-let publishEnergy;
 
 let prevOnTime;
 
@@ -96,28 +94,20 @@ const UPDATE_INTERVAL = 60 * 1000;
 
 let _updateInterval = 1;//Nominally no speed up
 
-function reportEnergy(onTime) {
-	const diff = process.hrtime(onTime);
-    const onDuration = diff[0] + diff[1] / 1e9; // Convert to seconds
-    const joules = 3000 * onDuration;
-	const kWHr = joules / 3600000;
-	if (publishEnergy) publishEnergy(kWHr);
-}
 /** 
 * Turn off the heater.
 * @fires heatEvent
 */
 const powerOff = () => {
 	i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
-	reportEnergy(prevOnTime);
 
 	//Need to stop timer on final 
 	pwm.stop();	
 	
 	if (publishHeater != null){
-		currentHeater = 0;
-		if (prevHeater != currentHeater){
-			prevHeater = currentHeater;
+		if (currentHeater !== 0){
+			publishHeater(currentHeater);
+			currentHeater = 0;
 			publishHeater(currentHeater);
 		}
 	} else{
@@ -134,9 +124,9 @@ const powerOn = () => {
 	prevOnTime = hrtime();
 
 	if (publishHeater != null){
-		currentHeater = MAX_POWER_W;
-		if (prevHeater != currentHeater){
-			prevHeater = currentHeater;
+		if (currentHeater !== 0){
+			publishHeater(currentHeater);
+			currentHeater = MAX_POWER_W;
 			publishHeater(currentHeater);
 		}
 	} else{
@@ -221,22 +211,12 @@ module.exports = {
 	
 			publishPower = broker.create(POWER);
 			publishHeater = broker.create("Heater");
-			publishEnergy = broker.create("KWHr");
 
 			//Define callbacks for PWM mark and space functions
 			pwm.init(powerOn, powerOff);
 	
 			_updateInterval = UPDATE_INTERVAL / simulationSpeed;
 			
-			// const J2KWHr = j => j / (3600000);
-			//Emit the current power to all listeners every 1 minute
-			// timer = setInterval(getPower.bind(null, false), _updateInterval);
-			
-			// timer = setInterval(() => {
-			// 	currentPower = getPower(true);
-			// 	energy.add(J2KWHr(currentPower * (_updateInterval / 1000)));
-			// }, _updateInterval);
-	
 			resolve();
 		}),
 
@@ -259,51 +239,44 @@ module.exports = {
 	},
 	
 	forceOn() {
-		// i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_ON});
-		
-		i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
-	
-		setPower(MAX_POWER_W);
-
+		const desiredPower = MAX_POWER_W;
 		if (publishHeater != null){
-			currentHeater = MAX_POWER_W;
-			if (prevHeater != currentHeater){
-				prevHeater = currentHeater;
+			if (currentHeater !== desiredPower){
+				publishHeater(currentHeater);
+
+				i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
+
+				setPower(desiredPower);		
+				currentHeater = desiredPower;
 				publishHeater(currentHeater);
 			}
 		} else{
 			console.error("heater forceOn but service not started?");
 		}	
-		return MAX_POWER_W;
+		return currentHeater;
 	},
-	forceOff() {
-		// i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_OFF});
-		i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
 
-		setPower(0);
-		
+	forceOff() {
+		const desiredPower = 0;
 		if (publishHeater != null){
-			currentHeater = 0;
-			if (prevHeater != currentHeater){
-				prevHeater = currentHeater;
+			if (currentHeater !== desiredPower){
+				publishHeater(currentHeater);
+				
+				i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
+
+				setPower(desiredPower);
+				currentHeater = desiredPower;				
 				publishHeater(currentHeater);
 			}
 		} else{
 			console.error("heater forceOff but service not started?");
 		}
-		return 0;	
+		return currentHeater;	
 	},
 
 	getStatus: () => {
-		const heater = i2c.readBit(HEATER_DEF.i2cPinOut);
-		currentHeater = heater === HEATER_ON ? MAX_POWER_W : 0;
-		if (publishHeater != null){
-			publishHeater(currentHeater);
-		}
-		if (publishPower != null){
-			publishPower(currentPower);
-		}	
-
+		// const heater = i2c.readBit(HEATER_DEF.i2cPinOut);
+		// currentHeater = heater === HEATER_ON ? MAX_POWER_W : 0;
 		return currentHeater;
 	}
 }

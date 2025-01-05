@@ -29,7 +29,7 @@ async function updateMisc (req, res, next, id, inventory_adjust, inventory) {
     if (error.response && error.response.status === 429) {
       const retryAfter = error.response.headers['retry-after'];
       const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : 0;
-      res.status(429).send(`Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
+      res.send(429, `Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
     } else {
       res.status(error.response ? error.response.status : 500).send(error.message);
     }

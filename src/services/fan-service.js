@@ -36,8 +36,7 @@ const FAN_ON = 0;//i2c.LOW;
 */
 const FAN_OFF = 1;//i2c.HIGH;
 
-/** Current state of the Fan (on/off) */
-let currentState = FAN_OFF;
+let currentPower = 0;
 
 /** 
  @const
@@ -57,31 +56,31 @@ let tempKettleListener;
 		
 /**
  * Switch fan on or off
- * @param {number} state - on or off
+ * @param {number} newPower - on or off
  */
-function setState(state){
-	currentState = state;
-	i2c.writeBit(FAN_DEF.i2cPinOut, currentState);
-	
-	if (publishFanState){
-		publishFanState((currentState === FAN_ON) ? POWER : 0);
+function setState(newPower){
+	i2c.writeBit(FAN_DEF.i2cPinOut, (newPower === POWER) ? FAN_ON : FAN_OFF);
+	if (newPower !== currentPower){
+		if (publishFanState){
+			publishFanState(currentPower);
+			publishFanState(newPower);
+		}
+		currentPower = newPower;
 	}
 }
 
-const isOn = () => (currentState === FAN_ON);
+const isOn = () => (currentPower === POWER);
 
 /**
  * Automatically switch on/off fan with temperature
  * @param {{name:string, date:number, value:number}} data - Data from sensor.
  */
 function tempKettleHandler({value}) {
-	const temp = value;
-	const fanOn = isOn();
-	if ((temp <= TEMP_FAN_OFF) && fanOn) {
-		setState(FAN_OFF);
+	if ((value <= TEMP_FAN_OFF) && isOn()) {
+		setState(0);
 	} else 
-	if ((temp >= TEMP_FAN_ON) && !fanOn) {
-		setState(FAN_ON);
+	if ((value >= TEMP_FAN_ON) && !isOn()) {
+		setState(POWER);
 	}	
 }
 
@@ -95,9 +94,7 @@ module.exports = {
         @fires fanEvent
      */
     switchOn() {
-		if (!isOn()) {
-			setState(FAN_ON);
-	    }
+		setState(POWER);
 		return POWER;
     },
 
@@ -105,10 +102,8 @@ module.exports = {
         @fires fanEvent
      */
     switchOff() {
-		if (isOn()) {
-			setState(FAN_OFF);
-	    }
-		return 0;
+		setState(0);
+	    return 0;
     },
 	
 	/**
@@ -117,7 +112,7 @@ module.exports = {
 	start(opt) {
 		return new Promise((resolve, reject) => {		
 			brewlog.debug("fan-service", "Started");
-			currentState = FAN_OFF;
+			currentPower = 0;
 			i2c.init({number:FAN_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:FAN_OFF});
 			
 			publishFanState = broker.create(FAN_DEF.name);
@@ -143,5 +138,5 @@ module.exports = {
 		});
 	},
 	
-	getStatus: () => (currentState === FAN_ON) ? POWER : 0
+	getStatus: () => currentPower
 }

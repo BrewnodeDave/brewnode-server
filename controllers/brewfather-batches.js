@@ -19,7 +19,7 @@ async function batches (req, res, next, include, complete, status, limit, start_
     if (error.response && error.response.status === 429) {
       const retryAfter = error.response.headers['retry-after'];
       const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : 0;
-      res.status(429).send(`Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
+      res.send(429, `Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
     } else {
       res.status(error.response ? error.response.status : 500).send(error.message);
     }
@@ -35,7 +35,7 @@ async function batch (req, res, next, include, id) {
     if (error.response && error.response.status === 429) {
       const retryAfter = error.response.headers['retry-after'];
       const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : 0;
-      res.status(429).send(`Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
+      res.send(429, `Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
     } else {
       res.status(error.response ? error.response.status : 500).send(error.message);
     }
@@ -50,7 +50,7 @@ async function getAllBatchReadings (req, res, next, id) {
     if (error.response && error.response.status === 429) {
       const retryAfter = error.response.headers['retry-after'];
       const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : 0;
-      res.status(429).send(`Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
+      res.send(429, `Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
     } else {
       res.status(error.response ? error.response.status : 500).send(error.message);
     }
@@ -65,7 +65,7 @@ async function getBatchBrewTracker (req, res, next, id) {
     if (error.response && error.response.status === 429) {
       const retryAfter = error.response.headers['retry-after'];
       const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : 0;
-      res.status(429).send(`Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
+      res.send(429, `Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
     } else {
       res.status(error.response ? error.response.status : 500).send(error.message);
     }
@@ -80,7 +80,7 @@ async function getLastBatchReading (req, res, next, id) {
     if (error.response && error.response.status === 429) {
       const retryAfter = error.response.headers['retry-after'];
       const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : 0;
-      res.status(429).send(`Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
+      res.send(429, `Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
     } else {
       res.status(error.response ? error.response.status : 500).send(error.message);
     }
@@ -96,7 +96,7 @@ async function updateBatch (req, res, next, id, status, measuredMashPh, measured
     if (error.response && error.response.status === 429) {
       const retryAfter = error.response.headers['retry-after'];
       const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : 0;
-      res.status(429).send(`Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
+      res.send(429, `Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
     } else {
       res.status(error.response ? error.response.status : 500).send(error.message);
     }

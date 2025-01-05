@@ -60,7 +60,7 @@ const VALVE_DEFS = [{
 	pinOpened: brewdefs.GPIO_VALVE5_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE5_CLOSED,
 	i2cPinOut: brewdefs.I2C_KETTLE_VALVE_IN,
-	power: 0
+	power: 0.001 //non-zero implies open status
 }, {
 	name: "ValveMashIn",	//7
 	pinOpened: brewdefs.GPIO_VALVE6_OPENED,
@@ -99,15 +99,20 @@ function Valve(valveDef) {
 	thisValve.publish = broker.create(valveDef.name);
 
 	thisValve.openOrClose = (requested) => {
-		i2c.writeBit(thisValve.requestPin, requested);
-		brewlog.info(`thisValve.openOrClose ${thisValve.name}=`, `${requested}`);
-		if (requested === VALVE_OPEN_REQUEST) {
-			thisValve.status = thisValve.power;
-		} else if (requested === VALVE_CLOSE_REQUEST) {
+
+		if ((requested === VALVE_CLOSE_REQUEST) && (thisValve.status === thisValve.power)){
+			i2c.writeBit(thisValve.requestPin, requested);
 			thisValve.status = 0;
+			thisValve.publish(thisValve.power);
+			thisValve.publish(0);
 		}
-	
-		thisValve.publish(thisValve.status);
+		
+		if ((requested === VALVE_OPEN_REQUEST) && (thisValve.status === 0)){
+			i2c.writeBit(thisValve.requestPin, requested);
+			thisValve.status = thisValve.power;
+			thisValve.publish(0);
+			thisValve.publish(thisValve.power);
+		}
 	};
 
 	/**

@@ -74,35 +74,48 @@ function Pump(name, requestPin){
   const thisPump = this;  
 
   this.on = () => new Promise((resolve, reject) => {	
-    thisPump.state = ON;
-    i2c.writeBit(thisPump.requestPin, ON);
-	brewlog.info(this.name,"ON");
-    thisPump.publishState(POWER);
-    resolve(POWER);
+    if (thisPump.state === OFF){
+		thisPump.state = ON;
+		i2c.writeBit(thisPump.requestPin, ON);
+		brewlog.info(this.name,"ON");
+		thisPump.publishState(POWER);
+	} 
+	resolve(POWER);
+
   });
 
   this.onSync = (dutyCycle) => {
-	thisPump.state = ON;
-	i2c.writeBit(thisPump.requestPin, ON);
-	brewlog.info(this.name,"ON");
-	thisPump.publishState(POWER);
+	if (thisPump.state === OFF){
+		thisPump.state = ON;
+		i2c.writeBit(thisPump.requestPin, ON);
+		brewlog.info(this.name,"ON");
+		thisPump.publishState(0);
+		thisPump.publishState(POWER);
+	}
 	return POWER;
   }
 
-  this.off = () => new Promise((resolve, reject) => {	
-	thisPump.state = OFF;
-	brewlog.info(this.name,"OFF");
-	thisPump.publishState(0);
-	resolve(0);
+	this.off = () => new Promise((resolve, reject) => {	
+		if (thisPump.state === ON){
+			thisPump.state = OFF;
+			brewlog.info(this.name,"OFF");
+			thisPump.publishState(POWER);
+			thisPump.publishState(0);
+		}
+		resolve(0);
 	});
+	
 
-  this.offSync = () => {	
-	thisPump.state = OFF;
-	i2c.writeBit(thisPump.requestPin, OFF);
-	brewlog.info(this.name,"OFF Sync");
-	thisPump.publishState(0);
-	return 0;
-  }
+  	this.offSync = () => {	
+		if (thisPump.state === ON){
+			thisPump.state = OFF;
+			i2c.writeBit(thisPump.requestPin, OFF);
+			brewlog.info(this.name,"OFF Sync");
+			thisPump.publishState(POWER);
+			thisPump.publishState(0);
+		}
+		return 0;
+  	}
 }
 
 function on(name){
@@ -191,11 +204,11 @@ module.exports = {
 		if (mashPump){
 			mashState = mashPump.state;
 			if (mashState === OFF){
-				mashPump.publishState(0);
+				// mashPump.publishState(0);
 				result.push({name:mashPump.name, value:0});
 			}
 			else if (mashState === ON){
-				mashPump.publishState(POWER);
+				// mashPump.publishState(POWER);
 				result.push({name:mashPump.name, value:POWER});
 			}
 		}else{
@@ -206,11 +219,11 @@ module.exports = {
 		if( kettlePump){
 			kettleState = kettlePump.state;		
 			if (kettleState === OFF){
-				kettlePump.publishState(0);
+				// kettlePump.publishState(0);
 				result.push({name:kettlePump.name, value:0});
 			}
 			else if (kettleState === ON){
-				kettlePump.publishState(POWER);
+				// kettlePump.publishState(POWER);
 				result.push({name:kettlePump.name, value:POWER});
 			}
 		}else{
@@ -221,11 +234,11 @@ module.exports = {
 		if(chillPump){
 			chillState = chillPump.state;		
 			if (chillState === OFF){
-				chillPump.publishState(0);
+				// chillPump.publishState(0);
 				result.push({name:chillPump.name, value:0});
 			}
 			else if (chillState === ON){
-				chillPump.publishState(POWER);
+				// chillPump.publishState(POWER);
 				result.push({name:chillPump.name, value:POWER});
 			}
 		}else{
