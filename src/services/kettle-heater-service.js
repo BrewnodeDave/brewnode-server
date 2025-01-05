@@ -27,7 +27,6 @@ const broker = require('../broker.js');
 const i2c = require('./i2c_raspi-service.js');
 const pwm = require('../pwm.js');
 const brewlog = require('../brewstack/common/brewlog.js');
-const { hrtime } = require('process');
 
 const MAX_POWER_W = 3000;
 const POWER = "Power";
@@ -87,48 +86,21 @@ const HEATER_DEF = {
 	i2cPinOut:brewdefs.I2C_KETTLE_OUTPUT_BIT
 }
 
-//Report power every so often
-const UPDATE_INTERVAL = 60 * 1000;
-
-let _updateInterval = 1;//Nominally no speed up
-
-/** 
-* Turn off the heater.
-* @fires heatEvent
-*/
-const powerOff = () => {
-	i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
-
-	//Need to stop timer on final 
-	// pwm.stop();	
-	
+const powerOnOff = (i2cState, power) => {
+	i2c.writeBit(HEATER_DEF.i2cPinOut, i2cState);
 	if (publishHeater != null){
-		if (currentHeater !== 0){
+		if (currentHeater !== power){
 			publishHeater(currentHeater);
-			publishHeater(0);
-		}
-	} else{
-		console.error("heater powerOff but service not started?");
-	}
-	currentHeater = 0;
-};
-	
-/** 
-* Turn on the heater.
-* @fires heatEvent
-*/
-const powerOn = () => {
-	i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
-	if (publishHeater != null){
-		if (currentHeater !== MAX_POWER_W){
-			publishHeater(currentHeater);
-			publishHeater(MAX_POWER_W);
+			publishHeater(power);
 		}
 	} else{
 		console.error("heater powerOn but service not started?");
 	}	
-	currentHeater = MAX_POWER_W;
+	currentHeater = power;
 };
+
+const powerOff = () => powerOnOff(HEATER_OFF, 0);
+const powerOn = () => powerOnOff(HEATER_ON, MAX_POWER_W);
 
 function getPower(force = false){
 	const w = Math.trunc(currentPower);
@@ -148,7 +120,6 @@ function getPower(force = false){
  * @param {Number} watts 
  */
 function setPower(watts){
-
 	if (watts >= MAX_POWER_W){//3000
 		//Full on
 		currentPower = MAX_POWER_W;
@@ -172,22 +143,15 @@ function setPower(watts){
 	const mark = currentPower * PERIOD_INTERVAL_MS / MAX_POWER_W;
 	const space = PERIOD_INTERVAL_MS - mark;
 
-	//Update the mark and space periods
-//	pwm.restart(mark / _simOptions.speedupFactor, space / _simOptions.speedupFactor);	
 	pwm.restart(mark , space);	
 		
 	if (currentPower != prevPower) {	
-		// console.log("currentPower=",currentPower);
 		publishPower(currentPower);
 		prevPower = currentPower;
 	}
 }
 
-let timer = null;
-let ds18x20 = null;
-
 module.exports = {
-	getEnergy: energy.get,
 	getPower,
 	setPower,
 		
@@ -197,9 +161,6 @@ module.exports = {
 
 			energy.get();
 			
-			if (simulationSpeed !== 1){
-				ds18x20 = require('../sim/ds18x20.js');
-			}
 			i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_OFF});
 
 			currentPower = 0;
@@ -211,8 +172,6 @@ module.exports = {
 			//Define callbacks for PWM mark and space functions
 			pwm.init(powerOn, powerOff);
 	
-			_updateInterval = UPDATE_INTERVAL / simulationSpeed;
-			
 			resolve();
 		}),
 
@@ -220,18 +179,13 @@ module.exports = {
 	
 	MAX_W : MAX_POWER_W,
 	
-	stop() {
-		return new Promise((resolve, reject) => {	
-			brewlog.info("kettle-heater-service", "stopped");	
+	async stop() {
+		pwm.stop();
+		powerOff();
+		broker.destroy(POWER);
+		broker.destroy("Heater");
 
-			pwm.stop();
-			powerOff();
-			broker.destroy(POWER);
-			broker.destroy("Heater");
-			clearInterval(timer);
-			timer = null;
-			resolve();
-		});
+		brewlog.info("kettle-heater-service", "stopped");	
 	},
 	
 	forceOn() {

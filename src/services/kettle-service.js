@@ -10,7 +10,6 @@
 const kettleHeater = require('./kettle-heater-service.js');
 
 module.exports = {
-	getEnergy: kettleHeater.getEnergy,
 	getStatus: () => {},
 	
 	setPower: kettleHeater.setPower,
