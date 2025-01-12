@@ -4,6 +4,19 @@ info:
   version: 2.0.0
   description: <h1>Brewnode</h1>This Brewnode Server is designed to be run on a RaspberryPi with custom hardware (my brewery) attached. However, if not running on a RaspberyPi, all brewing processes are simulated. This allows the code to be tested and debugged easily on any platform. <h1>Brewfather</h1>This API exposes the entire Brewfather V2 API. Authorize access by adding your username and password.
 paths:
+  /mysql/brewnames:
+    get:
+      tags:
+      - Brewnode
+      summary: Get all brewnames in mysql database.
+      operationId: mysqlBrewnames
+      responses:
+        "200":
+          description: Success
+        "401":
+          description: Missing or invalid credentials
+      x-swagger-router-controller: mysql
+
   /brewdata:
     get:
       tags:

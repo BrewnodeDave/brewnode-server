@@ -36,38 +36,7 @@ function sanitizeBrewName(brewname) {
     return sanitized.substring(0, 64);
 }
 
-async function setBrewname(name){
-	const connection = await connect();//getConnection();
-	
-	const result = {};
-
-	if (connection){
-		const brewname = sanitizeBrewName(name);
-
-		setSession(brewname);
-		
-		const tableName = getSession();
-
-		const createTableQuery = `
-			CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, value JSON NOT NULL, timestamp)`;
-
-		connection.query(createTableQuery, (err, results) => {
-			result.err = err 
-				? `Error creating table: ${err}`
-				: `Table ${tableName} created or already exists.`;
-    	});
-
-		connection.end();
-				
-		return `Brewname set to ${name}`
-	}else{
-		c.end();
-					
-		result.err = "Can't set brewname, no connection";
-	}
-
-	return result;
-}
+// Removed duplicate setBrewname function
 
 function connect(){
 	return new Promise((resolve, reject) => {
@@ -179,9 +148,68 @@ function getBrewData(name){
 			}
 		});
 	});
-}	
+}
+
+function setBrewname(name){
+	return new Promise(async (resolve, reject) => {
+		const connection = await connect();//getConnection();
+		
+		if (connection){
+			const brewname = sanitizeBrewName(name);
+
+			setSession(brewname);
+			
+			const tableName = getSession();
+
+			const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, value JSON NOT NULL, timestamp TIMESTAMP)`;
+
+			connection.query(createTableQuery, (err, results) => {
+				if (err){ 
+					reject(err.message);
+				}else{
+					connection.end();
+					resolve(results);		
+				}
+			});
+
+		}else{
+			connection.end();			
+			reject("Can't set brewname, no connection");
+		}
+	});
+}
+
+
+function mysqlBrewnames(){
+	return new Promise((resolve, reject) => {
+
+		const query = `SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE()`;
+        const values = [];
+        
+        connect().then(connection => {
+            if (connection != undefined){
+                connection.query(query, values, function (error, results, fields) {
+                    if (error) {
+                        reject(error);
+                    }else{
+                        // Transform the results into an array of table names
+                        const tableNames = results.map(row => row.table_name);
+                        resolve(tableNames);
+                    }
+                });
+            } else {
+                reject(new Error('Connection is undefined'));
+            }
+        }).catch(error => {
+            reject(error);
+        });
+	});
+}
+
+
 
 module.exports = {
+	mysqlBrewnames,
 	brewData,
 	doublePublish,
 	getBrewData,
