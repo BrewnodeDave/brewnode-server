@@ -19,6 +19,7 @@
 const brewdefs = require('../brewstack/common/brewdefs.js');
 const brewlog  = require('../brewstack/common/brewlog.js');
 const broker   = require('../broker.js');
+const {doublePublish} = require('./mysql-service.js');
 
 // @ts-ignore
 let i2c = require('./i2c_raspi-service.js');
@@ -99,19 +100,17 @@ function Valve(valveDef) {
 	thisValve.publish = broker.create(valveDef.name);
 
 	thisValve.openOrClose = (requested) => {
-
+		
 		if ((requested === VALVE_CLOSE_REQUEST) && (thisValve.status === thisValve.power)){
 			i2c.writeBit(thisValve.requestPin, requested);
+			doublePublish(thisValve.publish, thisValve.status, 0);
 			thisValve.status = 0;
-			thisValve.publish(thisValve.power);
-			thisValve.publish(0);
 		}
 		
 		if ((requested === VALVE_OPEN_REQUEST) && (thisValve.status === 0)){
 			i2c.writeBit(thisValve.requestPin, requested);
+			doublePublish(thisValve.publish, thisValve.status, thisValve.power);
 			thisValve.status = thisValve.power;
-			thisValve.publish(0);
-			thisValve.publish(thisValve.power);
 		}
 	};
 
@@ -190,6 +189,8 @@ module.exports = {
 				initValue.number = v.requestPin;
 				i2c.init(initValue);			
 				v.close();
+				v.status = 0;
+				v.publish(v.status);
 				return v;
 			});
 			

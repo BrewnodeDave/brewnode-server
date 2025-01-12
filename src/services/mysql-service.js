@@ -13,6 +13,13 @@ let _session;
 const setSession = brewname => _session = `${brewname ? brewname : "none"}`;
 const getSession = () => _session;
 
+async function doublePublish(publish, prev, next){
+	const sixHours = 6 * 60 * 60 * 1000;
+	const dateTimeInMs = new Date().getTime() - sixHours;
+	
+	await publish(prev, dateTimeInMs);
+	await publish(next, dateTimeInMs + 1);
+}
 
 /**
  * Sanitizes a brew name by replacing any character that is not a letter, number, or underscore with an underscore.
@@ -42,7 +49,7 @@ async function setBrewname(name){
 		const tableName = getSession();
 
 		const createTableQuery = `
-			CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, value JSON NOT NULL, timestamp TIMESTAMP  DEFAULT CURRENT_TIMESTAMP)`;
+			CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, value JSON NOT NULL, timestamp)`;
 
 		connection.query(createTableQuery, (err, results) => {
 			result.err = err 
@@ -92,40 +99,6 @@ function connect(){
 	});
 }
 
-
-async function start(){
-	return;
-	return new Promise((resolve, reject) => {
-		const c = mysql.createConnection({
-			host     : process.env.DB_HOST,
-			user     : process.env.DB_USER,
-			password : process.env.DB_PASSWORD,
-			database : process.env.DB_NAME
-		});
-
-		setConnection(c);
-	
-		c.connect((err) => {
-			if (err) {
-				reject(err);
-			}else{
-				console.log('MySQL Connected');
-        
-				resolve(_connection.threadId);
-			}
-		});
-
-		getConnection().on('error', (err) => {
-			console.error('MySQL error:', err.code);
-			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-				start(); // Reconnect on connection loss
-			} else {
-				throw err;
-			}
-		});
-	});
-} 
-
 /**
  * Inserts a name and value into the current session's table in the MySQL database.
  * 
@@ -133,42 +106,37 @@ async function start(){
  * @param {any} value - The value to be inserted, which will be stringified.
  * @returns {Promise} - A promise that resolves if the insertion is successful or if certain conditions are met, and rejects if there is an error during the query execution.
  */
-async function brewData(name, value){
-	 	const tablename = getSession();
-		if (tablename === undefined || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
-			return;
+async function brewData(name, value, timestamp){
+	const tablename = getSession();
+	if (tablename === undefined || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
+		return;
+	}
+
+	const query = `INSERT INTO ${tablename} (name, value, timestamp) VALUES (?, ?, ?)`;
+	const values = [name, JSON.stringify(value), timestamp];
+	
+	try {
+	const connection = await connect();
+	connection.on('error', (err) => {
+		console.error('MySQL error:', err.code);
+		if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+			connect(); // Reconnect on connection loss
+		} else {
+			throw (err);
 		}
+	});
 
-		const query = `INSERT INTO ${tablename} (name, value) VALUES (?, ?)`;
-		const values = [name, JSON.stringify(value)];
-		
-		const connection = await connect();
-		connection.on('error', (err) => {
-			console.error('MySQL error:', err.code);
-			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-				connect(); // Reconnect on connection loss
-			} else {
-				throw err;
-			}
-		});
-
-
-		if (connection != undefined){
-			try{
-				connection.query(query, values, function (error, results, fields) {
-					if (error) {
-						connection.end();
-						throw(error);
-					}else{
-						connection.end();
-						return results;
-					}
-				});
-			}catch(err){
-				connection.end();
-				throw(err);
-			}
+	connection.query(query, values, function (error, results, fields) {
+		connection.end();
+		if (error) {
+			throw (error);
+		}else{
+			return results;
 		}
+	});
+	}catch(err){
+		throw(err);
+	}		
 }
 
 function getBrewData(name){
@@ -213,25 +181,9 @@ function getBrewData(name){
 	});
 }	
 
-/**
- * Stops the MySQL connection.
- * 
- * @returns {Promise<void>} A promise that resolves when the connection is successfully closed, or rejects with an error if the connection could not be closed.
- */
-async function stop(){
-	return;
-		const c = connect();
-		c.end((err) => {
-			if (err) {
-				throw(err);
-			}
-		});
-}
-
 module.exports = {
 	brewData,
+	doublePublish,
 	getBrewData,
 	setBrewname,
-	start,
-	stop
 }

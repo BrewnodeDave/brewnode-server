@@ -21,6 +21,7 @@ const brewdefs = require('../brewstack/common/brewdefs.js');
 const brewlog  = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
 const i2c = require('./i2c_raspi-service.js');
+const {doublePublish} = require('./mysql-service.js');
 
 const POWER = 18;
 let started = false;
@@ -45,6 +46,7 @@ const MASH_PUMP = "PumpMash";
 const KETTLE_PUMP = "PumpKettle";
 const GLYCOL_PUMP = "PumpGlycol";
 
+
 const pumpStop = pump => {
 	if (pump) {
 		pump.offSync();
@@ -59,60 +61,54 @@ const pumpStop = pump => {
  * @param {number} requestPin - I2C pin number	 
  */
 function Pump(name, requestPin){
-  this.publishState = null;
   this.name = name;
 
   i2c.init({
 	number:requestPin, 
 	dir:i2c.DIR_OUTPUT, 
 	value:OFF
-});
+	});
 	
   this.state = OFF;
   this.requestPin = requestPin;
 
   const thisPump = this;  
 
-  this.on = () => new Promise((resolve, reject) => {	
+  this.on = async () => {	
     if (thisPump.state === OFF){
-		thisPump.state = ON;
 		i2c.writeBit(thisPump.requestPin, ON);
 		brewlog.info(this.name,"ON");
-		thisPump.publishState(POWER);
+		await doublePublish(thisPump.publishState, 0, POWER);
+		thisPump.state = ON;
 	} 
-	resolve(POWER);
-
-  });
+	return POWER;
+  };
 
   this.onSync = (dutyCycle) => {
 	if (thisPump.state === OFF){
-		thisPump.state = ON;
 		i2c.writeBit(thisPump.requestPin, ON);
 		brewlog.info(this.name,"ON");
-		thisPump.publishState(0);
-		thisPump.publishState(POWER);
+		doublePublish(thisPump.publishState, 0, POWER);
+		thisPump.state = ON;
 	}
 	return POWER;
   }
 
-	this.off = () => new Promise((resolve, reject) => {	
+	this.off = async () => {	
 		if (thisPump.state === ON){
-			thisPump.state = OFF;
 			brewlog.info(this.name,"OFF");
-			thisPump.publishState(POWER);
-			thisPump.publishState(0);
+			await doublePublish(thisPump.publishState, POWER, 0);
+			thisPump.state = OFF;
 		}
-		resolve(0);
-	});
-	
+		return 0;
+	};
 
   	this.offSync = () => {	
 		if (thisPump.state === ON){
 			thisPump.state = OFF;
 			i2c.writeBit(thisPump.requestPin, OFF);
 			brewlog.info(this.name,"OFF Sync");
-			thisPump.publishState(POWER);
-			thisPump.publishState(0);
+			doublePublish(thisPump.publishState, POWER, 0);
 		}
 		return 0;
   	}
@@ -154,8 +150,9 @@ module.exports = {
 			}
 
 			mashPump = new Pump(MASH_PUMP, brewdefs.I2C_MASH_PUMP);
-
+			
 			mashPump.publishState = broker.create(MASH_PUMP);
+			mashPump.publishState(0);
 			module.exports.mashOnSync = mashPump.onSync;
 			module.exports.mashOffSync = mashPump.offSync;
 			module.exports.mashOn = mashPump.on;
@@ -164,6 +161,7 @@ module.exports = {
 			
 			kettlePump = new Pump(KETTLE_PUMP, brewdefs.I2C_KETTLE_PUMP);
 			kettlePump.publishState = broker.create(KETTLE_PUMP);
+			kettlePump.publishState(0);
 			module.exports.kettleOn = kettlePump.on;
 			module.exports.kettleOnSync = kettlePump.onSync;
 			module.exports.kettleOff = kettlePump.off;
@@ -172,6 +170,7 @@ module.exports = {
 
 			chillPump = new Pump(GLYCOL_PUMP, brewdefs.I2C_GLYCOL_PUMP);
 			chillPump.publishState = broker.create(GLYCOL_PUMP);
+			chillPump.publishState(0);
 			module.exports.chillPumpOn = chillPump.on;
 			module.exports.chillPumpOnSync = chillPump.onSync;
 			module.exports.chillPumpOff = chillPump.off;

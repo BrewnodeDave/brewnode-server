@@ -18,6 +18,7 @@ const brewlog   = require('../brewstack/common/brewlog.js');
 //const i2c       = require('../../nodeDrivers/i2c/i2c_mraa.js');
 const i2c       = require('./i2c_raspi-service.js');
 const broker 	= require('../broker.js');
+const {doublePublish} = require('./mysql-service.js');
 
 const TEMP_FAN_ON = 50;
 const TEMP_FAN_OFF = 30;
@@ -62,8 +63,7 @@ function setState(newPower){
 	i2c.writeBit(FAN_DEF.i2cPinOut, (newPower === POWER) ? FAN_ON : FAN_OFF);
 	if (newPower !== currentPower){
 		if (publishFanState){
-			publishFanState(currentPower);
-			publishFanState(newPower);
+			doublePublish(publishFanState, currentPower, newPower);
 		}
 		currentPower = newPower;
 	}

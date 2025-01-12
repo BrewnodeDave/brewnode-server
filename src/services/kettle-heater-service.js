@@ -27,6 +27,7 @@ const broker = require('../broker.js');
 const i2c = require('./i2c_raspi-service.js');
 const pwm = require('../pwm.js');
 const brewlog = require('../brewstack/common/brewlog.js');
+const {doublePublish} = require('./mysql-service.js');
 
 const MAX_POWER_W = 3000;
 const POWER = "Power";
@@ -90,8 +91,7 @@ const powerOnOff = (i2cState, power) => {
 	i2c.writeBit(HEATER_DEF.i2cPinOut, i2cState);
 	if (publishHeater != null){
 		if (currentHeater !== power){
-			publishHeater(currentHeater);
-			publishHeater(power);
+			doublePublish(publishHeater, currentHeater, power);
 		}
 	} else{
 		console.error("heater powerOn but service not started?");
@@ -106,7 +106,7 @@ function getPower(force = false){
 	const w = Math.trunc(currentPower);
 		
 	if ((currentPower != prevPower) || (force === true)) {
-		publishPower(currentPower);
+		//publishPower(currentPower);
 		prevPower = currentPower;
 	}
 
@@ -146,7 +146,7 @@ function setPower(watts){
 	pwm.restart(mark , space);	
 		
 	if (currentPower != prevPower) {	
-		publishPower(currentPower);
+		doublePublish(publishPower, prevPower, currentPower);
 		prevPower = currentPower;
 	}
 }

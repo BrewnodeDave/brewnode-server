@@ -10,7 +10,6 @@ const glycol 	= require('./services/glycol-service.js');
 const fill 		= require('./services/fill-service.js');
 const kettleHeater 	= require('./services/kettle-heater-service.js');
 const tempController 	= require('./services/temp-controller-service.js');
-const mysql		 = require('./services/mysql-service.js');
 const {getSimulationSpeed} = require('./sim/sim.js');
 
 const sim 		= require('./sim/sim.js');
@@ -29,7 +28,6 @@ async function start() {
 	//and should a client api be created for this?
 	// await brewfather.start(recipeName);//must come after temp.start
 
-	await mysql.start();
 	await pump.start();
 	await fan.start();
 	await valves.start(simulationSpeed);
@@ -51,7 +49,6 @@ async function stop() {
 
 	// brewfather.stop();
 
-	await mysql.stop();
 	await pump.stop();
 	await temp.stop();
 	await fan.stop();

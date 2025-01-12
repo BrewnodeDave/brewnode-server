@@ -60,22 +60,22 @@ function create(sensorName) {
    sensorNames.push(sensorName);	
    
    //return a publish function
-   return async (value, emit=true) => {    
-	//    brewlog.sensorLog(sensorName, value);
-	   if (_socket){
+   return async (value, timestamp) => {    
+	   	if (_socket){
 		   _socket.broadcast.emit(sensorName,  value);
 		   _socket.emit(sensorName,  value);
-	   }
-	   if (emit){
-		   sensor.emit(sensorName, value);
-		   	await mysql.brewData(sensorName, value);
-	   }
+	   	}
+
+	   	sensor.emit(sensorName, value);
+		const dt = timestamp ? timestamp : new Date().getTime();
+		const mysqlDatetime = new Date(dt).toISOString().slice(0, 23).replace('T', ' ');
+        await mysql.brewData(sensorName, value, mysqlDatetime);
 	   
-	   clients.forEach(client => {
-		   if (client.connected){
+		clients.forEach(client => {
+			if (client.connected){
 			   client.emit(sensorName,  value);
 			   client.broadcast.emit(sensorName,  value);
-		   }
+		   	}
 	   });
    };		
 }		

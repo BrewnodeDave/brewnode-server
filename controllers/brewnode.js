@@ -10,7 +10,6 @@
 const { KETTLE_TEMPNAME } = require('../src/services/kettle-service.js');
 const tempService = require('../src/services/temp-service.js');
 const glycol = require('../src/services/glycol-service.js');
-const brewdata = require('../src/brewstack/common/brewdata.js');
 const k2m = require('../src/brewstack/brewingAlgorithms/k2m.js');
 const m2k = require('../src/brewstack/brewingAlgorithms/m2k.js');
 const k2f = require('../src/brewstack/brewingAlgorithms/k2f.js');
@@ -429,7 +428,11 @@ const getValve = (name) => async (req, res, next, openClose) => valve(req, res, 
  * @param {string} name - The name of the pump.
  * @returns {Function} - An asynchronous function that takes in req, res, next, and onOff parameters and calls the pump function.
  */
-const getPump = (name) => async (req, res, next, onOff) => pump(req, res, next, name, onOff);   
+const getPump = (name) => {
+  return async (req, res, next, onOff) => {
+    pump(req, res, next, name, onOff);  
+  }
+}
 
 /**
  * Calculates the heat loss in a pipe and returns the temperature difference.
@@ -551,6 +554,11 @@ async function setBrewname (req, res, next, name) {
   result.err ? res.status(500).send(res.err) : res.send(200, result);
 } 
 
+const kettlePump =  getPump("PumpKettle");
+const mashPump =  getPump("PumpMash");
+const glycolPump = getPump("PumpGlycol");
+
+
 module.exports = {
   boil,
   chill,
@@ -565,16 +573,16 @@ module.exports = {
   getKettleTemp,
   getKettleVolume,
   getSimSpeed,
-  glycolPump: getPump("PumpGlycol"),
+  glycolPump,
   heat,
   k2f: kettle2fermenter,
   k2m: kettle2mashtun,
   kettleInValve: getValve("ValveKettleIn"),
-  kettlePump: getPump("PumpKettle"),
+  kettlePump,
   m2k: mash2kettle,
   mash,
   mashInValve: getValve("ValveMashIn"),
-  mashPump: getPump("PumpMash"),
+  mashPump,
   pumpsStatus,
   restart,
   sensorStatus,
