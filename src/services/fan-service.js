@@ -138,5 +138,5 @@ module.exports = {
 		});
 	},
 	
-	getStatus: () => currentPower
+	getStatus: () => currentPower//({name: FAN_DEF.name, value: currentPower})
 }

@@ -11,6 +11,7 @@ const brewlog = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
 const therm = require('./temp-service.js');
 const glycolHeater = require('./glycol-heater-service.js');
+const glycolChiller = require('./glycol-chiller-service.js');
 
 let _simulationSpeed = null;
 
@@ -169,11 +170,9 @@ function doStep(step) {
 		const tempAmbient = await therm.getTemp(AMBIENT_TEMPNAME);
 		const chillStep = tempC < tempAmbient;
 		if (chillStep) {
-			//turn on chiller
-
+			glycolChiller.switchOn();
 		}else{
-			//turn off chiller
-
+			glycolChiller.switchOff();
 			glycolInterval = maintainGlycolTemp(desiredFermentTemp);			
 		}
 

@@ -79,7 +79,7 @@ module.exports = {
 	
 	I2C_WATCHDOG_HALT_BIT:	23,
 
-	I2C_RELAY_3:	 		1,	//unused
+	I2C_CHILL_OUTPUT_BIT:	1,	
 	I2C_HEAT_OUTPUT_BIT:	2, 		
     I2C_MASH_PUMP: 			3, 
 	I2C_FERMENTER_PUMP: 	4,

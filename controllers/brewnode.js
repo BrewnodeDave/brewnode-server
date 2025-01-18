@@ -15,6 +15,8 @@ const m2k = require('../src/brewstack/brewingAlgorithms/m2k.js');
 const k2f = require('../src/brewstack/brewingAlgorithms/k2f.js');
 const sim = require('../src/sim/sim.js');
 const kettleHeater = require('../src/services/kettle-heater-service.js');  
+const glycolHeater = require('../src/services/glycol-heater-service.js');  
+const glycolChiller = require('../src/services/glycol-chiller-service.js');  
 const fillService = require('../src/services/fill-service.js');
 const therm = require('../src/services/temp-service.js');
 const pumps = require('../src/services/pump-service.js');
@@ -215,6 +217,15 @@ async function restart (req, res, next) {
   res.send(200, "Restarted server");
 };
 
+async function glycolChill(req, res, next, onOff) {
+  const watts = (onOff === 'On') ? glycolChiller.switchOn() : glycolChiller.switchOff(); 
+  res.send(200, watts);
+};
+
+async function glycolHeat(req, res, next, onOff) {
+  const watts = (onOff === 'On') ? glycolHeater.switchOn() : glycolHeater.switchOff(); 
+  res.send(200, watts);
+};
 
 async function sensorStatus(req, res, next) {
   try {
@@ -248,6 +259,12 @@ async function sensorStatus(req, res, next) {
         break;
       case "Fan":
         result = fan.getStatus();
+        break;
+      case "GlycolHeater":
+        result = glycolHeater.getStatus();
+        break;
+      case "GlycolChiller":
+        result = glycolChiller.getStatus();
         break;
       case "Heater":
         result = kettleHeater.getStatus();
@@ -284,6 +301,8 @@ async function sensorStatus(req, res, next) {
         result.push(flow.getStatus().flat());
         result.push(wdog.getStatus());
         result.push(fan.getStatus());
+        result.push(glycolHeater.getStatus());
+        result.push(glycolChiller.getStatus());
         result.push(kettleHeater.getStatus());
         result.push(valves.getStatus().flat());
 
@@ -575,6 +594,8 @@ module.exports = {
   getSimSpeed,
   glycolPump,
   heat,
+  glycolChill,
+  glycolHeat,
   k2f: kettle2fermenter,
   k2m: kettle2mashtun,
   kettleInValve: getValve("ValveKettleIn"),

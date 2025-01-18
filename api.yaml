@@ -122,6 +122,7 @@ paths:
           - PumpGlycol
           - TempKettle
           - TempMash
+          - TempGlycol
           - TempWort
           - TempFermenter
           - ValveKettleIn
@@ -129,6 +130,8 @@ paths:
           - ValveChillWortIn
           - ValveFermentIn
           - Heater
+          - GlycolHeater
+          - GlycolChiller
           - Fan
           - Watchdog
           default: All
@@ -186,13 +189,55 @@ paths:
   /heat:
     put:
       tags:
-      - Sensors
+      - Kettle
       summary: Turn on or off kettle heater
       operationId: heat
       parameters:
       - name: onOff
         in: query
         description: Heater state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /glycol/heat:
+    put:
+      tags:
+      - Glycol
+      summary: Turn on or off glycol heater
+      operationId: glycolHeat
+      parameters:
+      - name: onOff
+        in: query
+        description: Heater state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      responses:
+        "200":
+          description: Success
+      x-swagger-router-controller: brewnode
+
+  /glycol/chill:
+    put:
+      tags:
+      - Glycol
+      summary: Turn on or off glycol chiller
+      operationId: glycolChill
+      parameters:
+      - name: onOff
+        in: query
+        description: Chiller state
         schema:
           type: string
           enum:
@@ -250,7 +295,7 @@ paths:
   /valve/kettlein:
     put:
       tags:
-      - Sensors
+      - Kettle
       summary: Open or close the kettle in valve
       operationId: kettleInValve
       parameters:
@@ -271,7 +316,7 @@ paths:
   /valve/mashin:
     put:
       tags:
-      - Sensors
+      - Mash Tun
       summary: Open or close the mash in valve
       operationId: mashInValve
       parameters:
@@ -345,7 +390,7 @@ paths:
   /pump/kettle:
     put:
       tags:
-      - Sensors
+      - Kettle
       summary: Turn on or off kettle pump
       operationId: kettlePump
       parameters:
@@ -366,7 +411,7 @@ paths:
   /pump/mash:
     put:
       tags:
-      - Sensors
+      - Mash Tun
       summary: Turn on or off mash pump
       operationId: mashPump
       parameters:
@@ -387,7 +432,7 @@ paths:
   /pump/glycol:
     put:
       tags:
-      - Sensors
+      - Glycol
       summary: Turn on or off the glycol pump
       operationId: glycolPump
       parameters:
