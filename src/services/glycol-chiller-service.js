@@ -17,17 +17,17 @@ const {doublePublish} = require('./mysql-service.js');
  @const {number} 
  @desc I2C value used to switch OFF the pump.
 */
-const HEAT_ON = 0;//i2c.LOW;
+const CHILL_ON = 0;//i2c.LOW;
 
-const POWER = 120;
+const POWER = 800;
 /** 
  @const {number} 
  @desc I2C value used to switch ON the pump.
 */
-const HEAT_OFF = 1;//i2c.HIGH;
+const CHILL_OFF = 1;//i2c.HIGH;
 
 /** Current state of the Fan (on/off) */
-let currentState = HEAT_OFF;
+let currentState = CHILL_OFF;
 
 /** 
  @const
@@ -35,21 +35,24 @@ let currentState = HEAT_OFF;
  @property {string} name - Unique fan name.
  @property {number} i2cPinOut - I2C pin number connected to the fan.
  */
-const HEAT_DEF = {
-	name:"GlycolHeater",		
-	i2cPinOut:brewdefs.I2C_HEAT_OUTPUT_BIT
+const CHILL_DEF = {
+	name:"GlycolChiller",		
+	i2cPinOut:brewdefs.I2C_CHILL_OUTPUT_BIT
 }
 
 let publishState;
+
+const statePower = state => state === CHILL_ON ? POWER : 0;
+
 		
-const statePower = state => state === HEAT_ON ? POWER : 0;
 /**
  * Switch fan on or off
  * @param {number} state - on or off
  */
 function setState(state){
+	i2c.writeBit(CHILL_DEF.i2cPinOut, state);
+	
 	if (currentState != state) {	
-		i2c.writeBit(HEAT_DEF.i2cPinOut, state);
 		doublePublish(publishState, statePower(currentState), statePower(state));
 		currentState = state;
 	}
@@ -59,37 +62,44 @@ function setState(state){
 
 
 module.exports = {
-    isOn: () => currentState === HEAT_ON,
-    switchOn: () => setState(HEAT_ON),
-    switchOff: () => setState(HEAT_OFF),
+    isOn: () => currentState === CHILL_ON,
+    switchOn: () => setState(CHILL_ON),
+    switchOff: () => setState(CHILL_OFF),
 	
+	/**
+	 * @desc Add listener to kettle temp and emit fan events when switching on and off. 
+	 */
 	start(opt) {
 		return new Promise((resolve, reject) => {		
-			currentState = HEAT_OFF;
-			i2c.init({number:HEAT_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEAT_OFF});
+			currentState = CHILL_OFF;
+			i2c.init({number:CHILL_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:CHILL_OFF});
 			
-			publishState = broker.create(HEAT_DEF.name);
-			setState(HEAT_OFF);
+			publishState = broker.create(CHILL_DEF.name);
+			setState(CHILL_OFF);
 			resolve(opt);
 		});
 	},
 
+	/**
+	 * @desc Remove kettle temp listener and fan event. 
+	 */
 	stop() {
 		return new Promise((resolve,reject) => {
-			broker.destroy(HEAT_DEF.name);
+			broker.destroy(CHILL_DEF.name);
 
-			setState(HEAT_OFF);
+			setState(CHILL_OFF);
 			brewlog.info("gylcol-heater.js", "stopped");
 			resolve();	
+			// broker.destroy(HEAT_DEF.name);
 		})
 	},
 	
 	getStatus() {
 		setState(currentState);
-		if (currentState === HEAT_OFF){
-			return 0;//{name: HEAT_DEF.name, value: 0};
-		}else if (currentState === HEAT_ON){
-			return POWER;//{name: HEAT_DEF.name, value: POWER}
+		if (currentState === CHILL_OFF){
+			return 0;// {name: CHILL_DEF.name, value: 0}
+		}else if (currentState === CHILL_ON){
+			return POWER;//{name: CHILL_DEF.name, value: POWER}
 		}
 	}
 }

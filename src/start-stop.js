@@ -6,6 +6,7 @@ const valves 	= require('./services/valve-service.js');
 const wdog 		= require('./services/wdog-service.js');
 const temp 		= require('./services/temp-service.js');
 const glycolHeater = require('./services/glycol-heater-service.js');
+const glycolChiller = require('./services/glycol-chiller-service.js');
 const glycol 	= require('./services/glycol-service.js');
 const fill 		= require('./services/fill-service.js');
 const kettleHeater 	= require('./services/kettle-heater-service.js');
@@ -35,6 +36,7 @@ async function start() {
 	await flow.start(simulationSpeed);
 	await kettleHeater.start(simulationSpeed);
 	await glycolHeater.start();
+	await glycolChiller.start();
 	await glycol.start(simulationSpeed);
 	await fill.start(simulationSpeed);
 	await temp.start(simulationSpeed);
@@ -58,6 +60,7 @@ async function stop() {
 	await kettleHeater.stop();
 	await glycolHeater.stop();
 	await glycol.stop();
+	await glycolChiller.stop();
 	await fill.stop();
 	await sim.stop();
 
