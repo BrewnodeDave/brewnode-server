@@ -73,8 +73,8 @@ module.exports = {
 		return new Promise((resolve, reject) => {		
 			currentState = CHILL_OFF;
 			i2c.init({number:CHILL_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:CHILL_OFF});
-			
 			publishState = broker.create(CHILL_DEF.name);
+
 			setState(CHILL_OFF);
 			resolve(opt);
 		});
@@ -86,20 +86,13 @@ module.exports = {
 	stop() {
 		return new Promise((resolve,reject) => {
 			broker.destroy(CHILL_DEF.name);
-
 			setState(CHILL_OFF);
-			brewlog.info("gylcol-heater.js", "stopped");
 			resolve();	
-			// broker.destroy(HEAT_DEF.name);
 		})
 	},
 	
 	getStatus() {
-		setState(currentState);
-		if (currentState === CHILL_OFF){
-			return 0;// {name: CHILL_DEF.name, value: 0}
-		}else if (currentState === CHILL_ON){
-			return POWER;//{name: CHILL_DEF.name, value: POWER}
-		}
+		// setState(currentState);
+		return statePower(currentState);
 	}
 }
