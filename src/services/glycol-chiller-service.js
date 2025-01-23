@@ -69,30 +69,23 @@ module.exports = {
 	/**
 	 * @desc Add listener to kettle temp and emit fan events when switching on and off. 
 	 */
-	start(opt) {
-		return new Promise((resolve, reject) => {		
-			currentState = CHILL_OFF;
-			i2c.init({number:CHILL_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:CHILL_OFF});
-			publishState = broker.create(CHILL_DEF.name);
+	start: (opt) => new Promise((resolve, reject) => {		
+		currentState = CHILL_OFF;
+		i2c.init({number:CHILL_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:CHILL_OFF});
+		publishState = broker.create(CHILL_DEF.name);
 
-			setState(CHILL_OFF);
-			resolve(opt);
-		});
-	},
-
+		setState(CHILL_OFF);
+		resolve(opt);
+	}),
 	/**
 	 * @desc Remove kettle temp listener and fan event. 
 	 */
-	stop() {
-		return new Promise((resolve,reject) => {
-			broker.destroy(CHILL_DEF.name);
-			setState(CHILL_OFF);
-			resolve();	
-		})
-	},
+	stop: () => new Promise((resolve,reject) => {
+		broker.destroy(CHILL_DEF.name);
+		setState(CHILL_OFF);
+		resolve();	
+	}),
 	
-	getStatus() {
-		// setState(currentState);
-		return statePower(currentState);
-	}
+	getStatus: () => statePower(currentState)
+	
 }
