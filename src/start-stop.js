@@ -22,9 +22,12 @@ async function start() {
 
 	const simulationSpeed = getSimulationSpeed();
 
-	await i2c.start();
-	await temp.start(simulationSpeed)
-
+	await i2c.start(simulationSpeed);
+	try {
+		await temp.start(simulationSpeed)
+	}catch(err){
+		console.log(err.message);
+	}
 	//This only needs to be done during fermentation 
 	//and should a client api be created for this?
 	// await brewfather.start(recipeName);//must come after temp.start
@@ -37,10 +40,24 @@ async function start() {
 	await kettleHeater.start(simulationSpeed);
 	await glycolHeater.start();
 	await glycolChiller.start();
-	await glycol.start(simulationSpeed);
+	try{
+		await glycol.start(simulationSpeed);
+	}catch(err){
+		console.log(err.message);
+	}
 	await fill.start(simulationSpeed);
-	await temp.start(simulationSpeed);
-	await tempController.start(simulationSpeed);
+	try{
+		await tempController.start(simulationSpeed);
+	}catch(err){
+		console.log(err.message);
+	}
+
+	try {
+		await temp.start(simulationSpeed);
+	}catch(err){
+		console.log(err.message);
+	}
+
 	await sim.start(simulationSpeed);
 
 	return ;
@@ -50,6 +67,15 @@ async function stop() {
 	broker.destroy('log');
 
 	// brewfather.stop();
+	tempController.stop();
+
+	await glycol.stop();
+	await glycolChiller.stop();
+	await fill.stop();
+	await sim.stop();
+
+	await kettleHeater.stop();
+	await glycolHeater.stop();
 
 	await pump.stop();
 	await temp.stop();
@@ -57,14 +83,7 @@ async function stop() {
 	await valves.stop();
 	await wdog.stop();
 	await flow.stop();
-	await kettleHeater.stop();
-	await glycolHeater.stop();
-	await glycol.stop();
-	await glycolChiller.stop();
-	await fill.stop();
-	await sim.stop();
 
-	tempController.stop();
 }
 
 module.exports = {

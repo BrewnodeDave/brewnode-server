@@ -137,7 +137,7 @@ function init(P, I, D) {
 			brewlog.info("init PID: Current Temp=",t);
 			currentTemp = t;
 			resolve(currentTemp);
-		});
+		}, reject);
 	  });
 }
 

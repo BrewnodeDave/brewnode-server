@@ -96,10 +96,10 @@ function circulate(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, 
 		    fermentDone();
 		}
 
-		pump.chillPumpOffSync();
+		pump.off(pump.chillPumpName);
 	} else {
 		if (currentFermentTemp < getGlycolTemp()){
-			pump.chillPumpOnSync();
+			pump.on(pump.chillPumpName);
 		}
 	}
 }
@@ -119,7 +119,7 @@ module.exports = {
 				.then(currentFermentTemp => {
 					resolve(); 
 				});
-			});
+			}, reject);
 		});
 	},
 
@@ -133,7 +133,7 @@ module.exports = {
 			
 			glycolHeater.switchOff();
 			
-			pump.chillPumpOffSync();
+			pump.off(pump.chillPumpName);
 
 			brewlog.info("glycol-ferment.js", "stopped");
 			resolve();
