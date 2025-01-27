@@ -22,6 +22,7 @@
 let ds18x20;
 const brewlog = require("../brewstack/common/brewlog.js");
 const broker = require("../broker.js");
+const { doublePublish } = require("./mysql-service.js");
 let PROBES = require('./probes-service.js');
 
 let pollInterval = null;
@@ -195,7 +196,8 @@ module.exports = {
 									if ((Math.abs(delta) > 0.5))
 									{
 										if (probe.publishTemp){
-											probe.publishTemp(value);
+											doublePublish(probe.publishTemp, probe.prevValue, value);
+											// probe.publishTemp(value);
 											probe.prevValue = value;
 										}
 									}
