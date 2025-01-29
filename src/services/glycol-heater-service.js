@@ -48,11 +48,11 @@ const statePower = state => state === HEAT_ON ? POWER : 0;
  * @param {number} state - on or off
  */
 function setState(state){
-	if (currentState != state) {	
+	// if (currentState != state) {	
 		i2c.writeBit(HEAT_DEF.i2cPinOut, state);
 		doublePublish(publishState, statePower(currentState), statePower(state));
 		currentState = state;
-	}
+	// }
 	
 	return statePower(currentState);
 }
