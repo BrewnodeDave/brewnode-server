@@ -74,7 +74,7 @@ async function pollTemperatures(){
 	const sensorValues =  sensors.map(sensor => sensor.value);
 
 	// Find sensors with different values
-	const changedSensors = sensors.filter((sensor, index) => sensor.value !== prevSensorValues[index]);
+	const changedSensors = sensors.filter((sensor, index) => Math.abs(sensor.value - prevSensorValues[index]) > 0.5);
 
 	// Publish changes for sensors with different values
 	changedSensors.forEach(sensor => {
