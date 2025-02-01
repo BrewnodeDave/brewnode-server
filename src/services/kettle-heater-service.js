@@ -47,30 +47,6 @@ let currentHeater = 0;
 let publishPower;
 let publishHeater;
 
-const energy = function(){
-	const filename = path.join(brewdefs.installDir, "energy.txt");
-	let currentEnergy = 0;
-	function get() {
-		if (!fs.existsSync(filename)) {
-			set(currentEnergy);
-		}
-		const txt = fs.readFileSync(filename);
-		currentEnergy = parseFloat(txt.toString());
-		return currentEnergy;
-	}
-
-	function set(e) {
-		if (e==0) return;
-		currentEnergy = e;
-		fs.writeFileSync(filename, currentEnergy.toString());
-	}
-
-	return {
-		add: e => set(get() + e),
-		get,
-		reset: () => set(0)
-	}
-}();
 /** 
  @const {number} 
  @desc I2C value used to switch OFF the pump.
@@ -158,9 +134,7 @@ module.exports = {
 	start: (simulationSpeed) =>
 		new Promise((resolve, reject) => {
 			brewlog.info("kettle-heater-service", "Start");	
-
-			energy.get();
-			
+	
 			i2c.init({number:HEATER_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:HEATER_OFF});
 
 			currentPower = 0;
@@ -190,42 +164,10 @@ module.exports = {
 	
 	forceOn() {
 		setPower(MAX_POWER_W);
-		return;
-		const desiredPower = MAX_POWER_W;
-		if (publishHeater != null){
-			if (currentHeater !== desiredPower){
-				publishHeater(currentHeater);
-
-				i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_ON);
-
-				setPower(desiredPower);		
-				currentHeater = desiredPower;
-				publishHeater(currentHeater);
-			}
-		} else{
-			console.error("heater forceOn but service not started?");
-		}	
-		return currentHeater;
 	},
 
 	forceOff() {
 		setPower(0);
-		return;
-		const desiredPower = 0;
-		if (publishHeater != null){
-			if (currentHeater !== desiredPower){
-				publishHeater(currentHeater);
-				
-				i2c.writeBit(HEATER_DEF.i2cPinOut, HEATER_OFF);
-
-				setPower(desiredPower);
-				currentHeater = desiredPower;				
-				publishHeater(currentHeater);
-			}
-		} else{
-			console.error("heater forceOff but service not started?");
-		}
-		return currentHeater;	
 	},
 
 	getStatus: () => {
