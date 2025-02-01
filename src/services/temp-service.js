@@ -43,22 +43,30 @@ function setPollInterval(secs){
 
 async function getAllTemps() {
 	let result = [];
-	ds18x20.getAll((err, tempObj) => {
-		if(err){
-			brewlog.error("Failed to get all temperatures", err);
-		}else{
-			PROBES.forEach(probe => {
-				for (const key in tempObj){
-					if (key == probe.id){					
-						const value = tempObj[key];
-						result.push({name:probe.name, value, publish:probe.publishTemp});									
-					}
+	try {
+		const tempObj = await new Promise((resolve, reject) => {
+			ds18x20.getAll((err, tempObj) => {
+				if (err) {
+					reject(err);
+				} else {
+					resolve(tempObj);
 				}
 			});
-		}//else
-	});//getAll
+		});
 
-	return result;
+		PROBES.forEach(probe => {
+			for (const key in tempObj) {
+				if (key == probe.id) {
+					const value = tempObj[key];
+					result.push({ name: probe.name, value, publish: probe.publishTemp });
+				}
+			}
+		});
+		return result;
+	} catch (err) {
+		brewlog.error("Failed to get all temperatures", err);
+		return result;
+	}
 }
 
 async function pollTemperatures(){
