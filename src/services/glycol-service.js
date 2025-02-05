@@ -25,7 +25,7 @@ const doSteps = steps => promiseSerial(steps.map(doStep));
 
 const GLYCOL_TEMPNAME = "TempGlycol";
 const FERMENT_TEMPNAME = "TempFermenter";
-const AMBIENT_TEMPNAME = "TempMash";
+const AMBIENT_TEMPNAME = "TempAmbient";
 
 const FERMENTER_OVERSHOOT = 0.1;//0;//0.1;//0;//0.4;//0.1;//0.3;
 

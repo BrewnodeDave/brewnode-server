@@ -121,6 +121,7 @@ paths:
           - PumpMash
           - PumpGlycol
           - TempKettle
+          - TempAmbient
           - TempMash
           - TempGlycol
           - TempWort
