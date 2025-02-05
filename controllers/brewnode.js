@@ -294,6 +294,10 @@ async function sensorStatus(req, res, next) {
         f = await temp.getStatus();
         result = f.find(t => t.name === "TempGlycol").value;
         break
+      case "TempAmbient":
+          f = await temp.getStatus();
+          result = f.find(t => t.name === "TempAmbient").value;
+          break
       case "All":
         const tempStatus = await temp.getStatus();
         result.push(tempStatus.flat());

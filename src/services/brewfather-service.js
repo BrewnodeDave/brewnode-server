@@ -19,8 +19,8 @@ let timer = null;
 
 async function getFermenterTemp(recipeName = "") {
     const fermenterT = await therm.getTemp("TempFermenter");
-    const ambientT = await therm.getTemp("TempMash");
     const glycolT = await therm.getTemp("TempGlycol");
+    const ambientT = await therm.getTemp("TempAmbient");
 
     await logTemps(recipeName, fermenterT, ambientT, glycolT);
 }
