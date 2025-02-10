@@ -69,8 +69,12 @@ function create(sensorName) {
 	   	sensor.emit(sensorName, value);
 		const dt = timestamp ? timestamp : new Date().getTime();
 		const mysqlDatetime = new Date(dt).toISOString().slice(0, 23).replace('T', ' ');
-        await mysql.brewData(sensorName, value, mysqlDatetime);
-	   
+        try{
+			await mysql.brewData(sensorName, value, mysqlDatetime);
+		}catch(err){
+			brewlog.error(`Failed to publish ${sensorName} to mysql`, err);
+		}
+
 		clients.forEach(client => {
 			if (client.connected){
 			   client.emit(sensorName,  value);
