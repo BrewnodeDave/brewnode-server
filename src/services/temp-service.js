@@ -79,10 +79,11 @@ async function pollTemperatures(){
 	// Publish changes for sensors with different values
 	changedSensors.forEach(sensor => {
 		sensor?.publish(sensor.value);
+
+		// Update previous sensor values
+		prevSensorValues = sensorValues;
 	});
 
-	// Update previous sensor values
-	prevSensorValues = sensorValues;
 }
 
 module.exports = { 	
@@ -151,6 +152,9 @@ module.exports = {
 					}
 				});	
 			}//timer null
+
+			const sensors = await getAllTemps();
+		 	prevSensorValues =  sensors.map(sensor => sensor.value);
 		}),
 	
 	/**

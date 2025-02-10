@@ -50,9 +50,14 @@ const statePower = state => state === HEAT_ON ? POWER : 0;
 function setState(state){
 	// if (currentState != state) {	
 		i2c.writeBit(HEAT_DEF.i2cPinOut, state);
-		doublePublish(publishState, statePower(currentState), statePower(state));
-		currentState = state;
+		// doublePublish(publishState, statePower(currentState), statePower(state));
+		// currentState = state;
 	// }
+
+		if (currentState != state) {	
+			doublePublish(publishState, statePower(currentState), statePower(state));
+			currentState = state;
+		}
 	
 	return statePower(currentState);
 }

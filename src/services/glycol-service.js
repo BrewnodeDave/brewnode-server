@@ -145,7 +145,7 @@ module.exports = {
 function doStep(step) {	
 	return () => 
 	  new Promise(async (resolve, reject) => {
-		const {tempC, days} = JSON.parse(step);
+		const {stepTemp:tempC, stepTime:days} = JSON.parse(step);
 
 		let pumpInterval = null;
 		const totalMins = days * 24 * 60 / _simulationSpeed;
