@@ -13,7 +13,7 @@
  @property {number} prevValue - Previous measurement.
  @property {function} publishTemp - Subscription callback.
  */
-module.exports = [
+ module.exports = [
 	{name:'TempKettle',		id:'28-00000751bbce', prevValue:null, publishTemp:null},
 	{name:'TempFermenter',  	id:'28-000007519802', prevValue:null, publishTemp:null},
 	{name:'TempMash',		id:'28-0000069be682', prevValue:null, publishTemp:null},
