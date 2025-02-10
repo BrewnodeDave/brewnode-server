@@ -152,7 +152,7 @@ module.exports = {
 			mashPump = new Pump(MASH_PUMP, brewdefs.I2C_MASH_PUMP);
 			
 			mashPump.publishState = broker.create(MASH_PUMP);
-			mashPump.publishState(0);
+			// mashPump.publishState(0);
 			module.exports.mashOnSync = mashPump.onSync;
 			module.exports.mashOffSync = mashPump.offSync;
 			module.exports.mashOn = mashPump.on;
@@ -161,7 +161,7 @@ module.exports = {
 			
 			kettlePump = new Pump(KETTLE_PUMP, brewdefs.I2C_KETTLE_PUMP);
 			kettlePump.publishState = broker.create(KETTLE_PUMP);
-			kettlePump.publishState(0);
+			// kettlePump.publishState(0);
 			module.exports.kettleOn = kettlePump.on;
 			module.exports.kettleOnSync = kettlePump.onSync;
 			module.exports.kettleOff = kettlePump.off;
@@ -170,7 +170,7 @@ module.exports = {
 
 			chillPump = new Pump(GLYCOL_PUMP, brewdefs.I2C_GLYCOL_PUMP);
 			chillPump.publishState = broker.create(GLYCOL_PUMP);
-			chillPump.publishState(0);
+			// chillPump.publishState(0);
 			module.exports.chillPumpOn = chillPump.on;
 			module.exports.chillPumpOnSync = chillPump.onSync;
 			module.exports.chillPumpOff = chillPump.off;
