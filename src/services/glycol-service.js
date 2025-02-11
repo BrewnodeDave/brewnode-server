@@ -33,10 +33,14 @@ let glycolTempListener;
 let glycolInterval = null;
 
 let glycolTemp;
-const setGlycolTemp = t => glycolTemp = t;		
-const getGlycolTemp = () => glycolTemp;			
+const setGlycolTemp = t => {
+	glycolTemp = t;
+}		
+const getGlycolTemp = () => {
+	return glycolTemp;
+}			
 
-const glycolFermentTempChange = value => setGlycolTemp(value.value);
+const glycolFermentTempChange = value => setGlycolTemp(value);
 				
 const hrsecs = hrtime => hrtime[0] + hrtime[1] / 1E9;
 

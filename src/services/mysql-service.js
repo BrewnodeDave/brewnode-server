@@ -7,7 +7,6 @@
  */
 
 const mysql  = require('mysql');
-
 let _session;
 
 const setSession = brewname => _session = `${brewname ? brewname : "none"}`;
@@ -69,11 +68,11 @@ function connect(){
 }
 
 async function log(msg){
-	const mysqlDatetime = new Date(dt).toISOString().slice(0, 23).replace('T', ' ');
+	const mysqlDatetime = new Date().toISOString().slice(0, 23).replace('T', ' ');
 	try{
-		await mysql.brewData("log", msg, mysqlDatetime);
+		await brewData("log", msg, mysqlDatetime);
 	}catch(err){
-		brewlog.error(`Failed to log to mysql`, err);
+		console.error(`Failed to log to mysql`, err);
 	}
 }
 
