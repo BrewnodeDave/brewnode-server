@@ -71,7 +71,7 @@ function timeToText(prefix, hrTime){
 }
 
 //Circulate until ferment temp is reached
-function circulate(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, timeAtTemp, prevTimeAtTemp) {
+function pumpOnOff(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, timeAtTemp, prevTimeAtTemp) {
 	if (msToGo === null) {
 		return;
 	}
@@ -91,12 +91,14 @@ function circulate(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, 
 		const secsToGo = Math.trunc(msToGo / 1000);
 		const nsToGo = (msToGo * 1E6);
 		const hrTime = [secsToGo, nsToGo - (secsToGo * 1E9)];
+
+		pump.off(pump.chillPumpName);
+
 		timeToText("Fermentation Step To Go = ", hrTime);
 		if (msToGo < 0) {
 		    fermentDone();
 		}
 
-		pump.off(pump.chillPumpName);
 	} else {
 		if (currentFermentTemp < getGlycolTemp()){
 			pump.on(pump.chillPumpName);
@@ -157,7 +159,7 @@ function doStep(step) {
 		pumpInterval = setInterval(() => {
 			therm.getTemp(FERMENT_TEMPNAME)
 			.then(t => {
-				circulate(desiredFermentTemp, t, (x) => {
+				pumpOnOff(desiredFermentTemp, t, (x) => {
 					clearInterval(pumpInterval);
 					brewlog.info("Step Complete");
 					resolve(x);
@@ -180,11 +182,11 @@ function doStep(step) {
 		timeAtTemp = process.hrtime();
 		prevTimeAtTemp = process.hrtime();
 
-		therm.getTemp(FERMENT_TEMPNAME)
-		.then(currentFermentTemp => {
-			circulate(desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
-			therm.getTemp(GLYCOL_TEMPNAME).then(setGlycolTemp);
-		});
+		// therm.getTemp(FERMENT_TEMPNAME)
+		// .then(currentFermentTemp => {
+		// 	circulate(desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
+		// 	therm.getTemp(GLYCOL_TEMPNAME).then(setGlycolTemp);
+		// });
 	  });
 }
 
