@@ -68,6 +68,15 @@ function connect(){
 	});
 }
 
+async function log(msg){
+	const mysqlDatetime = new Date(dt).toISOString().slice(0, 23).replace('T', ' ');
+	try{
+		await mysql.brewData("log", msg, mysqlDatetime);
+	}catch(err){
+		brewlog.error(`Failed to log to mysql`, err);
+	}
+}
+
 /**
  * Inserts a name and value into the current session's table in the MySQL database.
  * 
@@ -213,5 +222,6 @@ module.exports = {
 	brewData,
 	doublePublish,
 	getBrewData,
+	log,
 	setBrewname,
 }

@@ -16,6 +16,7 @@
 const brewdefs = require('./brewdefs.js');
 let rollbar;
 const Rollbar = require('rollbar');
+const mysqlService = require('../../services/mysql-service.js');
 
 let prevPower = null;
 if (brewdefs.ROLLBAR === true) {
@@ -77,6 +78,7 @@ module.exports = {
 				gLogger.info(msg);
 			}
 		}
+		mysqlService.log(`${msg}: ${data}`);
 	},
 
 	warning(msg, data = '') {
