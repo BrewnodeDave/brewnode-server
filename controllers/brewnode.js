@@ -57,11 +57,11 @@ async function whatsBrewing (req, res, next) {
       if (numBrewing === 0) {
         res.send(400, "No brews in progress!");
       }else {
-        progressPublish(response.data[0].recipe.name);
+        // progressPublish(response.data[0].recipe.name);
         res.send(200, response.data[0].recipe);
       }
   }else if (numBrewing === 1) {
-    progressPublish(response.data[0].recipe.name);
+    // progressPublish(response.data[0].recipe.name);
     res.send(200, response.data[0].recipe);
   }else {
     res.send(400, `Multiple brews in progress!`);
