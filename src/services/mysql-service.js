@@ -51,8 +51,11 @@ function connect(){
 			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
 				//
 			} else {
-				throw err;
+				// throw err;
 			}
+		});
+		connection.on('timeout', async (err) => {
+			console.error('MySQL timeout:', err);
 		});
 
 		connection.connect((err) => {
