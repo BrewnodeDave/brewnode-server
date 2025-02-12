@@ -71,7 +71,7 @@ function timeToText(prefix, hrTime){
 		}			
 	}
 
-	brewlog.info(timeString);
+	progressPublish(timeString);
 }
 
 //Circulate until ferment temp is reached
