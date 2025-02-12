@@ -127,7 +127,8 @@ async function chill (req, res, next, profile) {
 
   await glycol.doSteps(profile);
 
-  progressPublish(``);
+  progressPu
+  blish(``);
   res.send(200, "Chill Complete");
 };
 
