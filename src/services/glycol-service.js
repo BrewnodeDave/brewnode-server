@@ -71,7 +71,7 @@ function timeToText(prefix, hrTime){
 		}			
 	}
 
-	progressPublish(timeString);
+	broker.progressPublish(timeString);
 }
 
 //Circulate until ferment temp is reached
