@@ -127,8 +127,7 @@ async function chill (req, res, next, profile) {
 
   await glycol.doSteps(profile);
 
-  progressPu
-  blish(``);
+  progressPublish('');
   res.send(200, "Chill Complete");
 };
 
@@ -318,7 +317,7 @@ async function sensorStatus(req, res, next) {
         res.send(400, `Unknown sensor name: ${req.query.name}`);
         return;
     }
-
+    console.log(result);
     res.status(200).json(result);
   } catch (error) {
     console.error('Error getting status:', error);
@@ -573,8 +572,11 @@ async function fill (req, res, next, litres) {
 };
 
 async function setBrewname (req, res, next, name) {
-  const result = await mysqlService.setBrewname(name);
-  progressPublish(name);
+  console.log({name});
+console.log({mysqlService});
+const result = await mysqlService.setBrewname(name);
+console.log({result});
+  //progressPublish(name);
   result.err ? res.status(500).send(res.err) : res.send(200, result);
 } 
 

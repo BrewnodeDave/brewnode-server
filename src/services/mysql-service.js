@@ -39,13 +39,14 @@ function sanitizeBrewName(brewname) {
 
 function connect(){
 	return new Promise((resolve, reject) => {
-		const connection = mysql.createConnection({
+		const foo = {
 			host     : process.env.DB_HOST,
 			user     : process.env.DB_USER,
 			password : process.env.DB_PASSWORD,
 			database : process.env.DB_NAME
-		});
-
+		};
+console.log({foo});
+		const connection = mysql.createConnection(foo);
 		connection.on('error', async (err) => {
 			console.error('MySQL error:', err.code);
 			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
@@ -164,18 +165,20 @@ function getBrewData(name){
 function setBrewname(name){
 	return new Promise(async (resolve, reject) => {
 		const connection = await connect();//getConnection();
-		
+	console.log("setBrewname");	
 		if (connection){
 			const brewname = sanitizeBrewName(name);
 
+	console.log(brewname);
 			setSession(brewname);
 			
 			const tableName = getSession();
 
 			const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, value JSON NOT NULL, timestamp TIMESTAMP)`;
-
+console.log(createTableQuery);
 			connection.query(createTableQuery, (err, results) => {
-				if (err){ 
+				if (err){
+console.log(err); 
 					reject(err.message);
 				}else{
 					connection.end();

@@ -275,23 +275,23 @@ module.exports = {
 			
 			if (_simulationSpeed === 1){
 				timeoutSecs = TIMEOUT_SECS;
-				pulseTimer = setInterval(() => {
-					//Make this as fast as possible
-					if (active == false){
-						active = true;
-
-						const word = i2c.getWord();
-		// console.log("flow word =", word.toString(16));
-						flows[ID_FLOW_KETTLE_OUT].bitCount	((word & I2C_FLOW_KETTLE_OUT_MASK)	>> brewdefs.I2C_FLOW_KETTLE_OUT);
-						flows[ID_FLOW_MASH_OUT].bitCount	((word & I2C_FLOW_MASH_OUT_MASK)	>> brewdefs.I2C_FLOW_MASH_OUT); 
-						flows[ID_FLOW_FERMENT_IN].bitCount	((word & I2C_FLOW_FERMENT_IN_MASK)	>> brewdefs.I2C_FLOW_FERMENT); 
-						flows[ID_FLOW_KETTLE_IN].bitCount	((word & I2C_FLOW_KETTLE_IN_MASK) 	>> brewdefs.I2C_FLOW_KETTLE_IN);
-						active = false;
-					}else {
-						//DONT LOG - takes too long
-						samplePeriodTooSmall++;
-					}
-				}, SAMPLE_PERIOD);
+//				pulseTimer = setInterval(() => {
+//					//Make this as fast as possible
+//					if (active == false){
+//						active = true;
+//
+//						const word = i2c.getWord();
+//		// console.log("flow word =", word.toString(16));
+//						flows[ID_FLOW_KETTLE_OUT].bitCount	((word & I2C_FLOW_KETTLE_OUT_MASK)	>> brewdefs.I2C_FLOW_KETTLE_OUT);
+//						flows[ID_FLOW_MASH_OUT].bitCount	((word & I2C_FLOW_MASH_OUT_MASK)	>> brewdefs.I2C_FLOW_MASH_OUT); 
+//						flows[ID_FLOW_FERMENT_IN].bitCount	((word & I2C_FLOW_FERMENT_IN_MASK)	>> brewdefs.I2C_FLOW_FERMENT); 
+//						flows[ID_FLOW_KETTLE_IN].bitCount	((word & I2C_FLOW_KETTLE_IN_MASK) 	>> brewdefs.I2C_FLOW_KETTLE_IN);
+//						active = false;
+//					}else {
+//						//DONT LOG - takes too long
+//						samplePeriodTooSmall++;
+//					}
+//				}, SAMPLE_PERIOD);
 			}else{
 				timeoutSecs = TIMEOUT_SECS / _simulationSpeed;
 			}
