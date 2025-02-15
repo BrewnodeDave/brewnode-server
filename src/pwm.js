@@ -14,7 +14,7 @@
 
  let timeout;
 let mark_fn;
-let space_fn;
+let space_fn = () => {};
 let interval_fn;
 
 /**
@@ -62,6 +62,7 @@ module.exports = {
 	 * Initially define both mark and space functions
 	 */
  	init(mark, space) {
+		console.log("pwm init");
 		mark_fn = mark;
 		space_fn = space;
 	}

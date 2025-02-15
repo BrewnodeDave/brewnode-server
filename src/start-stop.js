@@ -36,7 +36,11 @@ async function start() {
 	await fan.start();
 	await valves.start(simulationSpeed);
 	await wdog.start();
-	await flow.start(simulationSpeed);
+	try{
+		await flow.start(simulationSpeed);
+	}catch(err){
+		console.log(err.message);
+	}
 	await kettleHeater.start(simulationSpeed);
 	await glycolHeater.start();
 	await glycolChiller.start();
@@ -48,12 +52,6 @@ async function start() {
 	await fill.start(simulationSpeed);
 	try{
 		await tempController.start(simulationSpeed);
-	}catch(err){
-		console.log(err.message);
-	}
-
-	try {
-		await temp.start(simulationSpeed);
 	}catch(err){
 		console.log(err.message);
 	}
