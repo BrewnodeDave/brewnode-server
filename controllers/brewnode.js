@@ -7,7 +7,6 @@
  */
 
 'use strict';
-const { KETTLE_TEMPNAME } = require('../src/services/kettle-service.js');
 const tempService = require('../src/services/temp-service.js');
 const glycol = require('../src/services/glycol-service.js');
 const k2m = require('../src/brewstack/brewingAlgorithms/k2m.js');
@@ -186,9 +185,8 @@ async function setKettleTemp (req, res, next, tempC, mins) {
   res.send(200, `Kettle reached ${tempC}`);
 };
 
-
 async function getKettleTemp (req, res, next) {
-  const result = await tempService.getTemp(KETTLE_TEMPNAME);
+  const result = await tempService.getTemp("TempKettle");
   res.send(200, `${result}`);
 };
 

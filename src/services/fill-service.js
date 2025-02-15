@@ -8,7 +8,7 @@
 
 const delay = require('../brewstack/common/delay.js');
 const valves = require('./valve-service.js');
-const kettle = require('./kettle-service.js');
+const kettleHeater = require('./kettle-heater-service.js');
 const brewlog = require('../brewstack/common/brewlog.js')
 const {remainingFillLitres} = require('../broker.js');	
 
@@ -23,7 +23,7 @@ function waitUntilFilled(targetVolume) {
 
 	return new Promise((resolve, reject) => {
 		//Monitor kettle volume
-		kettle.emitter.on(kettle.eventName, (name, value) => {
+		kettleHeater.emitter.on(kettleHeater.eventName, (name, value) => {
 			if (name === 'volume') {
 				if (value >= (targetVolume - FILL_VALVE_CLOSE_VOLUME)) {
 					resolve(value);

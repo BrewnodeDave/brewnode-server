@@ -31,7 +31,7 @@ cause the system to be highly sensitive to noise.
 
 const broker = require('../broker.js');
 const therm = require('./temp-service.js');
-const kettle = require('./kettle-service.js'); 
+const kettleHeater = require('./kettle-heater-service.js'); 
 
 const NanoTimer = require('nanotimer');
 const brewlog = require('../brewstack/common/brewlog.js');
@@ -49,7 +49,7 @@ let currentPower = null;
 const heatTimer = new NanoTimer();
 
 let timeAtTemp = 0;
-let currentThermName; 
+let currentThermName = "TempKettle"; 
 
 let speedupFactor = 1;
 let tempListener;
@@ -99,7 +99,7 @@ function calculatePower(actualTemperature) {
 
 	prevError = error;    // Save the error for the next loop
 
-	const W = Math.min(Math.max(U, 0), kettle.MAX_W);
+	const W = Math.min(Math.max(U, 0), kettleHeater.MAX_W);
 	// brewlog.info(`delta T=${Math.floor(Math.trunc(error*10)/10)}C. P=${W}W.`);
 	return W;
 };
@@ -111,7 +111,7 @@ function tempHandler(value){
 
 function pause(){
 	heatTimer.clearInterval();
-	kettle.setPower(0);	
+	kettleHeater.setPower(0);	
 	currentPower = 0;
 	mashTimer.clearInterval();
 }
@@ -124,7 +124,7 @@ function init(P, I, D) {
 		Ki = I;
 		Kd = D
 		brewlog.debug(currentThermName);	
-		kettle.setPower(0);
+		kettleHeater.setPower(0);
 	
 		if (_simulationSpeed !== 1){
 			calculationInterval = CALCULATION_INTERVAL_MS / _simulationSpeed;
@@ -195,11 +195,11 @@ module.exports = {
 					}
 					if (targetTemp >= MAX_TEMP){
 						targetTemp = MAX_TEMP;
-						currentPower = kettle.MAX_W;
+						currentPower = kettleHeater.MAX_W;
 					}else{
 						currentPower = calculatePower(currentTemp);
 					}
-					kettle.setPower(currentPower);
+					kettleHeater.setPower(currentPower);
 					
 				}, '', `${calculationInterval}m`);
 				
@@ -228,7 +228,7 @@ module.exports = {
 				timeAtTemp += calculationInterval;
 			}
 			currentPower = calculatePower(currentTemp);
-			kettle.setPower(currentPower);
+			kettleHeater.setPower(currentPower);
 
 			cb({kW:currentPower, secsAtTemp: timeAtTemp/1000});
 		}, '', `${calculationInterval}m`);
@@ -239,7 +239,6 @@ module.exports = {
 	start: (simulationSpeed) => {
 		_simulationSpeed = simulationSpeed;
 		brewlog.info("temp-controller-service", "Start");
-		currentThermName = kettle.KETTLE_TEMPNAME;
 		tempListener = broker.subscribe(currentThermName, tempHandler);
 		return init(1000, 5, 100);
 	},
