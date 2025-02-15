@@ -1,0 +1,6 @@
+title: My Project Documentation
+description: Documentation for my project.
+baseurl: "/docs"
+url: "https://username.github.io"
+theme: jekyll-theme-slate
+markdown: kramdown
