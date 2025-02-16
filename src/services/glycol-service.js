@@ -177,6 +177,8 @@ function doStep(step) {
 		const chillStep = tempC < tempAmbient;
 		if (chillStep) {
 			glycolChiller.switchOn();
+			clearInterval(glycolInterval);
+			glycolHeater.switchOff();
 		}else{
 			glycolChiller.switchOff();
 			glycolInterval = maintainGlycolTemp(desiredFermentTemp);			
