@@ -13,8 +13,7 @@ const setSession = brewname => _session = `${brewname ? brewname : "none"}`;
 const getSession = () => _session;
 
 async function doublePublish(publish, prev, next){
-	const sixHours = 6 * 60 * 60 * 1000;
-	const dateTimeInMs = new Date().getTime() - sixHours;
+	const dateTimeInMs = new Date().getTime();
 	
 	await publish(prev, dateTimeInMs);
 	await publish(next, dateTimeInMs + 1);
@@ -121,6 +120,7 @@ async function brewData(name, value, timestamp){
 }
 
 function getBrewData(name){
+	const TIME_ZONE_OFFSET = 0;
 	return new Promise((resolve, reject) => {
 		const tablename = sanitizeBrewName(name);
 
@@ -138,7 +138,7 @@ function getBrewData(name){
 						results.forEach(row => {
 							const name = row.name;
 							const timestamp = new Date(row.timestamp); // Convert MySQL TIMESTAMP to JavaScript Date
-							timestamp.setHours(timestamp.getHours() + 6);
+							timestamp.setHours(timestamp.getHours() + TIME_ZONE_OFFSET);
 
 							timeSeries[name] = timeSeries[name] ? timeSeries[name] : [];
 							timeSeries[name].push({
@@ -164,28 +164,23 @@ function getBrewData(name){
 
 function setBrewname(name){
 	return new Promise(async (resolve, reject) => {
-		const connection = await connect();//getConnection();
-	console.log("setBrewname");	
+		const connection = await connect();
 		if (connection){
 			const brewname = sanitizeBrewName(name);
 
-	console.log(brewname);
 			setSession(brewname);
 			
 			const tableName = getSession();
 
 			const createTableQuery = `CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, value JSON NOT NULL, timestamp TIMESTAMP)`;
-console.log(createTableQuery);
 			connection.query(createTableQuery, (err, results) => {
 				if (err){
-console.log(err); 
 					reject(err.message);
 				}else{
 					connection.end();
 					resolve(results);		
 				}
 			});
-
 		}else{
 			connection.end();			
 			reject("Can't set brewname, no connection");
