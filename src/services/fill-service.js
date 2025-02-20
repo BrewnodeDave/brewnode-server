@@ -54,14 +54,13 @@ module.exports = {
 			const mLPerSec = 200;
 
 			//The time it takes to open & close, 1.0L pass.
-			const minimumLitres = 1;
 
 			//If delay is too short then no flow pulses will be registered.
 			const mLPerL = 	1000;
-			let tSecs = (mLPerL * (strikeLitres-minimumLitres) / mLPerSec) / _simulationSpeed;
+			let tSecs = (mLPerL * strikeLitres / mLPerSec) / _simulationSpeed;
 
 			//valveSwitchDelay is in mS
-			const valveSwitchDelay = 5000 / _simulationSpeed;
+			const valveSwitchDelay = 3000 / _simulationSpeed;
 			const msPerSec = 1000;
 			if ((tSecs * msPerSec) < valveSwitchDelay) {
 				//bypass pulses and simply update kettle volume
