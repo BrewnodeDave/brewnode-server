@@ -128,7 +128,8 @@ module.exports = {
 										reject(err);
 									}else{
 										PROBES.forEach(probe => {
-											probe.publishTemp = broker.create(probe.name);
+											const publish = broker.create(probe.name);
+											probe.publishTemp = (value, timestamp) => (value != 85) ? publish(value, timestamp) : null;
 											if (simulationSpeed !== 1){
 												ds18x20.set(probe.name, 9.9);
 											}
