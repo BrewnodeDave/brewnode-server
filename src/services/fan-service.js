@@ -76,12 +76,14 @@ const isOn = () => (currentPower === POWER);
  * @param {{name:string, date:number, value:number}} data - Data from sensor.
  */
 function tempKettleHandler({value}) {
-	if ((value <= TEMP_FAN_OFF) && isOn()) {
-		setState(0);
-	} else 
-	if ((value >= TEMP_FAN_ON) && !isOn()) {
-		setState(POWER);
-	}	
+	// if ((value <= TEMP_FAN_OFF) && isOn()) {
+	// 	setState(0);
+	// } else 
+	// if ((value >= TEMP_FAN_ON) && !isOn()) {
+	// 	setState(POWER);
+	// }	
+	
+	setState((value <= TEMP_FAN_OFF) ? 0 : POWER);
 }
 
 module.exports = {
