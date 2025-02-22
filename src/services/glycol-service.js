@@ -187,11 +187,15 @@ function doStep(step) {
 		timeAtTemp = process.hrtime();
 		prevTimeAtTemp = process.hrtime();
 
-		// therm.getTemp(FERMENT_TEMPNAME)
-		// .then(currentFermentTemp => {
-		// 	circulate(desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
-		// 	therm.getTemp(GLYCOL_TEMPNAME).then(setGlycolTemp);
-		// });
+		//**********
+		// ????????????
+		// still needed ???? */
+		therm.getTemp(FERMENT_TEMPNAME)
+		.then(currentFermentTemp => {
+			pumpOnOff(desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
+			therm.getTemp(GLYCOL_TEMPNAME)
+			.then(setGlycolTemp);
+		});
 	  });
 }
 
