@@ -14,7 +14,7 @@
 
 
   const brewlog = require("./brewstack/common/brewlog.js");
-  const mysql = require("./services/mysql-service.js");
+  const mysqlService = require("./services/mysql-service.js");
   
   const EventEmitter = require("events").EventEmitter;
   const sensor = new EventEmitter();
@@ -70,7 +70,7 @@ function create(sensorName) {
 		const dt = timestamp ? timestamp : new Date().getTime();
 		const mysqlDatetime = new Date(dt).toISOString().slice(0, 23).replace('T', ' ');
         try{
-			await mysql.brewData(sensorName, value, mysqlDatetime);
+			await mysqlService.brewData(sensorName, value, mysqlDatetime);
 		}catch(err){
 			brewlog.error(`Failed to publish ${sensorName} to mysql`, err);
 		}

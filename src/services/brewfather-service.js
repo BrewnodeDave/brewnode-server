@@ -14,44 +14,47 @@ dotenv.config();//Adds contents of .env to environ vars e.g. process.env.DB_PASS
 
 const brewlog = require("../brewstack/common/brewlog.js");
 const therm = require("./temp-service.js");
+const mysqlService = require("./mysql-service.js");
+    
 
 let timer = null;
 
-async function getFermenterTemp(recipeName = "") {
+async function getFermenterTemp() {
     const fermenterT = await therm.getTemp("TempFermenter");
     const glycolT = await therm.getTemp("TempGlycol");
     const ambientT = await therm.getTemp("TempAmbient");
 
-    await logTemps(recipeName, fermenterT, ambientT, glycolT);
+    await logTemps(fermenterT, ambientT, glycolT);
 }
 
 
 /**
  * Logs temperature data to Brewfather.
  *
- * @param {string} recipeName - The name of the beer recipe.
  * @param {number} fermenter - The temperature of the fermenter.
  * @param {number} ambient - The ambient temperature.
  * @param {number} glycol - The temperature of the glycol.
  * @returns {Promise} - A promise that resolves when the data is posted.
  */
-function logTemps(recipeName, fermenter, ambient, glycol) {
+function logTemps(fermenter, ambient, glycol) {
+    const brewname = mysqlService.getBrewname();
+
     const data = JSON.stringify({
         "name": process.env.BREWFATHER_STREAM_NAME, // Required field, this will be the ID in Brewfather
         "temp": fermenter, //Ferment Temp
         "aux_temp": glycol, //Fridge Temp
         "comment": "Brewnode",
-        "beer": recipeName,
+        "beer": brewname,
         "ext_temp": ambient,
     });
     return post(data);
 }
 
 module.exports = {
-    start: async (recipeName) => {
+    start: async () => {
         brewlog.info("brewfather-service", "Start");
         const mins15  = 15 * 60 * 1000;
-        timer = setInterval(() => getFermenterTemp(recipeName), mins15);
+        timer = setInterval(() => getFermenterTemp(mins15));
         return;
     },
     stop: () => {

@@ -34,6 +34,11 @@ function sanitizeBrewName(brewname) {
     return sanitized.substring(0, 64);
 }
 
+function deSanitizeBrewName(sanitizedBrewName) {
+	let original = sanitizedBrewName.replace(/_/g, ' ');
+	return original.trim();
+}
+
 // Removed duplicate setBrewname function
 
 function connect(){
@@ -44,7 +49,7 @@ function connect(){
 			password : process.env.DB_PASSWORD,
 			database : process.env.DB_NAME
 		};
-console.log({foo});
+
 		const connection = mysql.createConnection(foo);
 		connection.on('error', async (err) => {
 			console.error('MySQL error:', err.code);
@@ -188,6 +193,21 @@ function setBrewname(name){
 	});
 }
 
+function getBrewname(){
+	return new Promise(async (resolve, reject) => {
+		const connection = await connect();
+		if (connection){
+			const tableName = getSession();
+			const brewname = deSanitizeBrewName(tableName);
+			connection.end();
+			resolve(brewname);		
+		}else{
+			connection.end();			
+			reject("Can't get brewname, no connection");
+		}
+	});
+}
+
 
 function mysqlBrewnames(){
 	return new Promise((resolve, reject) => {
@@ -222,6 +242,7 @@ module.exports = {
 	brewData,
 	doublePublish,
 	getBrewData,
+	getBrewname,
 	log,
 	setBrewname,
 }

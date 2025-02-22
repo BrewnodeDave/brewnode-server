@@ -153,11 +153,7 @@ module.exports = {
 	/**
 	 * @param {any} speedupFactor
 	 */
-	async brewfatherOptions(speedupFactor) {
-		const options = await getBrewfatherOptions(speedupFactor);
-		await temp.start(options);
-		return options;
-    },
+	getBrewfatherOptions,
 
 	//These are used only when there is no brew data from json or xml files.
 	defaultOptions() {	

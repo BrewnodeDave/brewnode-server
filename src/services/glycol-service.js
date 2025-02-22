@@ -12,6 +12,7 @@ const broker = require('../broker.js');
 const therm = require('./temp-service.js');
 const glycolHeater = require('./glycol-heater-service.js');
 const glycolChiller = require('./glycol-chiller-service.js');
+const brewfather = require('./brewfather-service.js');
 
 let _simulationSpeed = null;
 
@@ -121,10 +122,7 @@ module.exports = {
 				setGlycolTemp(t);
 				const getFermentTemp = () => therm.getTemp(FERMENT_TEMPNAME);
 
-				getFermentTemp()
-				.then(currentFermentTemp => {
-					resolve(); 
-				});
+				getFermentTemp().then(resolve);
 			}, reject);
 		});
 	},
@@ -141,8 +139,8 @@ module.exports = {
 			
 			pump.off(pump.chillPumpName);
 
+			brewfather.stop().then(resolve);
 			brewlog.info("glycol-ferment.js", "stopped");
-			resolve();
 		});
 	},
 }
