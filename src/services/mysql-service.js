@@ -65,6 +65,17 @@ function connect(){
 
 		connection.connect((err) => {
 			if (err) {
+				if (err.code === "ER_HOST_IS_BLOCKED") {
+					connection.query('FLUSH HOSTS', (flushErr) => {
+						if (flushErr) {
+							reject(flushErr);
+						} else {
+							reject(err);
+						}
+					});
+				} else {
+					reject(err);
+				}
 				reject(err);
 			}else{
 				resolve(connection);
