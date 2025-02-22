@@ -139,8 +139,9 @@ module.exports = {
 			
 			pump.off(pump.chillPumpName);
 
-			brewfather.stop().then(resolve);
+			// brewfather.stop();
 			brewlog.info("glycol-ferment.js", "stopped");
+			resolve();
 		});
 	},
 }

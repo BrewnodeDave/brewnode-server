@@ -48,7 +48,7 @@ async function start() {
 		console.log(err.message);
 	}
 
-	await brewfatherService.start();
+	// await brewfatherService.start();
 
 	await fill.start(simulationSpeed);
 	try{
