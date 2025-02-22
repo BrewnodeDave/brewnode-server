@@ -23,7 +23,7 @@ let ds18x20;
 const brewlog = require("../brewstack/common/brewlog.js");
 const broker = require("../broker.js");
 const { doublePublish } = require("./mysql-service.js");
-let PROBES = require('./probes-service.js');
+let probes = require('../probes.js');
 
 let pollInterval = null;
 let prevSensorValues = [];
@@ -54,7 +54,7 @@ async function getAllTemps() {
 			});
 		});
 
-		PROBES.forEach(probe => {
+		probes.forEach(probe => {
 			for (const key in tempObj) {
 				if (key == probe.id) {
 					const value = tempObj[key];
@@ -127,7 +127,7 @@ module.exports = {
 										brewlog.error("Failed to get all temperatures", err);
 										reject(err);
 									}else{
-										PROBES.forEach(probe => {
+										probes.forEach(probe => {
 											const publish = broker.create(probe.name);
 											probe.publishTemp = (value, timestamp) => (value != 85) ? publish(value, timestamp) : null;
 											if (simulationSpeed !== 1){
@@ -140,7 +140,7 @@ module.exports = {
 											ambientTemp = 9.9;
 										}else{
 											setPollInterval(10);
-											const ambientId = PROBES.find(probe => probe.name === 'TempMash').id; 
+											const ambientId = probes.find(probe => probe.name === 'TempMash').id; 
 											ambientTemp = tempObj[ambientId];
 										}
 										started = true;
@@ -170,7 +170,7 @@ module.exports = {
 				pollInterval = null;
 				
 				started = false;
-				PROBES.forEach(({name}) => {
+				probes.forEach(({name}) => {
 					broker.destroy(name);
 				});
 			}
@@ -196,7 +196,7 @@ module.exports = {
 					// brewlog.critical("Failed to find any temp sensors.", err);
 					resolve(result);
 				}else{
-					PROBES.forEach(probe => {
+					probes.forEach(probe => {
 						for (const key in tempObj){
 							if (key == probe.id){					
 								const value = tempObj[key];
@@ -233,7 +233,7 @@ module.exports = {
 	getTemp(name) {
 		return new Promise((resolve, reject) => {
 			try {
-				const probe = PROBES.find(p => p.name === name);
+				const probe = probes.find(p => p.name === name);
 				ds18x20.get(probe.id, (err, temp) => {
 					if (err){
 						reject(err);
