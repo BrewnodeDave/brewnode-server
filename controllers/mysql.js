@@ -7,7 +7,6 @@
  */
 
 'use strict';
-const axios = require('axios');
 const mysqlService = require('../src/services/mysql-service.js');
 
 async function mysqlBrewnames (req, res, next) {

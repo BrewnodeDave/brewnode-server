@@ -570,10 +570,7 @@ async function fill (req, res, next, litres) {
 };
 
 async function setBrewname (req, res, next, name) {
-  console.log({name});
-console.log({mysqlService});
-const result = await mysqlService.setBrewname(name);
-console.log({result});
+  const result = await mysqlService.setBrewname(name);
   //progressPublish(name);
   result.err ? res.status(500).send(res.err) : res.send(200, result);
 } 

@@ -15,6 +15,7 @@ const {getSimulationSpeed} = require('./sim/sim.js');
 
 const sim 		= require('./sim/sim.js');
 const broker 	= require('./broker.js');
+const brewfatherService = require('./services/brewfather-service.js');
 
 async function start() {
 
@@ -28,9 +29,6 @@ async function start() {
 	}catch(err){
 		console.log(err.message);
 	}
-	//This only needs to be done during fermentation 
-	//and should a client api be created for this?
-	// await brewfather.start(recipeName);//must come after temp.start
 
 	await pump.start();
 	await fan.start();
@@ -49,6 +47,9 @@ async function start() {
 	}catch(err){
 		console.log(err.message);
 	}
+
+	await brewfatherService.start();
+
 	await fill.start(simulationSpeed);
 	try{
 		await tempController.start(simulationSpeed);
@@ -67,6 +68,7 @@ async function stop() {
 	// brewfather.stop();
 	tempController.stop();
 
+	await brewfatherService.stop();
 	await glycol.stop();
 	await glycolChiller.stop();
 	await fill.stop();
