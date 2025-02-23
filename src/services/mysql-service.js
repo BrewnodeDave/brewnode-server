@@ -112,27 +112,31 @@ async function brewData(name, value, timestamp){
 	const values = [name, JSON.stringify(value), timestamp];
 	
 	try {
-	const connection = await connect();
-	connection.on('error', (err) => {
-		console.error('MySQL error:', err.code);
-		if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-			connect(); // Reconnect on connection loss
-		} else {
-			throw (err);
-		}
-	});
+		const connection = await connect();
+		connection.on('error', (err) => {
+			console.error('MySQL error:', err.code);
+			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+				connect(); // Reconnect on connection loss
+			} else {
+				console.error(err);
+				return;
+			}
+		});
 
-	connection.query(query, values, function (error, results, fields) {
-		connection.end();
-		if (error) {
-			throw (error);
-		}else{
-			return results;
-		}
-	});
-	}catch(err){
-		throw(err);
-	}		
+		connection.query(query, values, function (error, results, fields) {
+			connection.end();
+			if (error) {
+				console.error(err);
+				return;
+			}else{
+				return results;
+			}
+		});
+	} catch (err) {
+		console.error(err);
+		return;
+	}
+
 }
 
 function getBrewData(name){
