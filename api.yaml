@@ -30,6 +30,14 @@ paths:
         required: True
         schema:
           type: string
+      - name: since
+        in: query
+        description: Only return data since this date
+        required: False
+        schema:
+           type: string
+           format: date-time
+           example: "2023-10-01T12:00:00Z"
       responses:
         "200":
           description: Success
