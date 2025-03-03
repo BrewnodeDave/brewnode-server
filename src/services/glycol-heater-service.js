@@ -54,10 +54,10 @@ function setState(state){
 		// currentState = state;
 	// }
 
-		if (currentState != state) {	
+		// if (currentState != state) {	
 			doublePublish(publishState, statePower(currentState), statePower(state));
 			currentState = state;
-		}
+		// }
 	
 	return statePower(currentState);
 }

@@ -139,13 +139,14 @@ async function brewData(name, value, timestamp){
 
 }
 
-function getBrewData(name){
+function getBrewData(name, since = '1970-01-01 00:00:00') {
 	const TIME_ZONE_OFFSET = 0;
 	return new Promise((resolve, reject) => {
 		const tablename = sanitizeBrewName(name);
 
-		const query = `SELECT * FROM ${tablename}`;
-		const values = [];
+		// const query = `SELECT * FROM ${tablename} WHERE timestamp > ? ORDER BY timestamp DESC`;
+		const query = `SELECT * FROM ${tablename} WHERE timestamp > ? ORDER BY id ASC`;
+		const values = [since];
 		
 		connect().then(connection => {
 			if (connection != undefined){
@@ -155,6 +156,7 @@ function getBrewData(name){
 					}else{
 						// Transform the results into a series of arrays
 						const timeSeries = [];
+						let latestTimestamp = null;
 						results.forEach(row => {
 							const name = row.name;
 							const timestamp = new Date(row.timestamp); // Convert MySQL TIMESTAMP to JavaScript Date
@@ -165,6 +167,10 @@ function getBrewData(name){
 								value: JSON.parse(row.value),
 								timestamp
 							});
+
+							if (!latestTimestamp || timestamp > latestTimestamp) {
+								latestTimestamp = timestamp;
+							}
 						});
 
 						// Get key and value of each object in timeSeries
@@ -174,7 +180,7 @@ function getBrewData(name){
 						}));
 
 						connection.end();
-						resolve(highcharts);
+						resolve({ highcharts, latestTimestamp });
 					}
 				});
 			}

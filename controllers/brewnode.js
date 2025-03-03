@@ -69,8 +69,9 @@ async function whatsBrewing (req, res, next) {
 
 async function getBrewData (req, res, next) {
   try {
-    const response = await mysqlService.getBrewData(req.query.brewname);
-    res.send(200, response);
+    const {highcharts, latestTimestamp} = await mysqlService.getBrewData(req.query.brewname, req.query.since);
+    const latest = latestTimestamp ? latestTimestamp : '';
+    res.send(200, {highcharts, latestTimestamp:latest});
   }catch (err) {
     res.send(500, err.message);
   }
