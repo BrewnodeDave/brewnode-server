@@ -106,9 +106,6 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 		pump.off(pump.chillPumpName);
 
 		timeToText(`Fermentation(${desiredFermentTemp}C)=`, hrsecs(hrTime));
-		if (msToGo < 0) {
-		    fermentDone();
-		}
 
 	} else {
 		if (chillStep){
@@ -121,6 +118,11 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 			}
 		}
 	}
+
+	if (msToGo <= 0) {
+		fermentDone();
+	}
+
 }
 
 module.exports = {
