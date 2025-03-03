@@ -131,8 +131,6 @@ module.exports = {
 	names: valveNames,
 
 	getStatus: () => _valves.map(valve => {
-//Why publish!!!!? To update the UI?
-		// valve.publish(valve.status);
 		return { 
 			name :valve.name, 
 			value: valve.status 

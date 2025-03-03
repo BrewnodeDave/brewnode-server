@@ -24,16 +24,7 @@ const TEMP_FAN_OFF = 30;
 
 const POWER = 1000;
 
-/** 
- @const {number} 
- @desc I2C value used to switch OFF the pump.
-*/
 const FAN_ON = 0;//i2c.LOW;
-
-/** 
- @const {number} 
- @desc I2C value used to switch ON the pump.
-*/
 const FAN_OFF = 1;//i2c.HIGH;
 
 let currentPower = 0;
@@ -66,13 +57,14 @@ function setState(newPower){
 		}
 		currentPower = newPower;
 	}
+
+	return currentPower;
 }
 
 const isOn = () => (currentPower === POWER);
 
 /**
  * Automatically switch on/off fan with temperature
- * @param {{name:string, date:number, value:number}} data - Data from sensor.
  */
 function tempKettleHandler({value}) {	
 	if (value >= TEMP_FAN_ON){
@@ -83,26 +75,9 @@ function tempKettleHandler({value}) {
 }
 
 module.exports = {
-    /** 
-	 * @returns {string} 
-	 */
     isOn,
-
-    /** Turn on the fan.
-        @fires fanEvent
-     */
-    switchOn() {
-		setState(POWER);
-		return POWER;
-    },
-
-    /** Turn off the fan.
-        @fires fanEvent
-     */
-    switchOff() {
-		setState(0);
-	    return 0;
-    },
+    switchOn: () => setState(POWER),
+    switchOff: () => setState(0),
 	
 	/**
 	 * @desc Add listener to kettle temp and emit fan events when switching on and off. 
@@ -114,7 +89,7 @@ module.exports = {
 			i2c.init({number:FAN_DEF.i2cPinOut, dir:i2c.DIR_OUTPUT, value:FAN_OFF});
 			
 			publishFanState = broker.create(FAN_DEF.name);
-			publishFanState(0);
+			publishFanState(currentPower);
 			
 			tempKettleListener = broker.subscribe("TempKettle", tempKettleHandler);
 			
