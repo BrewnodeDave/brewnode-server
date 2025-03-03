@@ -76,12 +76,17 @@ function timeToText(prefix, hrTime){
 }
 
 //Circulate until ferment temp is reached
-function pumpOnOff(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, timeAtTemp, prevTimeAtTemp) {
+function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, timeAtTemp, prevTimeAtTemp) {
 	if (msToGo === null) {
 		return;
 	}
 
-	if (currentFermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT)) {
+	const reached = (chillStep)
+		? currentFermentTemp <= (desiredFermentTemp + FERMENTER_OVERSHOOT)
+		: currentFermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT);
+
+	
+	if (reached) {
 		//Reached ferment temp
 		timeAtTemp = process.hrtime();
 	        
@@ -105,8 +110,14 @@ function pumpOnOff(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, 
 		}
 
 	} else {
-		if (currentFermentTemp < getGlycolTemp()){
-			pump.on(pump.chillPumpName);
+		if (chillStep){
+			if (currentFermentTemp >= getGlycolTemp()){
+				pump.on(pump.chillPumpName);
+			}
+		}else{
+			if (currentFermentTemp < getGlycolTemp()){
+				pump.on(pump.chillPumpName);
+			}
 		}
 	}
 }
@@ -159,10 +170,13 @@ function doStep(step) {
 		let timeAtTemp, prevTimeAtTemp;
 		const desiredFermentTemp = parseInt(tempC,10);
 
+		const tempAmbient = await therm.getTemp(AMBIENT_TEMPNAME);
+		const chillStep = tempC < tempAmbient;
+
 		pumpInterval = setInterval(() => {
 			therm.getTemp(FERMENT_TEMPNAME)
 			.then(t => {
-				pumpOnOff(desiredFermentTemp, t, (x) => {
+				pumpOnOff(chillStep, desiredFermentTemp, t, (x) => {
 					clearInterval(pumpInterval);
 					brewlog.info("Step Complete");
 					resolve(x);
@@ -172,8 +186,6 @@ function doStep(step) {
 
 		glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
 
-		const tempAmbient = await therm.getTemp(AMBIENT_TEMPNAME);
-		const chillStep = tempC < tempAmbient;
 		if (chillStep) {
 			glycolChiller.switchOn();
 			clearInterval(glycolInterval);
@@ -192,7 +204,7 @@ function doStep(step) {
 		// still needed ???? */
 		therm.getTemp(FERMENT_TEMPNAME)
 		.then(currentFermentTemp => {
-			pumpOnOff(desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
+			pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
 			therm.getTemp(GLYCOL_TEMPNAME)
 			.then(setGlycolTemp);
 		});
