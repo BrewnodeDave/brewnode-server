@@ -188,12 +188,6 @@ console.log({step});
 
 		//glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
 
-<<<<<<< HEAD
-		const tempAmbient = await therm.getTemp(AMBIENT_TEMPNAME);
-		glycolTemp = await therm.getTemp(GLYCOL_TEMPNAME);
-		const chillStep = (tempC < glycolTemp);//tempC < tempAmbient; // H => G=tempC+10    C=>G=-3 chill=(G-tempC)>10 
-=======
->>>>>>> 44fa8ccd221b588a79eb3dee75379208e6fffd0e
 		if (chillStep) {
 console.log("CHILL", {tempC}, {tempAmbient}, {glycolTemp});
 			glycolChiller.switchOn();
