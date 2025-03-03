@@ -50,12 +50,9 @@ const statePower = state => state === CHILL_ON ? POWER : 0;
  * @param {number} state - on or off
  */
 function setState(state){
-	i2c.writeBit(CHILL_DEF.i2cPinOut, state);
-	
-	if (currentState != state) {	
-		doublePublish(publishState, statePower(currentState), statePower(state));
-		currentState = state;
-	}
+	i2c.writeBit(CHILL_DEF.i2cPinOut, state);	
+	doublePublish(publishState, statePower(currentState), statePower(state));
+	currentState = state;
 	
 	return statePower(currentState);
 }

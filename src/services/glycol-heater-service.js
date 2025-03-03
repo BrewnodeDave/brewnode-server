@@ -38,7 +38,7 @@ let currentState = HEAT_OFF;
 const HEAT_DEF = {
 	name:"GlycolHeater",		
 	i2cPinOut:brewdefs.I2C_HEAT_OUTPUT_BIT
-}
+} 
 
 let publishState;
 		
@@ -48,16 +48,9 @@ const statePower = state => state === HEAT_ON ? POWER : 0;
  * @param {number} state - on or off
  */
 function setState(state){
-	// if (currentState != state) {	
-		i2c.writeBit(HEAT_DEF.i2cPinOut, state);
-		// doublePublish(publishState, statePower(currentState), statePower(state));
-		// currentState = state;
-	// }
-
-		// if (currentState != state) {	
-			doublePublish(publishState, statePower(currentState), statePower(state));
-			currentState = state;
-		// }
+	i2c.writeBit(HEAT_DEF.i2cPinOut, state);
+	doublePublish(publishState, statePower(currentState), statePower(state));
+	currentState = state;
 	
 	return statePower(currentState);
 }
