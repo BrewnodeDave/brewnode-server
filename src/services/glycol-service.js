@@ -80,13 +80,13 @@ function pumpOnOff(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, 
 	if (msToGo === null) {
 		return;
 	}
-
+console.log({msToGo});
 	if (currentFermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT)) {
 		//Reached ferment temp
 		timeAtTemp = process.hrtime();
 	        
 		const secsAtTemp = hrsecs(timeAtTemp);	
-	    const prevSecsAtTemp = hrsecs(prevTimeAtTemp);	
+	        const prevSecsAtTemp = hrsecs(prevTimeAtTemp);	
 		
 		let delta2 = 1000 * (secsAtTemp - prevSecsAtTemp);
 
@@ -99,7 +99,7 @@ function pumpOnOff(desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, 
 
 		pump.off(pump.chillPumpName);
 
-		timeToText("Fermentation Step To Go = ", hrTime);
+		timeToText(`Fermentation(${desiredFermentTemp})=`, hrTime);
 		if (msToGo < 0) {
 		    fermentDone();
 		}
@@ -122,6 +122,8 @@ module.exports = {
 				setGlycolTemp(t);
 				const getFermentTemp = () => therm.getTemp(FERMENT_TEMPNAME);
 
+		                glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
+				
 				getFermentTemp().then(resolve);
 			}, reject);
 		});
@@ -150,6 +152,7 @@ module.exports = {
 function doStep(step) {	
 	return () => 
 	  new Promise(async (resolve, reject) => {
+console.log({step});
 		const {stepTemp:tempC, stepTime:days} = JSON.parse(step);
 
 		let pumpInterval = null;
@@ -170,15 +173,18 @@ function doStep(step) {
 			});
 		}, 60 * 1000 / _simulationSpeed);
 
-		glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
+		//glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
 
 		const tempAmbient = await therm.getTemp(AMBIENT_TEMPNAME);
-		const chillStep = tempC < tempAmbient;
+		glycolTemp = await therm.getTemp(GLYCOL_TEMPNAME);
+		const chillStep = (tempC < glycolTemp);//tempC < tempAmbient; // H => G=tempC+10    C=>G=-3 chill=(G-tempC)>10 
 		if (chillStep) {
+console.log("CHILL", {tempC}, {tempAmbient}, {glycolTemp});
 			glycolChiller.switchOn();
 			clearInterval(glycolInterval);
 			glycolHeater.switchOff();
 		}else{
+console.log("HEAT", {tempC}, {tempAmbient}, {glycolTemp});
 			glycolChiller.switchOff();
 			glycolInterval = maintainGlycolTemp(desiredFermentTemp);			
 		}
