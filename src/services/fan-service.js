@@ -15,7 +15,6 @@
 
 const brewdefs  = require('../brewstack/common/brewdefs.js');
 const brewlog   = require('../brewstack/common/brewlog.js');
-//const i2c       = require('../../nodeDrivers/i2c/i2c_mraa.js');
 const i2c       = require('./i2c_raspi-service.js');
 const broker 	= require('../broker.js');
 const {doublePublish} = require('./mysql-service.js');
@@ -57,7 +56,7 @@ let tempKettleListener;
 		
 /**
  * Switch fan on or off
- * @param {number} newPower - on or off
+ * @param {number} newPower - Watts.
  */
 function setState(newPower){
 	i2c.writeBit(FAN_DEF.i2cPinOut, (newPower === POWER) ? FAN_ON : FAN_OFF);
@@ -75,15 +74,12 @@ const isOn = () => (currentPower === POWER);
  * Automatically switch on/off fan with temperature
  * @param {{name:string, date:number, value:number}} data - Data from sensor.
  */
-function tempKettleHandler({value}) {
-	// if ((value <= TEMP_FAN_OFF) && isOn()) {
-	// 	setState(0);
-	// } else 
-	// if ((value >= TEMP_FAN_ON) && !isOn()) {
-	// 	setState(POWER);
-	// }	
-	
-	setState((value <= TEMP_FAN_OFF) ? 0 : POWER);
+function tempKettleHandler({value}) {	
+	if (value >= TEMP_FAN_ON){
+		setState(POWER);
+	} else if (value <= TEMP_FAN_OFF){
+		setState(0);
+	}
 }
 
 module.exports = {
@@ -131,7 +127,7 @@ module.exports = {
 	 */
 	stop() {
 		return new Promise((resolve, reject) => {		
-			setState(FAN_OFF);
+			setState(0);
 			broker.unSubscribe(tempKettleListener);
 			broker.destroy(FAN_DEF.name);
 			brewlog.info("fan-service", "Stop");
