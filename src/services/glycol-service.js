@@ -45,8 +45,7 @@ const glycolFermentTempChange = value => setGlycolTemp(value);
 				
 const hrsecs = hrtime => hrtime[0] + hrtime[1] / 1E9;
 
-function timeToText(prefix, hrTime){
-	const secs = hrsecs(hrTime);
+function timeToText(prefix, secs){
 	const mins = Math.trunc(secs / 60);
 	const hours = Math.trunc(secs / (60 * 60));
 	const days = Math.trunc(secs / (60 * 60 * 24));
@@ -80,9 +79,12 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 	if (msToGo === null) {
 		return;
 	}
+
 	const reached = (chillStep)
 		? currentFermentTemp <= (desiredFermentTemp + FERMENTER_OVERSHOOT)
 		: currentFermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT);
+
+	timeToText(`Fermentation(${desiredFermentTemp}C)=`, msToGo / 1000);
 
 	
 	if (reached) {
@@ -90,7 +92,7 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 		timeAtTemp = process.hrtime();
 	        
 		const secsAtTemp = hrsecs(timeAtTemp);	
-	        const prevSecsAtTemp = hrsecs(prevTimeAtTemp);	
+	    const prevSecsAtTemp = hrsecs(prevTimeAtTemp);	
 		
 		let delta2 = 1000 * (secsAtTemp - prevSecsAtTemp);
 
@@ -103,7 +105,7 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 
 		pump.off(pump.chillPumpName);
 
-		timeToText(`Fermentation(${desiredFermentTemp})=`, hrTime);
+		timeToText(`Fermentation(${desiredFermentTemp}C)=`, hrsecs(hrTime));
 		if (msToGo < 0) {
 		    fermentDone();
 		}
