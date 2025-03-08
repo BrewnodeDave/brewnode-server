@@ -21,16 +21,22 @@ const fs = require('fs');
  * This function determines if the current platform is running on a Raspberry Pi
  * by first checking if the operating system is Linux. If it is, it reads the
  * contents of the '/etc/os-release' file to check for specific identifiers
- * ('Raspbian' or 'bullseye') that indicate a Raspberry Pi.
+ * ('Raspbian' or 'bullseye') that indicate a Raspberry Pi. Additionally, it
+ * reads the '/proc/cpuinfo' file to check for Raspberry Pi-specific hardware
+ * identifiers.
  *
  * @returns {boolean} True if the platform is a Raspberry Pi, false otherwise.
  */
-function isRaspPi(){
-	const isLinux = /^linux/.test(process.platform);
-	if (isLinux){
-		const cpuInfo = fs.readFileSync('/etc/os-release', 'utf8');
-		return cpuInfo.includes('Raspbian') || cpuInfo.includes('bullseye');
-	}
+function isRaspPi() {
+    const isLinux = /^linux/.test(process.platform);
+    if (isLinux) {
+        const osRelease = fs.readFileSync('/etc/os-release', 'utf8');
+        if (osRelease.includes('Raspbian') || osRelease.includes('bullseye') || osRelease.includes('bookworm')) {
+            const cpuInfo = fs.readFileSync('/proc/cpuinfo', 'utf8');
+            return cpuInfo.includes('BCM2708') || cpuInfo.includes('BCM2709') || cpuInfo.includes('BCM2710') || cpuInfo.includes('BCM2835') || cpuInfo.includes('BCM2836') || cpuInfo.includes('BCM2837') || cpuInfo.includes('BCM2711');
+        }
+    }
+    return false;
 }
 
 const dotenv = require('dotenv');
