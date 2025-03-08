@@ -70,21 +70,25 @@ function timeToText(prefix, secs){
 			timeString += ` ${sec} secs`;
 		}			
 	}
-
+console.log(timeString);
 	broker.progressPublish(timeString);
 }
 
 //Circulate until ferment temp is reached
-function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDone, msToGo, timeAtTemp, prevTimeAtTemp) {
-	if (msToGo === null) {
+function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDone, msToGo2, timeAtTemp, prevTimeAtTemp) {
+
+console.log("pumpOnOff",chillStep,desiredFermentTemp, currentFermentTemp, msToGo2, timeAtTemp, prevTimeAtTemp);
+	if (msToGo2 === null) {
 		return;
 	}
 
 	const reached = (chillStep)
-		? currentFermentTemp <= (desiredFermentTemp + FERMENTER_OVERSHOOT)
+		? currentFermentTemp < (desiredFermentTemp + FERMENTER_OVERSHOOT)
 		: currentFermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT);
 
-	timeToText(`Fermentation(${desiredFermentTemp}C)=`, msToGo / 1000);
+console.log({reached});
+
+	timeToText(`Fermentation(${desiredFermentTemp}C)=`, msToGo2 / 1000);
 
 	
 	if (reached) {
@@ -97,16 +101,21 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 		let delta2 = 1000 * (secsAtTemp - prevSecsAtTemp);
 
 		prevTimeAtTemp = timeAtTemp;
-		msToGo -= delta2;
-
-		const secsToGo = Math.trunc(msToGo / 1000);
-		const nsToGo = (msToGo * 1E6);
+		msToGo2 -= delta2;
+		msToGo2 = (msToGo2 < 0) ? 0 : msToGo2;
+		
+		const secsToGo = Math.trunc(msToGo2 / 1000);
+		const nsToGo = (msToGo2 * 1E6);
 		const hrTime = [secsToGo, nsToGo - (secsToGo * 1E9)];
 
 		pump.off(pump.chillPumpName);
 
 		timeToText(`Fermentation(${desiredFermentTemp}C)=`, hrsecs(hrTime));
-
+		if (msToGo2 <= 0) {
+			fermentDone();
+		}
+	
+	
 	} else {
 		if (chillStep){
 			if (currentFermentTemp >= getGlycolTemp()){
@@ -119,9 +128,6 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 		}
 	}
 
-	if (msToGo <= 0) {
-		fermentDone();
-	}
 
 }
 
@@ -136,9 +142,10 @@ module.exports = {
 				setGlycolTemp(t);
 				const getFermentTemp = () => therm.getTemp(FERMENT_TEMPNAME);
 
-		                glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
+		        glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
 				
-				getFermentTemp().then(resolve);
+				getFermentTemp()
+				.then(resolve);
 			}, reject);
 		});
 	},
@@ -182,8 +189,9 @@ console.log({step});
 		pumpInterval = setInterval(() => {
 			therm.getTemp(FERMENT_TEMPNAME)
 			.then(t => {
+console.log(`pumpOnOff:${msToGo}`);
 				pumpOnOff(chillStep, desiredFermentTemp, t, (x) => {
-					clearInterval(pumpInterval);
+					//clearInterval(pumpInterval);
 					brewlog.info("Step Complete");
 					resolve(x);
 				}, msToGo, timeAtTemp, prevTimeAtTemp)
