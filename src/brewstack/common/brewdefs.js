@@ -33,7 +33,7 @@ function isRaspPi() {
         const osRelease = fs.readFileSync('/etc/os-release', 'utf8');
         if (osRelease.includes('Raspbian') || osRelease.includes('bullseye') || osRelease.includes('bookworm')) {
             const cpuInfo = fs.readFileSync('/proc/cpuinfo', 'utf8');
-            return cpuInfo.includes('BCM2708') || cpuInfo.includes('BCM2709') || cpuInfo.includes('BCM2710') || cpuInfo.includes('BCM2835') || cpuInfo.includes('BCM2836') || cpuInfo.includes('BCM2837') || cpuInfo.includes('BCM2711');
+            return cpuInfo.includes('Raspberry Pi');
         }
     }
     return false;

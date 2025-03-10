@@ -43,8 +43,9 @@ async function whatsBrewing (req, res, next) {
   };  
   
   const config = { params, auth};  
-  const response = await axios.get(`${brewfatherV2}/batches`, config);
-  const numBrewing = response.data.length;
+  try {
+    const response = await axios.get(`${brewfatherV2}/batches`, config);
+    const numBrewing = response.data.length;
     if (numBrewing === 0) {
       const params = {
         "complete": true, 
@@ -55,15 +56,18 @@ async function whatsBrewing (req, res, next) {
       const numBrewing = response.data.length;
       if (numBrewing === 0) {
         res.send(400, "No brews in progress!");
-      }else {
+      } else {
         // progressPublish(response.data[0].recipe.name);
         res.send(200, response.data[0].recipe);
       }
-  }else if (numBrewing === 1) {
-    // progressPublish(response.data[0].recipe.name);
-    res.send(200, response.data[0].recipe);
-  }else {
-    res.send(400, `Multiple brews in progress!`);
+    } else if (numBrewing === 1) {
+      // progressPublish(response.data[0].recipe.name);
+      res.send(200, response.data[0].recipe);
+    } else {
+      res.send(400, `Multiple brews in progress!`);
+    }
+  } catch (error) {
+    res.send(500, error.message);
   }
 }
 
