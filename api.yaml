@@ -84,6 +84,38 @@ paths:
         
       x-swagger-router-controller: brewnode
 
+  /i2c:
+    put:
+      tags:
+      - Sensors
+      summary: Set I2C pin
+      operationId: i2cSet
+      parameters:
+      - name: bit
+        in: query
+        description: Sensor bit number
+        required: true
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 0xFFFFFFFF
+          example: 1 
+      - name: value
+        in: query
+        description: Value to set
+        required: true
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 1
+          example: 1
+      responses:
+        "200":
+          description: Success 
+        "500":
+          description: Error
+      x-swagger-router-controller: brewnode
+
   /brewname:
     put:
       tags:

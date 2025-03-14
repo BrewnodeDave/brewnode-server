@@ -154,10 +154,11 @@ process.on('uncaughtException', (err) => {
  * @param {Number} bit 
  */
 function getBit(byte, bit){
-	const result = (byte & (1 << bit)) >> bit;
-	//console.log("bit",bit,"of",byte,"=",result)
-	return result; 
-	
+	return (byte & (1 << bit)) >> bit;
+}
+
+function array2Hex(a) {
+	return '0x' + [...a].reverse().map(byte => byte.toString(16).padStart(2, '0')).join('');
 }
 
 function init(i2c){
@@ -212,7 +213,7 @@ module.exports = {
 	 * @param {number} value - 0 or 1
 	 */
     writeBit(bit, value) {
-    	try {
+		try {
 			if (bit < 16) {
 			  if (bit < 8) {
 				dataByte[0] = writeReg(REGx20, 0x12, dataByte[0], bit - (0 * 8), value);
@@ -226,8 +227,10 @@ module.exports = {
 				dataByte[3] = writeReg(REGx21, 0x13, dataByte[3], bit - (3 * 8), value);
 			  }
 			}
+			return array2Hex(dataByte);
 		  } catch (err) {
 			brewlog.critcal('Error in writeBit:', JSON.stringify(err.stack));
+			return err;
 		  }
 	},
 	
@@ -237,25 +240,26 @@ module.exports = {
     readBit(bit) {
 	  // brewlog.debug("Read bit=>"+bit)
 	  let result;
+	  let byte;
 	  if (bit < 16){
 	    if (bit < 8){
-	      dataByte[0] = _i2c.readByteSync(REGx20, 0x12);
+	      byte = _i2c.readByteSync(REGx20, 0x12);
 	    //   brewlog.debug("Read [byte0]=>"+dataByte[0])
-	      result = getBit(dataByte[0], bit); 
+	      result = getBit(byte, bit); 
 	    }else{		
-	      dataByte[1] = _i2c.readByteSync(REGx20, 0x13);
+	      byte = _i2c.readByteSync(REGx20, 0x13);
 	    //   brewlog.debug("Read [byte1]=>"+dataByte[1])
-	      result = getBit(dataByte[1], bit-8); 
+	      result = getBit(byte, bit-8); 
 	    }
 	  }else{
 	    if (bit < 24){
-	      dataByte[2] = _i2c.readByteSync(REGx21, 0x12);		
+			byte = _i2c.readByteSync(REGx21, 0x12);		
 	        // brewlog.debug("Read [byte2]=>"+dataByte[2])
-		result = getBit(dataByte[2], bit-16); 
+		result = getBit(byte, bit-16); 
 	    }else{		
-	      dataByte[3] = _i2c.readByteSync(REGx21, 0x13);		
+			byte = _i2c.readByteSync(REGx21, 0x13);		
 	    //   brewlog.debug("Read [byte3]=>"+dataByte[3])
-	      result = getBit(dataByte[3], bit-24); 
+	      result = getBit(byte, bit-24); 
 	    }
 	  }
 		
@@ -305,7 +309,6 @@ module.exports = {
 			const byte2 = _i2c.readByteSync(REGx21, 0x12);		
 			const byte3 = _i2c.readByteSync(REGx21, 0x13);		
 			
-		//console.log(byte3,byte2,byte1,byte0);
 			const word = (byte3 << 24) | (byte2 << 16) | (byte1 << 8) | byte0;
 			
 			return word;

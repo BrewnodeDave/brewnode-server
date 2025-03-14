@@ -32,7 +32,7 @@ const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
 const mysqlService = require('../src/services/mysql-service.js');
 const {getSimulationSpeed} = require('../src/sim/sim.js');
-
+const {writeBit} = require('../src/services/i2c_raspi-service.js');
 const flowTimeoutSecs = 5;
 
 async function whatsBrewing (req, res, next) {
@@ -66,6 +66,15 @@ async function whatsBrewing (req, res, next) {
     } else {
       res.send(400, `Multiple brews in progress!`);
     }
+  } catch (error) {
+    res.send(500, error.message);
+  }
+}
+
+async function i2cSet(req, res, next, bit, value) {
+  try {
+    const result = writeBit(bit, value);
+    res.send(200, result);
   } catch (error) {
     res.send(500, error.message);
   }
@@ -603,6 +612,7 @@ module.exports = {
   heat,
   glycolChill,
   glycolHeat,
+  i2cSet,
   k2f: kettle2fermenter,
   k2m: kettle2mashtun,
   kettleInValve: getValve("ValveKettleIn"),
