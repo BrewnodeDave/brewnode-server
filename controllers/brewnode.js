@@ -32,7 +32,7 @@ const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
 const mysqlService = require('../src/services/mysql-service.js');
 const {getSimulationSpeed} = require('../src/sim/sim.js');
-const {writeBit} = require('../src/services/i2c_raspi-service.js');
+const {DIR_OUTPUT, setDir, writeBit} = require('../src/services/i2c_raspi-service.js');
 const flowTimeoutSecs = 5;
 
 async function whatsBrewing (req, res, next) {
@@ -73,6 +73,7 @@ async function whatsBrewing (req, res, next) {
 
 async function i2cSet(req, res, next, bit, value) {
   try {
+    setDir(bit, DIR_OUTPUT);
     const result = writeBit(bit, value);
     res.send(200, result);
   } catch (error) {
