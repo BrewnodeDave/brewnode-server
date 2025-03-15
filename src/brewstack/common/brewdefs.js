@@ -96,11 +96,12 @@ module.exports = {
 	I2C_RELAY_4:	 		15,
 
 	
-	I2C_KETTLE_OUTPUT_BIT:	26,
+	I2C_KETTLE_OUTPUT_BIT:	17, //i2cset -y 1 0x21 0x12 0x2
 	
 	I2C_WATCHDOG_HALT_BIT:	23,
 	I2C_WATCHDOG_LED_BIT: 	22,
 
+	
 	
 	//GPIO Numbers
 	GPIO_VALVE0_CLOSED:		40,
