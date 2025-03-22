@@ -64,20 +64,6 @@ module.exports = {
 				const newState = i2c.toggleBit(brewDefs.I2C_WATCHDOG_LED_BIT);
 				error = false;
 				bark(newState);
-			
-				//Halt upon a button press
-				const result = i2c.readBit(brewDefs.I2C_WATCHDOG_HALT_BIT);	
-				if ((result == 0) && brewDefs.isRaspPi() && false /*(opt.sim === false)*/){		
-					//This event should trigger an attempted controlled shutdown.
-					bark("DEAD");
-					error = true;
-					brewlog.critical("Watchdog Shutdown request!");
-					if (debug === false){
-						//Need to switch everything off first
-						exec("sudo shutdown -h now");
-					}
-				}
-				
 			}, HEARTBEAT_INTERVAL);
 	
 			resolve(opt);
