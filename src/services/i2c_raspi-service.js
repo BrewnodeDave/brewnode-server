@@ -271,7 +271,9 @@ module.exports = {
 	 */
 	toggleBit(bit) {
 		const value = this.readBit(bit);
+console.log("WDOG LED READ", value);
 		const newValue = (value === 0) ? 1 : 0;
+console.log("WDOG LED WRITE", newValue);
 		this.writeBit(bit, newValue);
 		return newValue;
 	},
