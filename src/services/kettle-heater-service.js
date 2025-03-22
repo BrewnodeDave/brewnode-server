@@ -60,7 +60,7 @@ const HEATER_OFF = 0;//i2c.LOW;
 const HEATER_ON = 1;//i2c.HIGH;
 
 const HEATER_DEF = {
-	i2cPinOut:brewdefs.I2C_KETTLE_OUTPUT_BIT
+	i2cPinOut:brewdefs.I2C_KETTLE_POWER
 }
 
 const powerOnOff = (i2cState, power) => {

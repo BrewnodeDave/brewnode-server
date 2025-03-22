@@ -39,7 +39,7 @@ const FAN_DEF = {
 	/** @type {string} */
 	name:"Fan",		
 	/** @type {number} */
-	i2cPinOut:brewdefs.I2C_FAN_OUTPUT_BIT
+	i2cPinOut:brewdefs.I2C_FAN
 }
 
 let publishFanState;

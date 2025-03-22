@@ -43,10 +43,6 @@ const dotenv = require('dotenv');
 dotenv.config();//Adds contents of .env tsso environ vars e.g. process.env.DB_PASS
 
 module.exports = {
-	//installDir: '.',	
-	installDir: `${__dirname}/../..`,	
-	brewsDir: '/brews/',
-	
 	isLinux: /^linux/.test(process.platform),
 	isRaspPi,
 
@@ -77,30 +73,29 @@ module.exports = {
 
 	// I2C_FLOW_MASH_IN:               28,
 
+	I2C_RELAY_A:	 		0, 
+	I2C_GLYCOL_POWER:		1,//chiller power
+	I2C_GLYCOL_HEATER:		2,//glycol heater
+	I2C_MASH_PUMP: 			3, 
 
-	I2C_RELAY_B:	 	15,
-	I2C_RELAY_A:	 	0, 
-	I2C_RELAY_D:	 	14,
-	I2C_CHILL_OUTPUT_BIT:	1,//chiller power
-	I2C_FAN_OUTPUT_BIT:	13,	
-	I2C_HEAT_OUTPUT_BIT:	2,//glycol heater
-	I2C_KETTLE_PUMP: 	12, 
-        I2C_MASH_PUMP: 		3, 
-	I2C_MASH_IN_VALVE: 	11, 
-	I2C_FERMENTER_PUMP: 	9,
-	I2C_RELAY_5:	 	10,
 	I2C_KETTLE_VALVE_IN: 	5,
-	I2C_CHILL_WORT_VALVE_IN:9, //relay 3
 	I2C_FERMENTER_VALVE_IN: 6, //relay 2 
-	I2C_GLYCOL_PUMP: 	8, 
-	I2C_RELAY_4:	 	7,
+	I2C_RELAY_4:	 		7,
+	I2C_GLYCOL_PUMP: 		8, 
 
+	I2C_FERMENTER_PUMP: 	9,
+	I2C_CHILL_WORT_VALVE_IN:9, //relay 3
 	
-	I2C_KETTLE_OUTPUT_BIT:	16, 
-	
+	I2C_RELAY_5:	 		10,
+	I2C_MASH_IN_VALVE: 		11, 
+	I2C_KETTLE_PUMP: 		12, 
+	I2C_FAN:				13,	
+	I2C_RELAY_D:	 		14,
+	I2C_RELAY_B:	 		15,
+	I2C_KETTLE_POWER:		16,
+
 	I2C_WATCHDOG_LED_BIT: 	31,
 
-	
 	
 	//GPIO Numbers
 	GPIO_VALVE0_CLOSED:		40,

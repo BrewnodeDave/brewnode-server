@@ -37,7 +37,7 @@ let currentState = CHILL_OFF;
  */
 const CHILL_DEF = {
 	name:"GlycolChiller",		
-	i2cPinOut:brewdefs.I2C_CHILL_OUTPUT_BIT
+	i2cPinOut:brewdefs.I2C_GLYCOL_POWER
 }
 
 let publishState;

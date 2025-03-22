@@ -37,7 +37,7 @@ let currentState = HEAT_OFF;
  */
 const HEAT_DEF = {
 	name:"GlycolHeater",		
-	i2cPinOut:brewdefs.I2C_HEAT_OUTPUT_BIT
+	i2cPinOut:brewdefs.I2C_GLYCOL_HEATER
 } 
 
 let publishState;
