@@ -15,7 +15,8 @@
  */
  module.exports = [
 	{name:'TempKettle',			id:'28-00000751bbce', prevValue:null, publishTemp:null},
-	{name:'TempFermenter',  	id:'28-000007519802', prevValue:null, publishTemp:null},
+	{name:'TempFermenter',  	id:'28-ab0e2e346461', prevValue:null, publishTemp:null},
+	//{name:'TempFermenter',  	id:'28-000007519802', prevValue:null, publishTemp:null},
 	{name:'TempMash',			id:'28-0000069be682', prevValue:null, publishTemp:null},
 	{name:'TempGlycol',			id:'28-0000071f5017', prevValue:null, publishTemp:null},	
 	{name:'TempAmbient',		id:'28-0000006a79e8', prevValue:null, publishTemp:null},	
