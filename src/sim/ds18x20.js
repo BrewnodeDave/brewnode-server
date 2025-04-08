@@ -67,13 +67,13 @@ module.exports = {
      * Need a way to set the temp for simulation
      */
     set(name, t) {
-        let temp = Math.trunc(t*100)/100;
         probes.forEach(probe => {
             if (probe.name === name){
-                const compensated = probe.compensate(temp);
-                if (probe.prevValue != compensated){
-                    probe.prevValue = compensated;
-                    probe.publishTemp(compensated);
+                const compensated = probe.compensate(t);
+                const temp = Math.trunc(compensated*100)/100;
+                if (probe.prevValue != temp){
+                    probe.prevValue = temp;
+                    probe.publishTemp(temp);
                 }
                 return;
             }
