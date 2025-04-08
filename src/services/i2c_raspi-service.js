@@ -138,7 +138,6 @@ function writeReg(chipAddress, address, currentByte, bit, value){
 	_i2c.writeByteSync(chipAddress, address, result);
 	//setDir(bit, DIR_INPUT);
 
-
 	return result;
 }
 

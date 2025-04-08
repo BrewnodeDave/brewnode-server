@@ -58,7 +58,8 @@ async function getAllTemps() {
 			for (const key in tempObj) {
 				if (key == probe.id) {
 					const value = tempObj[key];
-					result.push({ name: probe.name, value, publish: probe.publishTemp });
+					const compensated = probe.compensate(value);
+					result.push({ name: probe.name, value:compensated, publish: probe.publishTemp });
 				}
 			}
 		});

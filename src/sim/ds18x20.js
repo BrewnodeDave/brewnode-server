@@ -56,6 +56,7 @@ module.exports = {
                 temp = probe.prevValue;
             }
         });
+        
         if (temp === null){
             console.log("Failed to find simulated temp by name=", name);
         }
@@ -69,9 +70,10 @@ module.exports = {
         let temp = Math.trunc(t*100)/100;
         probes.forEach(probe => {
             if (probe.name === name){
-                if (probe.prevValue != temp){
-                    probe.prevValue = temp;
-                    probe.publishTemp(temp);
+                const compensated = probe.compensate(temp);
+                if (probe.prevValue != compensated){
+                    probe.prevValue = compensated;
+                    probe.publishTemp(compensated);
                 }
                 return;
             }
@@ -79,8 +81,9 @@ module.exports = {
      },
      setAll(temp) {
         probes.forEach(probe => {
-            probe.prevValue = temp;
-            probe.publishTemp(temp);
+            const compensated = probe.compensate(temp);
+            probe.prevValue = compensated;
+            probe.publishTemp(compensated);
         });
  	}
 }
