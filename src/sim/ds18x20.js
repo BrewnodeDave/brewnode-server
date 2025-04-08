@@ -69,8 +69,7 @@ module.exports = {
     set(name, t) {
         probes.forEach(probe => {
             if (probe.name === name){
-                const compensated = probe.compensate(t);
-                const temp = Math.trunc(compensated*100)/100;
+                const temp = probe.compensate(t);
                 if (probe.prevValue != temp){
                     probe.prevValue = temp;
                     probe.publishTemp(temp);
@@ -82,7 +81,7 @@ module.exports = {
      setAll(temp) {
         probes.forEach(probe => {
             const compensated = probe.compensate(temp);
-            probe.prevValue = Math.trunc(compensated*100)/100;
+            probe.prevValue = compensated;
             probe.publishTemp(compensated);
         });
  	}
