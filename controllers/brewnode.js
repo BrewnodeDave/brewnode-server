@@ -62,7 +62,8 @@ async function whatsBrewing (req, res, next) {
       }
     } else if (numBrewing === 1) {
       // progressPublish(response.data[0].recipe.name);
-      res.send(200, response.data[0].recipe);
+      const brewname = `${response.data[0].recipe.name}(${response.data[0].batchNo})`;
+      res.send(200, brewname);
     } else {
       res.send(400, `Multiple brews in progress!`);
     }
