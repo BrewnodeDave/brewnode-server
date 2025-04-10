@@ -58,12 +58,15 @@ async function whatsBrewing (req, res, next) {
         res.send(400, "No brews in progress!");
       } else {
         // progressPublish(response.data[0].recipe.name);
-        res.send(200, response.data[0].recipe);
-      }
+        const recipe = response.data[0].recipe;
+        recipe.name = `${recipe.name}(${response.data[0].batchNo})`;
+        res.send(200, recipe);
+        }
     } else if (numBrewing === 1) {
       // progressPublish(response.data[0].recipe.name);
-      const brewname = `${response.data[0].recipe.name}(${response.data[0].batchNo})`;
-      res.send(200, brewname);
+      const recipe = response.data[0].recipe;
+      recipe.name = `${recipe.name}(${response.data[0].batchNo})`;
+      res.send(200, recipe);
     } else {
       res.send(400, `Multiple brews in progress!`);
     }
