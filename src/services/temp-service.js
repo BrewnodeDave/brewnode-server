@@ -78,7 +78,7 @@ async function getAllTemps() {
 		probes.forEach(probe => {
 			const sensorId = sensorList.findIndex(id => id === probe.id);
 			if (sensorId === -1){
-				brewlog.error("Failed to find sensor id=", probe.id);
+				// brewlog.error("Failed to find sensor id=", probe.id);
 				return;
 			}
 			const value = sensors[sensorId];
