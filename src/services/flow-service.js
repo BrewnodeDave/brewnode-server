@@ -154,6 +154,7 @@ function Flow(flowDef){
 	 * Periodically emit a flowEvent that contains the current flow rate 
 	 * since the previous reset command.
 	 */
+/*
 	thisFlow.reportTimer = setInterval(() => {
 		const nowSecs2 = hrsecs(process.hrtime());
 		let deltaSecs = nowSecs2 - thisFlow.emitSecs2;
@@ -208,7 +209,7 @@ function Flow(flowDef){
 		}
 
 	}, reportPeriodSecs*1000);
-	
+*/	
 	/**
 	* Maintain a count for each bit that has changed.
 	* Called every time the flow bit is read.
