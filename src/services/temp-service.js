@@ -83,7 +83,9 @@ async function getAllTemps() {
 			}
 			const value = sensors[sensorId];
 			if (value){
-				const compensated = probe.compensate(value);
+				// const compensated = probe.compensate(value);
+				const compensated = parseFloat(value.toFixed(1)); // Limit to 1 decimal place
+
 				result.push({ name: probe.name, value:compensated, publish: probe.publishTemp });
 			}
 		});
@@ -212,23 +214,26 @@ module.exports = {
 					return;
 				}
 				const value = sensors[sensorId];
-				const delta = (probe.prevValue === null) ? 0 : probe.prevValue - value;
 								
 				if (value == 85){
 					//85 can be indiciative of an error but not always
 					// brewlog.warning(`${probe.name} has maybe failed (85)`);
 				}else{
+					// const compensated = probe.compensate(value);
+					const compensated = parseFloat(value.toFixed(1)); // Limit to 1 decimal place
+
+					const delta = (probe.prevValue === null) ? 0 : probe.prevValue - compensated;
+				
 					if ((Math.abs(delta) > 0.5))
 					{
 						if (probe.publishTemp){
-							doublePublish(probe.publishTemp, probe.prevValue, value);
+							doublePublish(probe.publishTemp, probe.prevValue, compensated);
 							// probe.publishTemp(value);
-							probe.prevValue = value;
+							probe.prevValue = compensated;
 						}
 					}
+					result.push({name:probe.name, value:compensated});									
 				}//if 85
-
-				result.push({name:probe.name, value});									
 			});
 			
 			return result;
