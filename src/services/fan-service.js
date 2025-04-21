@@ -66,7 +66,7 @@ const isOn = () => (currentPower === POWER);
 /**
  * Automatically switch on/off fan with temperature
  */
-function tempKettleHandler({value}) {	
+function tempKettleHandler(value) {	
 	if (value >= TEMP_FAN_ON){
 		setState(POWER);
 	} else if (value <= TEMP_FAN_OFF){
