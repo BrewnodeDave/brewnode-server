@@ -77,7 +77,7 @@ console.log(timeString);
 //Circulate until ferment temp is reached
 function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDone, msToGo2, timeAtTemp, prevTimeAtTemp) {
 
-console.log("pumpOnOff",chillStep,desiredFermentTemp, currentFermentTemp, msToGo2, timeAtTemp, prevTimeAtTemp);
+	console.log("pumpOnOff",chillStep,desiredFermentTemp, currentFermentTemp, msToGo2, timeAtTemp, prevTimeAtTemp);
 	if (msToGo2 === null) {
 		return;
 	}
@@ -86,9 +86,7 @@ console.log("pumpOnOff",chillStep,desiredFermentTemp, currentFermentTemp, msToGo
 		? currentFermentTemp < (desiredFermentTemp + FERMENTER_OVERSHOOT)
 		: currentFermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT);
 
-console.log({reached});
-
-	timeToText(`Fermentation(${desiredFermentTemp}C)=`, msToGo2 / 1000);
+	// timeToText(`Fermentation(${desiredFermentTemp}C)=`, msToGo2 / 1000);
 
 	
 	if (reached) {
