@@ -14,7 +14,6 @@
   "license": "Beerware",
   "private": true,
   "dependencies": {
-    "@iiot2k/ds18b20": "^3.0.3",
     "axios": "^1.7.7",
     "connect": "^3.2.0",
     "cors": "^2.8.5",
@@ -28,6 +27,7 @@
     "socket.io": "^4.8.0"
   },
   "optionalDependencies": {
+    "@iiot2k/ds18b20": "^3.0.3",
     "raspi": "^6.0.1",
     "raspi-i2c": "^6.2.4"
   },

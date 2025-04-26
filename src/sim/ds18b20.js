@@ -14,37 +14,22 @@ probes.forEach(({id}) => {
     listOfDeviceIds.push(id);
 });
 
+const sensors = probes.reduce((prev,curr) => {
+    prev[curr.id] = 9.9;
+    return prev;
+},[]);
+
 module.exports = { 	
-	isDriverLoaded(cb) {
-        let err = false;
-        let isLoaded = true;
-        cb(err, isLoaded);
+    read_sensor: (pin, fahrenheit, callback) => {
+        callback(sensors);
     },
-    list(cb) {
-        let err = false;
-        cb(err, listOfDeviceIds);
+    read_one_sensor: (pin, id, fahrenheit, callback) => {
+        callback(sensors[id]);
     },
-    getAll(cb) {
-        let err = false;
-        let result = [];
-        probes.forEach(({id, prevValue}) => {
-            result[id] = prevValue;
-        });
-        cb(err, result);
+    list_sensor: (pin) => {
+        return probes.map(probe => [probe.id]).flat();
     },
-    get(probeId, cb) {
-        let err = false;
-        let temp = null;
-        probes.forEach(({id, prevValue}) => {
-            if (id === probeId){
-                temp = prevValue;
-            }
-        });
-        if (temp === null){
-            console.log("Failed to find simulated temp by id=", probeId);
-        }
-        cb(err, temp);
-    },
+    
     /**
      * Need a way to get the temp by name for simulation
      */

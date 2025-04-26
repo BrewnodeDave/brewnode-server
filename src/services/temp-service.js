@@ -123,6 +123,7 @@ async function pollTemperatures(){
 
 }
 
+let sensors =[];
 module.exports = { 	
 	/* Upon initialisation, check that all temperature sensors are found.
 	* If not then subsequent temperature measurements will report a fail
@@ -140,7 +141,7 @@ module.exports = {
 				ds18b20 = require("@iiot2k/ds18b20");
 			}else{
 				// @ts-ignore
-				ds18b20 = require('ds18b20');
+				ds18b20 = require("../sim/ds18b20");
 			}
 
 			sensorList = listSensors(PIN);
