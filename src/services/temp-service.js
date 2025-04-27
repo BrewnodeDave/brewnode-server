@@ -51,6 +51,8 @@ const readSensor = (id) => ds18b20.read_one_sensor_sync(PIN, id, FAHRENHEIT);
 const readAllSensors = () => ds18b20.read_sensor_sync(PIN, FAHRENHEIT);
 const listSensors = () => ds18b20.list_sensor(PIN);
 
+const id2name = id => probes.find(probe => probe.id === id).name;
+
 const readAllSensorsAsync = () => {
 	return new Promise((resolve, reject) => {
 		try {
@@ -70,26 +72,30 @@ const readSensorAsync = (id) => {
 	});
 };
 
+/**
+ * Retrieves all temperature readings from sensors, processes them, and returns
+ * a list of temperature data objects with compensation applied.
+ *
+ * @async
+ * @function
+ * @returns {Promise<Array<{name: string, value: number, publish: boolean}>>} 
+ *          A promise that resolves to an array of objects containing:
+ *          - `name` (string): The name of the probe.
+ *          - `value` (number): The compensated temperature value, limited to 1 decimal place.
+ *          - `publish` (function): Function to call if not null.
+ *
+ * @throws {Error} Logs an error if the temperature retrieval process fails.
+ */
 async function getAllTemps() {
 	let result = [];
 	try {		
-		const sensors = await readAllSensorsAsync();
+		const sensorValues = await readAllSensorsAsync();
 
-		probes.forEach(probe => {
-			const sensorId = sensorList.findIndex(id => id === probe.id);
-			if (sensorId === -1){
-				// brewlog.error("Failed to find sensor id=", probe.id);
-				return;
-			}
-			const value = sensors[sensorId];
-			if (value){
-				// const compensated = probe.compensate(value);
-				const compensated = parseFloat(value.toFixed(1)); // Limit to 1 decimal place
-
-				result.push({ name: probe.name, value:compensated, publish: probe.publishTemp });
-			}
-		});
-		return result;
+		return sensorValues.map((value, index) => ({
+			name : sensorList[index],
+			value : parseFloat(value.toFixed(1)), // Limit to 1 decimal place
+			publish : probes.find(probe => probe.id === sensorList[index]).publishTemp
+		}));
 	} catch (err) {
 		brewlog.error("Failed to get all temperatures", err);
 		return result;
@@ -122,6 +128,8 @@ async function pollTemperatures(){
 	});
 
 }
+
+const probeId = name => probes.find(p => p.name === name).id;
 
 let sensors =[];
 module.exports = { 	
@@ -161,7 +169,7 @@ module.exports = {
 					ambientTemp = 9.9;
 				}else{
 					setPollInterval(10);
-					const ambientId = probes.find(probe => probe.name === 'TempAmbient').id; 
+					const ambientId = probeId('TempAmbient'); 
 					ambientTemp = readSensor(ambientId);
 				}
 				started = true;
@@ -184,9 +192,7 @@ module.exports = {
 				pollInterval = null;
 				
 				started = false;
-				probes.forEach(({name}) => {
-					broker.destroy(name);
-				});
+				probes.forEach(({name}) => broker.destroy(name));
 			}
 			brewlog.info("temp.js", "stopped");
 
@@ -197,48 +203,15 @@ module.exports = {
 	
 	setSampleInterval: setPollInterval,
 	
-	/**
-	* Emit the current temperature.
-	* @desc Only the probes whose temperature has changed will fire an event.
-	* @param {boolean} force - Force a status reading regardless of value.
-	* @fires temp
-	*/
 	async getStatus() {
-		let result = [];
-
-			const sensors = await readAllSensorsAsync();
-
-			probes.forEach(probe => {
-				const sensorId = sensorList.findIndex(id => id === probe.id);
-				if (sensorId === -1){
-					// brewlog.error("Failed to find sensor id=", probe.id);
-					return;
-				}
-				const value = sensors[sensorId];
-								
-				if (value == 85){
-					//85 can be indiciative of an error but not always
-					// brewlog.warning(`${probe.name} has maybe failed (85)`);
-				}else{
-					// const compensated = probe.compensate(value);
-					const compensated = parseFloat(value.toFixed(1)); // Limit to 1 decimal place
-
-					const delta = (probe.prevValue === null) ? 0 : probe.prevValue - compensated;
-				
-					if ((Math.abs(delta) > 0.5))
-					{
-						if (probe.publishTemp){
-							doublePublish(probe.publishTemp, probe.prevValue, compensated);
-							// probe.publishTemp(value);
-							probe.prevValue = compensated;
-						}
-					}
-					result.push({name:probe.name, value:compensated});									
-				}//if 85
-			});
-			
-			return result;
-		},//getStatus
+			const sensorValues = await readAllSensorsAsync();
+			const names = sensorList.map(id2name);
+			return sensorValues.map((sensorValue, id) => ({
+				name: names[id],
+				id,
+				value:parseFloat(sensorValue.toFixed(1))
+			})).filter(sensor => sensor.value !== 85);
+	},//getStatus
 	
 	/**
 	* @desc Get temp of a single probe.
@@ -246,8 +219,7 @@ module.exports = {
 	*/
 	async getTemp(name) {
 		try {
-			const probe = probes.find(p => p.name === name);
-			return await readSensorAsync(probe.id);
+			return await readSensorAsync(probeId(name));
 		} catch (err) {
 			console.log(name);			
 		}
