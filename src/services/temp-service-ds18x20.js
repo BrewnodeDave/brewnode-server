@@ -79,8 +79,8 @@ async function pollTemperatures(deltaSecs){
 
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
-		const deltaC = sensor.value - prevSensorValues[index];
-		const degPerSec = deltaC / deltaSecs;
+		const deltaC = Math.abs(sensor.value - prevSensorValues[index]);
+		const degPerSec = Math.abs(deltaC / deltaSecs);
 
 		return (deltaC >= minDeltaC) && (degPerSec < maxDegPerSec);
 	});
