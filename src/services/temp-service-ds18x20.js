@@ -38,7 +38,7 @@ function setPollInterval(secs){
 
 	module.exports.getStatus(true);
 	
-	pollInterval = setInterval(pollTemperatures, secs * 1000)								
+	pollInterval = setInterval(() => pollTemperatures(10), secs * 1000)								
 }
 
 async function getAllTemps() {
@@ -70,12 +70,20 @@ async function getAllTemps() {
 	}
 }
 
-async function pollTemperatures(){
+async function pollTemperatures(deltaSecs){
+	const maxDegPerSec = 0.1;
+	const minDeltaC = 0.2;
+
 	const sensors = await getAllTemps();
 	const sensorValues =  sensors.map(sensor => sensor.value);
 
 	// Find sensors with different values
-	const changedSensors = sensors.filter((sensor, index) => Math.abs(sensor.value - prevSensorValues[index]) >= 0.2);
+	const changedSensors = sensors.filter((sensor, index) => {
+		const deltaC = sensor.value - prevSensorValues[index];
+		const degPerSec = deltaC / deltaSecs;
+
+		return (deltaC >= minDeltaC) && (degPerSec < maxDegPerSec);
+	});
 
 	// Publish changes for sensors with different values
 	changedSensors.forEach(sensor => {
