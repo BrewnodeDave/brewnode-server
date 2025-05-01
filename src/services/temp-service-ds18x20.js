@@ -26,7 +26,9 @@ const { doublePublish } = require("./mysql-service.js");
 let probes = require('../probes.js');
 
 let pollInterval = null;
+
 let prevSensorValues = [];
+
 let started = false;
 
 function setPollInterval(secs){
@@ -71,13 +73,16 @@ async function getAllTemps() {
 }
 
 async function pollTemperatures(deltaSecs){
-	const maxDegPerSec = 1 * deltaSecs;
+	const maxDegPerSec = 0.5;
 	const minDeltaC = 0.5;
 
 	const sensors = await getAllTemps();
 
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
+		if (prevSensorValues[sensor.name] === undefined) {
+			return true;
+		}
 		const deltaC = Math.abs(sensor.value - prevSensorValues[sensor.name]);
 		const degPerSec = Math.abs(deltaC / deltaSecs);
 
