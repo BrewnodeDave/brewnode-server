@@ -13,6 +13,8 @@ const setSession = brewname => _session = `${brewname ? brewname : "none"}`;
 const getSession = () => _session;
 
 async function doublePublish(publish, prev, next){
+	if (prev === next) return
+	
 	const dateTimeInMs = new Date().getTime();
 	
 	await publish(prev, dateTimeInMs);
