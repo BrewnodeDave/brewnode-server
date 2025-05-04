@@ -82,6 +82,8 @@ async function pollTemperatures(deltaSecs){
 
 	const sensors = await getAllTemps();
 
+console.log({sensors});
+console.log({prevSensorValues});
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (prevSensorValues[sensor.name] === undefined) {
@@ -92,6 +94,8 @@ async function pollTemperatures(deltaSecs){
 
 		return (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
 	});
+
+console.log({changedSensors});
 	// Publish changes for sensors with different values
 	changedSensors.forEach((sensor) => {
 		sensor?.publish(sensor.value);
