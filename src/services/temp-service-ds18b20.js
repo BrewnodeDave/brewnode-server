@@ -178,7 +178,11 @@ module.exports = {
 				done(ambientTemp);
 			}
 
+			// Initially publish all sensors
 			prevSensors = await getAllTemps();
+			prevSensors.forEach((sensor) => {
+				sensor?.publish(sensor.value);
+			});
 		}),
 	
 	/**

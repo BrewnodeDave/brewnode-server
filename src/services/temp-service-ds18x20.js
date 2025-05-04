@@ -107,75 +107,68 @@ module.exports = {
 	/* Upon initialisation, check that all temperature sensors are found.
 	* If not then subsequent temperature measurements will report a fail
 	*/
-	start: (simulationSpeed) => 
+	start: (simulationSpeed) => new Promise(async (resolve, reject) => {
+		brewlog.info("temp.js","start");
+		if (started === true){
+			resolve();
+			return;
+		}
 		
-		 new Promise(async (resolve, reject) => {
-	
-			brewlog.info("temp.js","start");
-			if (started === true){
-				resolve();
-				return;
-			}
-			
-			if (simulationSpeed !== 1){
-				ds18x20 = require('../sim/ds18x20.js');
-			}else{
-				// @ts-ignore
-				ds18x20 = require('ds18x20');
-			}
-	
-			const done = resolve;
-			if (pollInterval === null){
-				ds18x20.isDriverLoaded((err, isLoaded) => {
-					if (err){
-						brewlog.critical("Temperature driver is not loaded.", err);
-						reject(err);
-					}
-					else {
-						ds18x20.list((err, listOfDeviceIds) => {
-							if(err){
-								brewlog.critical("Failed to start temp:",err);
-								reject(err);
-							}
-							else{
-								getAllTemps();
-								ds18x20.getAll(async (err, tempObj) => {
-									if(err){
-										brewlog.error("Failed to get all temperatures", err);
-										reject(err);
-									}else{
-										probes.forEach(probe => {
-											const publish = broker.create(probe.name);
-											probe.publishTemp = (value, timestamp) => (value != 85) ? publish(value, timestamp) : null;
-											if (simulationSpeed !== 1){
-												ds18x20.set(probe.name, 9.9);
-											}
-										});
-										
-										if (simulationSpeed !== 1){
-											setPollInterval(60 / simulationSpeed);
-											ambientTemp = 9.9;
-										}else{
-											setPollInterval(10);
-											const ambientId = probes.find(probe => probe.name === 'TempMash').id; 
-											ambientTemp = tempObj[ambientId];
-										}
-										started = true;
+		if (simulationSpeed !== 1){
+			ds18x20 = require('../sim/ds18x20.js');
+		}else{
+			// @ts-ignore
+			ds18x20 = require('ds18x20');
+		}
 
-										done(ambientTemp);
-									}
-								});
-							}
-						});//list
-					}
-				});	
-			}//timer null
+		const done = resolve;
+		if (pollInterval === null){
+			ds18x20.isDriverLoaded((err, isLoaded) => {
+				if (err){
+					brewlog.critical("Temperature driver is not loaded.", err);
+					reject(err);
+				}
+				else {
+					ds18x20.list((err, listOfDeviceIds) => {
+						if(err){
+							brewlog.critical("Failed to start temp:",err);
+							reject(err);
+						}
+						else{
+							probes.forEach(probe => {
+								const publish = broker.create(probe.name);
+								probe.publishTemp = (value, timestamp) => (value != 85) ? publish(value, timestamp) : null;
+								if (simulationSpeed !== 1){
+									ds18x20.set(probe.name, 9.9);
+								}
+							});
 
-			const sensors = await getAllTemps();
-		 	sensors.forEach(sensor => {
+							if (simulationSpeed !== 1){
+								setPollInterval(60 / simulationSpeed);
+								ambientTemp = 9.9;
+							}else{
+								setPollInterval(10);
+								ambientTemp = sensors.find(sensor => sensor.name === "TempAmbient")?.value;
+							}
+							started = true;
+
+							done(ambientTemp);
+						}
+					});
+				}
+			});//list
+
+			// Initially publish all sensors
+			sensors = await getAllTemps();
+			sensors.forEach((sensor) => {
+				sensor?.publish(sensor.value);
+		
+				// Update previous sensor values
 				prevSensorValues[sensor.name] = sensor.value;
 			});
-		}),
+		}
+	}),	
+	
 	
 	/**
 	* Stop the temperature service.
@@ -207,43 +200,7 @@ module.exports = {
 	* @param {boolean} force - Force a status reading regardless of value.
 	* @fires temp
 	*/
-	getStatus() {
-		return new Promise((resolve, reject) => {		
-			ds18x20.getAll((err, tempObj) => {
-				let result = [];
-				if(err){
-					// brewlog.critical("Failed to find any temp sensors.", err);
-					resolve(result);
-				}else{
-					probes.forEach(probe => {
-						for (const key in tempObj){
-							if (key == probe.id){					
-								const value = tempObj[key];
-								const delta = (probe.prevValue === null) ? 0 : probe.prevValue - value;
-								
-								if (value == 85){
-									//85 can be indiciative of an error but not always
-									// brewlog.warning(`${probe.name} has maybe failed (85)`);
-								}else{
-									if ((Math.abs(delta) > 0.5))
-									{
-										if (probe.publishTemp){
-											doublePublish(probe.publishTemp, probe.prevValue, value);
-											// probe.publishTemp(value);
-											probe.prevValue = value;
-										}
-									}
-								}//if 85
-								result.push({name:probe.name, value});									
-							}//if probe.id
-						}//for key
-					});//PROBES.forEach
-
-					resolve(result);
-				}//else
-			});//getAll
-		});//promise
-	},//getStatus
+	getStatus: getAllTemps,
 	
 	/**
 	* @desc Get temp of a single probe.
