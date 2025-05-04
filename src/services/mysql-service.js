@@ -109,7 +109,6 @@ async function brewData(name, value, timestamp){
 	if (tablename === undefined || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
 		return;
 	}
-
 	const query = `INSERT INTO ${tablename} (name, value, timestamp) VALUES (?, ?, ?)`;
 	const values = [name, JSON.stringify(value), timestamp];
 	

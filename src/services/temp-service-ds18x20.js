@@ -82,7 +82,6 @@ async function pollTemperatures(deltaSecs){
 
 	const sensors = await getAllTemps();
 
-console.log(JSON.stringify(sensors));
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (prevSensorValues[sensor.name] === undefined) {
@@ -93,7 +92,6 @@ console.log(JSON.stringify(sensors));
 
 		return (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
 	});
-console.log(JSON.stringify(changedSensors));
 	// Publish changes for sensors with different values
 	changedSensors.forEach((sensor) => {
 		sensor?.publish(sensor.value);
@@ -109,7 +107,6 @@ module.exports = {
 	* If not then subsequent temperature measurements will report a fail
 	*/
 	start: (simulationSpeed) => new Promise(async (resolve, reject) => {
-		brewlog.info("temp.js","start");
 		if (started === true){
 			resolve();
 			return;
@@ -129,7 +126,7 @@ module.exports = {
 					reject(err);
 				}
 				else {
-					ds18x20.list((err, listOfDeviceIds) => {
+					ds18x20.list(async (err, listOfDeviceIds) => {
 						if(err){
 							brewlog.critical("Failed to start temp:",err);
 							reject(err);
@@ -138,36 +135,37 @@ module.exports = {
 							probes.forEach(probe => {
 								const publish = broker.create(probe.name);
 								probe.publishTemp = (value, timestamp) => (value != 85) ? publish(value, timestamp) : null;
+
 								if (simulationSpeed !== 1){
 									ds18x20.set(probe.name, 9.9);
 								}
 							});
 						}
+						
+						// Initially publish all sensors
+						sensors = await getAllTemps();
+						sensors.forEach((sensor) => {
+							sensor?.publish(sensor.value);
+							// Update previous sensor values
+							prevSensorValues[sensor.name] = sensor.value;
+						});
+			
+						if (simulationSpeed !== 1){
+							setPollInterval(60 / simulationSpeed);
+							ambientTemp = 9.9;
+						}else{
+							setPollInterval(10);
+							ambientTemp = sensors.find(sensor => sensor.name === "TempAmbient")?.value;
+						}
+						started = true;
+			
+			
+						resolve(ambientTemp);
+			
 					});
 				}
 			});//list
 
-			// Initially publish all sensors
-			sensors = await getAllTemps();
-console.log("init",JSON.stringify(sensors));
-			sensors.forEach((sensor) => {
-				sensor?.publish(sensor.value);
-	console.log("publish",sensor);	
-				// Update previous sensor values
-				prevSensorValues[sensor.name] = sensor.value;
-			});
-
-			if (simulationSpeed !== 1){
-				setPollInterval(60 / simulationSpeed);
-				ambientTemp = 9.9;
-			}else{
-				setPollInterval(10);
-				ambientTemp = sensors.find(sensor => sensor.name === "TempAmbient")?.value;
-			}
-			started = true;
-
-
-			resolve(ambientTemp);
 		}
 	}),	
 	
