@@ -61,7 +61,11 @@ async function getAllTemps() {
 				if (key == probe.id) {
 					const value = tempObj[key];
 					const compensated = probe.compensate(value);
-					result.push({ name: probe.name, value:compensated, publish: probe.publishTemp });
+					result.push({ 
+						name: probe.name, 
+						value:compensated, 
+						publish: probe.publishTemp 
+					});
 				}
 			}
 		});
@@ -73,7 +77,7 @@ async function getAllTemps() {
 }
 
 async function pollTemperatures(deltaSecs){
-	const maxDegPerSec = 0.5;
+	const maxDegPerMin = 0.5;
 	const minDeltaC = 0.25;
 
 	const sensors = await getAllTemps();
@@ -84,13 +88,13 @@ async function pollTemperatures(deltaSecs){
 			return true;
 		}
 		const deltaC = Math.abs(sensor.value - prevSensorValues[sensor.name]);
-		const degPerSec = Math.abs(deltaC / deltaSecs);
+		const degPerMin = Math.abs(deltaC / (deltaSecs / 60));
 
-		return (deltaC > minDeltaC) && (degPerSec < maxDegPerSec);
+		return (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
 	});
 
 	// Publish changes for sensors with different values
-	changedSensors.forEach((sensor, index) => {
+	changedSensors.forEach((sensor) => {
 		sensor?.publish(sensor.value);
 
 		// Update previous sensor values

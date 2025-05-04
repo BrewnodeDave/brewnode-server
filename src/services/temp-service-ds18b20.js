@@ -32,7 +32,7 @@ const { doublePublish } = require("./mysql-service.js");
 let probes = require('../probes.js');
 
 let pollInterval = null;
-let prevSensors = [];
+let prevSensorValues = [];
 let started = false;
 
 function setPollInterval(secs){
@@ -91,23 +91,23 @@ async function getAllTemps() {
 	try {		
 		const sensorValues = await readAllSensorsAsync();
 
-		return sensorValues.map((value, index) => ({
+		result = sensorValues.map((value, index) => ({
 			name : sensorList[index],
 			value : parseFloat(value.toFixed(1)), // Limit to 1 decimal place
 			publish : probes.find(probe => probe.id === sensorList[index]).publishTemp
 		}));
 	} catch (err) {
 		brewlog.error("Failed to get all temperatures", err);
-		return result;
-	}
+	};
+
+	return result;
 }
 
-async function pollTemperatures(){
-	const sensors = await getAllTemps();
-
-	const maxDegPerSec = 0.5;
+async function pollTemperatures(deltaSecs){
+	const maxDegPerMin = 0.5;
 	const minDeltaC = 0.25;
 
+	const sensors = await getAllTemps();
 
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
@@ -115,19 +115,17 @@ async function pollTemperatures(){
 			return true;
 		}
 		const deltaC = Math.abs(sensor.value - prevSensorValues[sensor.name]);
-		const degPerSec = Math.abs(deltaC / deltaSecs);
+		const degPerMin = Math.abs(deltaC / (deltaSecs / 60));
 
-		return (deltaC > minDeltaC) && (degPerSec < maxDegPerSec);
+		return (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
 	});
 
-	
+	// Publish changes for sensors with different values
 	changedSensors.forEach(sensor => {
-		sensor.publish(sensor.value);
+		sensor?.publish(sensor.value);
 
-		const index = prevSensors.findIndex(s => s.name === sensor.name);
-		if (index !== -1) {
-			prevSensors[index] = sensor;
-		}
+		// Update previous sensor values
+		prevSensorValues[sensor.name] = sensor.value;
 	});
 
 }
