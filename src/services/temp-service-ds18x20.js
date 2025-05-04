@@ -121,7 +121,6 @@ module.exports = {
 			ds18x20 = require('ds18x20');
 		}
 
-		const done = resolve;
 		if (pollInterval === null){
 			ds18x20.isDriverLoaded((err, isLoaded) => {
 				if (err){
@@ -142,17 +141,6 @@ module.exports = {
 									ds18x20.set(probe.name, 9.9);
 								}
 							});
-
-							if (simulationSpeed !== 1){
-								setPollInterval(60 / simulationSpeed);
-								ambientTemp = 9.9;
-							}else{
-								setPollInterval(10);
-								ambientTemp = sensors.find(sensor => sensor.name === "TempAmbient")?.value;
-							}
-							started = true;
-
-							done(ambientTemp);
 						}
 					});
 				}
@@ -160,12 +148,25 @@ module.exports = {
 
 			// Initially publish all sensors
 			sensors = await getAllTemps();
+
 			sensors.forEach((sensor) => {
 				sensor?.publish(sensor.value);
 		
 				// Update previous sensor values
 				prevSensorValues[sensor.name] = sensor.value;
 			});
+
+			if (simulationSpeed !== 1){
+				setPollInterval(60 / simulationSpeed);
+				ambientTemp = 9.9;
+			}else{
+				setPollInterval(10);
+				ambientTemp = sensors.find(sensor => sensor.name === "TempAmbient")?.value;
+			}
+			started = true;
+
+
+			resolve(ambientTemp);
 		}
 	}),	
 	
