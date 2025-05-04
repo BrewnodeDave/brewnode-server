@@ -57,6 +57,7 @@
  * @return {Function} Function to be used to publish this event  
  */
 function create(sensorName) {
+	let published = false;
    sensorNames.push(sensorName);	
    
    //return a publish function
@@ -70,10 +71,10 @@ function create(sensorName) {
 		const dt = timestamp ? timestamp : new Date().getTime();
 		const mysqlDatetime = new Date(dt).toISOString().slice(0, 23).replace('T', ' ');
         try{
-console.log({sensorName},value);
-			await mysqlService.brewData(sensorName, value, mysqlDatetime);
+			published = await mysqlService.brewData(sensorName, value, mysqlDatetime);
 		}catch(err){
 			brewlog.error(`Failed to publish ${sensorName} to mysql`, err);
+			return false
 		}
 
 		clients.forEach(client => {
@@ -82,6 +83,8 @@ console.log({sensorName},value);
 			   client.broadcast.emit(sensorName,  value);
 		   	}
 	   });
+
+	   return published;
    };		
 }		
 

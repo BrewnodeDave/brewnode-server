@@ -82,7 +82,6 @@ async function pollTemperatures(deltaSecs){
 
 	const sensors = await getAllTemps();
 
-console.log(JSON.stringify(sensors));
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (prevSensorValues[sensor.name] === undefined) {
@@ -93,15 +92,16 @@ console.log(JSON.stringify(sensors));
 
 		return (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
 	});
-console.log(JSON.stringify(changedSensors));
+
 	// Publish changes for sensors with different values
 	changedSensors.forEach((sensor) => {
-		sensor?.publish(sensor.value);
+		const published = sensor?.publish(sensor.value);
 
-		// Update previous sensor values
-		prevSensorValues[sensor.name] = sensor.value;
+		if (published){
+			// Update previous sensor values
+			prevSensorValues[sensor.name] = sensor.value;
+		}
 	});
-
 }
 
 module.exports = { 	
@@ -147,15 +147,15 @@ module.exports = {
 				}
 			});//list
 
-			// Initially publish all sensors
-			sensors = await getAllTemps();
-console.log("init",JSON.stringify(sensors));
-			sensors.forEach((sensor) => {
-				sensor?.publish(sensor.value);
-	console.log("publish",sensor);	
-				// Update previous sensor values
-				prevSensorValues[sensor.name] = sensor.value;
-			});
+// 			// Initially publish all sensors
+// 			sensors = await getAllTemps();
+// console.log("init",JSON.stringify(sensors));
+// 			sensors.forEach((sensor) => {
+// 				sensor?.publish(sensor.value);
+// 	console.log("publish",sensor);	
+// 				// Update previous sensor values
+// 				prevSensorValues[sensor.name] = sensor.value;
+// 			});
 
 			if (simulationSpeed !== 1){
 				setPollInterval(60 / simulationSpeed);

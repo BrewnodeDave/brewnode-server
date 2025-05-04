@@ -107,7 +107,7 @@ async function log(msg){
 async function brewData(name, value, timestamp){
 	const tablename = getSession();
 	if (tablename === undefined || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
-		return;
+		return false;
 	}
 
 	const query = `INSERT INTO ${tablename} (name, value, timestamp) VALUES (?, ?, ?)`;
@@ -121,22 +121,21 @@ async function brewData(name, value, timestamp){
 				connect(); // Reconnect on connection loss
 			} else {
 				console.error(err);
-				return;
+				return false;
 			}
 		});
-console.log({query},{values});
 		connection.query(query, values, function (error, results, fields) {
 			connection.end();
 			if (error) {
 				console.error(err);
-				return;
+				return false;
 			}else{
-				return results;
+				return true;
 			}
 		});
 	} catch (err) {
 		console.error(err);
-		return;
+		return false;
 	}
 
 }
