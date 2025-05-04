@@ -70,6 +70,7 @@ function create(sensorName) {
 		const dt = timestamp ? timestamp : new Date().getTime();
 		const mysqlDatetime = new Date(dt).toISOString().slice(0, 23).replace('T', ' ');
         try{
+console.log({sensorName},value);
 			await mysqlService.brewData(sensorName, value, mysqlDatetime);
 		}catch(err){
 			brewlog.error(`Failed to publish ${sensorName} to mysql`, err);

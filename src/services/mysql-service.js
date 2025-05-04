@@ -124,7 +124,7 @@ async function brewData(name, value, timestamp){
 				return;
 			}
 		});
-
+console.log({query},{values});
 		connection.query(query, values, function (error, results, fields) {
 			connection.end();
 			if (error) {
