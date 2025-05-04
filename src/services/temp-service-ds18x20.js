@@ -176,16 +176,6 @@ module.exports = {
 				}
 			});//list
 
-// 			// Initially publish all sensors
-// 			sensors = await getAllTemps();
-// console.log("init",JSON.stringify(sensors));
-// 			sensors.forEach((sensor) => {
-// 				sensor?.publish(sensor.value);
-// 	console.log("publish",sensor);	
-// 				// Update previous sensor values
-// 				prevSensorValues[sensor.name] = sensor.value;
-// 			});
-
 			if (simulationSpeed !== 1){
 				setPollInterval(60 / simulationSpeed);
 				ambientTemp = 9.9;
