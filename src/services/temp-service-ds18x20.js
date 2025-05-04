@@ -81,13 +81,17 @@ async function pollTemperatures(deltaSecs){
 	const minDeltaC = 0.25;
 
 	const sensors = await getAllTemps();
+	const timestamp = new Date().getTime();
+
 
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (prevSensorValues[sensor.name] === undefined) {
 			return true;
 		}
-		const deltaC = Math.abs(sensor.value - prevSensorValues[sensor.name]);
+		const deltaC = Math.abs(sensor.value - prevSensorValues[sensor.name].value);
+		const deltaT = timestamp - prevSensorValues[sensor.name].timestamp;
+		const deltaSecs = deltaT / 1000;
 		const degPerMin = Math.abs(deltaC / (deltaSecs / 60));
 
 		return (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
@@ -99,7 +103,10 @@ async function pollTemperatures(deltaSecs){
 
 		if (published){
 			// Update previous sensor values
-			prevSensorValues[sensor.name] = sensor.value;
+			prevSensorValues[sensor.name] = {
+				value: sensor.value,
+				timestamp
+			};
 		}
 	});
 }
@@ -144,12 +151,13 @@ module.exports = {
 							});
 						}
 						
-						// Initially publish all sensors
+						// Save initial sensor values
 						sensors = await getAllTemps();
 						sensors.forEach((sensor) => {
-							sensor?.publish(sensor.value);
-							// Update previous sensor values
-							prevSensorValues[sensor.name] = sensor.value;
+							prevSensorValues[sensor.name] = {
+								value:sensor.value,
+								timestamp: new Date().getTime()
+							};
 						});
 			
 						if (simulationSpeed !== 1){
