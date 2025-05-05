@@ -77,7 +77,7 @@ async function getAllTemps() {
 }
 
 async function pollTemperatures(deltaSecs){
-	const maxDegPerMin = 0.5;
+	const maxDegPerMin = 0.5 * 10;
 	const minDeltaC = 0.25;
 
 	const sensors = await getAllTemps();
