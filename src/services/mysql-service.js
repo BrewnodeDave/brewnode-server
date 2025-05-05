@@ -115,6 +115,8 @@ async function brewData(name, value, timestamp){
 	}
 	const query = `INSERT INTO ${tablename} (name, value, timestamp) VALUES (?, ?, ?)`;
 	const values = [name, JSON.stringify(value), timestamp];
+
+console.log(query, values);
 	
 	try {
 		const connection = await connect();
