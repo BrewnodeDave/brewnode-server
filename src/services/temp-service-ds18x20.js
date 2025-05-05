@@ -92,11 +92,14 @@ async function pollTemperatures(deltaSecs){
 		const deltaT = timestamp - prevSensorValues[sensor.name].timestamp;
 		const deltaSecs = deltaT / 1000;
 		const degPerMin = Math.abs(deltaC / (deltaSecs / 60));
-		return (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
+		const changed =  (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
+console.log(changed, sensor.name,{deltaC},{degPerMin});
+		return changed;
 	});
 	// Publish changes for sensors with different values
-	changedSensors.forEach((sensor) => {
-		const published = sensor?.publish(sensor.value);
+	changedSensors.forEach(async (sensor) => {
+		const published = await sensor?.publish(sensor.value);
+console.log({published},{sensor});
 		if (published){
 			// Update previous sensor values
 			prevSensorValues[sensor.name] = {
@@ -135,6 +138,7 @@ module.exports = {
 						if(err){
 							brewlog.critical("Failed to start temp:",err);
 							reject(err);
+							return;
 						}
 						else{
 							probes.forEach(probe => {
@@ -155,7 +159,7 @@ module.exports = {
 								timestamp: new Date().getTime()
 							};
 						});
-			
+		console.log({prevSensorValues});	
 						if (simulationSpeed !== 1){
 							setPollInterval(60 / simulationSpeed);
 							ambientTemp = 9.9;

@@ -106,7 +106,11 @@ async function log(msg){
  */
 async function brewData(name, value, timestamp){
 	const tablename = getSession();
-	if (tablename === undefined || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
+	if (tablename === undefined){
+	  	console.error("No current brew");
+		return false;
+	}
+	if (name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
 		return false;
 	}
 	const query = `INSERT INTO ${tablename} (name, value, timestamp) VALUES (?, ?, ?)`;
