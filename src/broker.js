@@ -163,8 +163,6 @@ function create(sensorName) {
 	 */
 	attach(socket) {
 		_socket = socket;
-		// console.log(`Attached client ${socket.conn.remoteAddress}`);
-		// return;
         if (exists(socket) === false) {
 			clients.push(socket);
 			console.log(`New Attached client ${socket.conn.remoteAddress}`);

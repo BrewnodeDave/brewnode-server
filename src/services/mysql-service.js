@@ -105,7 +105,6 @@ async function log(msg){
  * @returns {Promise} - A promise that resolves if the insertion is successful or if certain conditions are met, and rejects if there is an error during the query execution.
  */
 async function brewData(name, value, timestamp){
-	console.log("brewData", name, value, timestamp);
 	const tablename = getSession();
 	if (tablename === undefined){
 	  	console.log("No current brew");
@@ -117,8 +116,6 @@ async function brewData(name, value, timestamp){
 	const query = `INSERT INTO ${tablename} (name, value, timestamp) VALUES (?, ?, ?)`;
 	const values = [name, JSON.stringify(value), timestamp];
 
-console.log(query, values);
-	
 	try {
 		const connection = await connect();
 		connection.on('error', (err) => {
@@ -143,7 +140,6 @@ console.log(query, values);
 		console.log(err);
 		return false;
 	}
-
 }
 
 function getBrewData(name, since = '1970-01-01 00:00:00') {
