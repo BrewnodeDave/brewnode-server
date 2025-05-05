@@ -81,7 +81,7 @@ function readBrewfatherJSONSync(filename, speedupFactor){
 	} else if (brewfather._type === 'recipe'){
 		recipe = brewfather;
 	}else{
-		console.error("Unknown file type=",brewfather._type)
+		console.log("Unknown file type=",brewfather._type)
 		console.assert(false);
 	}
 	

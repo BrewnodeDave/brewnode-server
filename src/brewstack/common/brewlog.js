@@ -96,7 +96,7 @@ module.exports = {
 
 		rollbar.error(msg, data, (err, data2) => {
 			if (err) {
-				console.error("ROLLBAR: an error occurred", err);
+				console.log("ROLLBAR: an error occurred", err);
 			}
 		});
 

@@ -330,14 +330,14 @@ async function sensorStatus(req, res, next) {
         result = result.flat();
         break;
       default:
-        console.error(`Unknown sensor name: ${req.query.name}`);
+        console.log(`Unknown sensor name: ${req.query.name}`);
         res.send(400, `Unknown sensor name: ${req.query.name}`);
         return;
     }
     console.log(result);
     res.status(200).json(result);
   } catch (error) {
-    console.error('Error getting status:', error);
+    console.log('Error getting status:', error);
     res.send(500, 'Internal Server Error');
   }
 }
@@ -354,7 +354,7 @@ async function pumpsStatus(req, res, next) {
   try {
     res.status(200).json(pumps.getStatus().flat());
   } catch (error) {
-    console.error('Error getting status:', error);
+    console.log('Error getting status:', error);
     res.send(500, 'Internal Server Error');
   }
 }
@@ -371,7 +371,7 @@ async function valvesStatus(req, res, next) {
   try {
     res.status(200).json(valves.getStatus().flat());
   } catch (error) {
-    console.error('Error getting status:', error);
+    console.log('Error getting status:', error);
     res.send(500, 'Internal Server Error');
   }
 }
@@ -391,7 +391,7 @@ async function fanStatus(req, res, next) {
   try {
     res.status(200).json(fan.getStatus());
   } catch (error) {
-    console.error('Error getting status:', error);
+    console.log('Error getting status:', error);
     res.send(500, 'Internal Server Error');
   }
 }

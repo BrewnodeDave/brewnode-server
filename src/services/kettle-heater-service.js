@@ -70,7 +70,7 @@ const powerOnOff = (i2cState, power) => {
 			doublePublish(publishHeater, currentHeater, power);
 		}
 	} else{
-		console.error("heater powerOn but service not started?");
+		console.log("heater powerOn but service not started?");
 	}	
 	currentHeater = power;
 };

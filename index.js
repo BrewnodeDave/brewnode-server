@@ -99,7 +99,7 @@ io.on("connection", (ws) => {
   
         broker.attach(clientSocket);
       } else {
-        console.error('connect: broker socket already exists');
+        console.log('connect: broker socket already exists');
       }
     });
 });

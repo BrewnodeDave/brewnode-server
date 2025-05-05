@@ -6,7 +6,7 @@ const bitToTest = parseInt(process.argv[2], 10);
 const value = parseInt(process.argv[3], 10);
 
 if (isNaN(bitToTest) || bitToTest < 0 || bitToTest >= 32) {
-    console.error('Please provide a valid bit number (0-31) as a command-line argument.');
+    console.log('Please provide a valid bit number (0-31) as a command-line argument.');
     process.exit(1);
 }
 

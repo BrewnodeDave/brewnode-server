@@ -73,7 +73,7 @@ function create(sensorName) {
         try{
 			published = await mysqlService.brewData(sensorName, value, mysqlDatetime);
 		}catch(err){
-			console.error(`Failed to publish ${sensorName} to mysql`, err);
+			console.log(`Failed to publish ${sensorName} to mysql`, err);
 			return false
 		}
 

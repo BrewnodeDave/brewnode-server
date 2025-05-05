@@ -54,7 +54,7 @@ function connect(){
 
 		const connection = mysql.createConnection(foo);
 		connection.on('error', async (err) => {
-			console.error('MySQL error:', err.code);
+			console.log('MySQL error:', err.code);
 			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
 				//
 			} else {
@@ -62,7 +62,7 @@ function connect(){
 			}
 		});
 		connection.on('timeout', async (err) => {
-			console.error('MySQL timeout:', err);
+			console.log('MySQL timeout:', err);
 		});
 
 		connection.connect((err) => {
@@ -93,7 +93,7 @@ async function log(msg){
 	try{
 		await brewData("log", msg, mysqlDatetime);
 	}catch(err){
-		console.error(`Failed to log to mysql`, err);
+		console.log(`Failed to log to mysql`, err);
 	}
 }
 
@@ -108,7 +108,7 @@ async function brewData(name, value, timestamp){
 	console.log("brewData", name, value, timestamp);
 	const tablename = getSession();
 	if (tablename === undefined){
-	  	console.error("No current brew");
+	  	console.log("No current brew");
 		return false;
 	}
 	if (name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
@@ -122,25 +122,25 @@ console.log(query, values);
 	try {
 		const connection = await connect();
 		connection.on('error', (err) => {
-			console.error('MySQL error:', err.code);
+			console.log('MySQL error:', err.code);
 			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
 				connect(); // Reconnect on connection loss
 			} else {
-				console.error(err);
+				console.log(err);
 				return false;
 			}
 		});
 		connection.query(query, values, function (error, results, fields) {
 			connection.end();
 			if (error) {
-				console.error(err);
+				console.log(err);
 				return false;
 			}else{
 				return true;
 			}
 		});
 	} catch (err) {
-		console.error(err);
+		console.log(err);
 		return false;
 	}
 

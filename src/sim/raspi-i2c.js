@@ -19,7 +19,7 @@ module.exports = {
         buffer.writeUInt8(data, (bankAddr * BANK_SIZE) + regAddr);
         return data;
         }catch (err) {
-            console.error(err)
+            console.log(err)
         }
     }
 };
