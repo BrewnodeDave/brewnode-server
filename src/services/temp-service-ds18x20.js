@@ -22,7 +22,6 @@
 let ds18x20;
 const brewlog = require("../brewstack/common/brewlog.js");
 const broker = require("../broker.js");
-const { doublePublish } = require("./mysql-service.js");
 let probes = require('../probes.js');
 
 let pollInterval = null;
