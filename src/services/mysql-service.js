@@ -78,7 +78,6 @@ function connect(){
 				} else {
 					reject(err);
 				}
-				reject(err);
 			}else{
 				resolve(connection);
 			}
@@ -115,14 +114,12 @@ async function brewData(name, value, timestamp){
 	const query = `INSERT INTO ${tablename} (name, value, timestamp) VALUES (?, ?, ?)`;
 	const values = [name, JSON.stringify(value), timestamp];
 
-console.log(query, values);
-	
 	try {
 		const connection = await connect();
 		connection.on('error', (err) => {
 			console.log('MySQL error:', err.code);
 			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-				connect(); // Reconnect on connection loss
+				return brewData(name, value, timestamp); //try again
 			} else {
 				console.log(err);
 				return false;
@@ -141,7 +138,6 @@ console.log(query, values);
 		console.log(err);
 		return false;
 	}
-
 }
 
 function getBrewData(name, since = '1970-01-01 00:00:00') {

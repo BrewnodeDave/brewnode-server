@@ -93,12 +93,12 @@ module.exports = {
 
 	error(msg, data = '') {
 		//_publishLog(`${msg} ${data}`);
-
-		rollbar.error(msg, data, (err, data2) => {
-			if (err) {
-				console.log("ROLLBAR: an error occurred", err);
-			}
-		});
+console.log(msg,data);
+//		rollbar.error(msg, data, (err, data2) => {
+//			if (err) {
+//				console.log("ROLLBAR: an error occurred", err);
+//			}
+		//});
 
 		if (data) {
 			gLogger.error(msg, ` ${data}`);
