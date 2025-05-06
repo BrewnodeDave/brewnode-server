@@ -37,7 +37,7 @@ function setPollInterval(secs){
 		pollInterval = null;
 	}
 
-	module.exports.getStatus(true);
+	module.exports.getStatus();
 	
 	pollInterval = setInterval(() => pollTemperatures(10), secs * 1000)								
 }

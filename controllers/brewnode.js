@@ -300,25 +300,12 @@ async function sensorStatus(req, res, next) {
         result = await temp.getStatus();
         break;
       case "TempKettle":
-        f = await temp.getStatus();
-        result = f.find(t => t.name === "TempKettle")?.value;
-        break;
       case "TempMash":
-        f = await temp.getStatus();
-        result = f.find(t => t.name === "TempMash")?.value;
-        break;    
       case "TempFermenter":
-        f = await temp.getStatus();
-        result = f.find(t => t.name === "TempFermenter")?.value;
-        break;
       case "TempGlycol":
-        f = await temp.getStatus();
-        result = f.find(t => t.name === "TempGlycol")?.value;
-        break
       case "TempAmbient":
-          f = await temp.getStatus();
-          result = f.find(t => t.name === "TempAmbient")?.value;
-          break
+        result = await temp.getTemp(req.query.name);
+        break
       case "All":
         const tempStatus = await temp.getStatus();
         result.push(tempStatus.flat());
