@@ -77,7 +77,7 @@ async function getAllTemps() {
 }
 
 async function pollTemperatures(deltaSecs){
-	const maxDegPerMin = 0.5 * 10;
+	const maxDegPerMin = 3; //0.5deg/10sec
 	const minDeltaC = 0.25;
 
 	const sensors = await getAllTemps();
@@ -92,19 +92,23 @@ async function pollTemperatures(deltaSecs){
 		const deltaT = timestamp - prevSensorValues[sensor.name].timestamp;
 		const deltaSecs = deltaT / 1000;
 		const degPerMin = Math.abs(deltaC / (deltaSecs / 60));
-		const changed =  (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
+		const changed = (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
 		return changed;
 	});
 	// Publish changes for sensors with different values
 	changedSensors.forEach(async (sensor) => {
 		const published = await sensor?.publish(sensor.value);
 		if (published){
+			console.log(prevSensorValues[sensor.name]);
+		}
+		//if (published){
+			const timestamp = new Date().getTime();
 			// Update previous sensor values
 			prevSensorValues[sensor.name] = {
 				value: sensor.value,
 				timestamp
 			};
-		}
+		//}
 	});
 }
 

@@ -78,7 +78,6 @@ function connect(){
 				} else {
 					reject(err);
 				}
-				reject(err);
 			}else{
 				resolve(connection);
 			}
@@ -107,7 +106,6 @@ async function log(msg){
 async function brewData(name, value, timestamp){
 	const tablename = getSession();
 	if (tablename === undefined){
-	  	console.log("No current brew");
 		return false;
 	}
 	if (name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
@@ -121,7 +119,7 @@ async function brewData(name, value, timestamp){
 		connection.on('error', (err) => {
 			console.log('MySQL error:', err.code);
 			if (err.code === 'PROTOCOL_CONNECTION_LOST') {
-				connect(); // Reconnect on connection loss
+				return brewData(name, value, timestamp); //try again
 			} else {
 				console.log(err);
 				return false;
