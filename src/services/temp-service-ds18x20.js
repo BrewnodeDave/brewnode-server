@@ -76,7 +76,8 @@ async function getAllTemps() {
 }
 
 async function pollTemperatures(deltaSecs){
-	const maxDegPerMin = 3; //0.5deg/10sec
+	//It takes 28 seconds to heat up 20 litres of water by 1 degree Celsius using a 3kW heater.
+	const maxDegPerMin = 0.25; 
 	const minDeltaC = 0.25;
 
 	const sensors = await getAllTemps();
