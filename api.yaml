@@ -682,6 +682,20 @@ paths:
           description: Success
       x-swagger-router-controller: brewnode
 
+  /streamLog:
+    get:
+      tags:
+      - Brewnode
+      summary: Stream the server log file
+      description: Stream the server log file.
+      operationId: streamLog
+      responses:
+        200:
+          description: Success
+        500:
+          description: Error
+      x-swagger-router-controller: brewnode
+
   /speedFactor:
     put:
       tags:

@@ -7,6 +7,9 @@
  */
 
 'use strict';
+const path = require('path');
+const fs = require('fs');
+
 const tempService = require('../src/services/temp-service.js');
 const glycol = require('../src/services/glycol-service.js');
 const k2m = require('../src/brewstack/brewingAlgorithms/k2m.js');
@@ -34,6 +37,7 @@ const mysqlService = require('../src/services/mysql-service.js');
 const {getSimulationSpeed} = require('../src/sim/sim.js');
 const {DIR_OUTPUT, setDir, writeBit} = require('../src/services/i2c_raspi-service.js');
 const flowTimeoutSecs = 5;
+
 
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
@@ -598,6 +602,19 @@ const kettlePump =  getPump("PumpKettle");
 const mashPump =  getPump("PumpMash");
 const glycolPump = getPump("PumpGlycol");
 
+async function streamLog (req, res, next) {
+  try {
+  const filePath = path.join(__dirname, '../log.txt'); 
+  const fileStream = fs.createReadStream(filePath);
+
+  res.setHeader('Content-Type', 'text/plain');
+  fileStream.pipe(res);
+  }catch (err) {
+    console.error('Error:', err);
+    res.status(500).send('Internal Server Error');
+    return;
+  }
+};
 
 module.exports = {
   boil,
@@ -633,6 +650,7 @@ module.exports = {
   setKettleTemp,
   setKettleVolume,
   setSimulationSpeed,
+  streamLog,
   valvesStatus,
   whatsBrewing
 }

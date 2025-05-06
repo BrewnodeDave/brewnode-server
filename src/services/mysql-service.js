@@ -105,10 +105,8 @@ async function log(msg){
  * @returns {Promise} - A promise that resolves if the insertion is successful or if certain conditions are met, and rejects if there is an error during the query execution.
  */
 async function brewData(name, value, timestamp){
-	console.log("brewData", name, value, timestamp);
 	const tablename = getSession();
 	if (tablename === undefined){
-	  	console.log("No current brew");
 		return false;
 	}
 	if (name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
