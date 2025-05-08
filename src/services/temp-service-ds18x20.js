@@ -56,13 +56,26 @@ async function getAllTemps() {
 		});
 
 		probes.forEach(probe => {
+	if (!probe.sensorHistory) {
+		probe.sensorHistory = [];
+	}
 			for (const key in tempObj) {
 				if (key == probe.id) {
 					const value = tempObj[key];
 					const compensated = probe.compensate(value);
+	// Add the current value to the history
+	probe.sensorHistory.push(compensated);
+
+	// Keep only the last 10 values
+	if (probe.sensorHistory.length > 10) {
+		probe.sensorHistory.shift();
+	}
+
+	// Calculate the running average
+	const average = probe.sensorHistory.reduce((sum, val) => sum + val, 0) / probe.sensorHistory.length;
 					result.push({ 
 						name: probe.name, 
-						value:compensated, 
+						value:average,//compensated, 
 						publish: probe.publishTemp 
 					});
 				}
@@ -81,7 +94,30 @@ async function pollTemperatures(deltaSecs){
 	const minDeltaC = 0.5;
 
 	const sensors = await getAllTemps();
+sensors.forEach(async (sensor) => {
+	const published = await sensor?.publish(sensor.value);
+});
+return;
 	const timestamp = new Date().getTime();
+sensors.forEach(async (sensor) => {
+	if (!sensorHistory[sensor.name]) {
+		sensorHistory[sensor.name] = [];
+	}
+
+	// Keep only the last 10 values
+	if (sensorHistory[sensor.name].length > 10) {
+		sensorHistory[sensor.name].shift();
+	}
+
+	// Calculate the running average
+	const average = sensorHistory[sensor.name].reduce((sum, val) => sum + val, 0) / sensorHistory[sensor.name].length;
+	if (Math.abs(average - sensor.valve) < 0.5){
+		// Add the current value to the history
+	  	sensorHistory[sensor.name].push(sensor.value);
+        }
+	const published = await sensor?.publish(average);
+});
+return;
 
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
@@ -89,6 +125,7 @@ async function pollTemperatures(deltaSecs){
 			return true;
 		}
 		const deltaC = Math.abs(sensor.value - prevSensorValues[sensor.name].value);
+return deltaC < 1;		
 		const deltaT = timestamp - prevSensorValues[sensor.name].timestamp;
 		const deltaSecs = deltaT / 1000;
 		const degPerMin = Math.abs(deltaC / (deltaSecs / 60));
