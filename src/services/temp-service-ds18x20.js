@@ -62,25 +62,12 @@ async function getAllTemps() {
 			for (const key in tempObj) {
 				if (key == probe.id) {
 					const value = tempObj[key];
-					const compensated = probe.compensate(value);
-					// Add the current value to the history
-					probe.sensorHistory.push(compensated);
 
-					// Keep only the last 10 values
-					if (probe.sensorHistory.length > 10) {
-						probe.sensorHistory.shift();
-					}
-
-					// Exclude the highest and lowest values
-					const sortedHistory = [...probe.sensorHistory].sort((a, b) => a - b);
-					const trimmedHistory = sortedHistory.slice(1, -1);
-
-					// Calculate the average of the trimmed history
-					const average = Math.round((trimmedHistory.reduce((sum, val) => sum + val, 0) / trimmedHistory.length) * 10) / 10;
+					updateProbeValue(probe, value);
 
 					result.push({ 
 						name: probe.name, 
-						value: average, 
+						value: probe.value, 
 						publish: probe.publishTemp 
 					});
 				}	
@@ -91,6 +78,31 @@ async function getAllTemps() {
 		brewlog.error("Failed to get all temperatures", err);
 		return result;
 	}
+}
+
+function updateProbeValue(probe, value) {
+	if (!probe.sensorHistory) {
+		probe.sensorHistory = [];
+	}
+
+	const compensated = probe.compensate(value);
+	
+	// Add the current value to the history
+	probe.sensorHistory.push(compensated);
+
+	// Keep only the last 10 values
+	if (probe.sensorHistory.length > 10) {
+		probe.sensorHistory.shift();
+	}
+
+	// Exclude the highest and lowest values
+	const sortedHistory = [...probe.sensorHistory].sort((a, b) => a - b);
+	const trimmedHistory = sortedHistory.slice(1, -1);
+
+	// Calculate the average of the trimmed history
+	const average = Math.round((trimmedHistory.reduce((sum, val) => sum + val, 0) / trimmedHistory.length) * 10) / 10;
+
+	probe.value = average;
 }
 
 async function pollTemperatures(deltaSecs){
@@ -278,7 +290,8 @@ module.exports = {
 					if (err){
 						reject(err);
 					}else{
-						resolve(temp);
+						updateProbeValue(probe, temp);
+						resolve(probe.value);
 					}
 				});
 			} catch (err) {
