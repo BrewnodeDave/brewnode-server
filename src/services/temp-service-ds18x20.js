@@ -106,64 +106,17 @@ function updateProbeValue(probe, value) {
 }
 
 async function pollTemperatures(deltaSecs){
-	//It takes 28 seconds to heat up 20 litres of water by 1 degree Celsius using a 3kW heater.
-	const maxDegPerMin = 0.22; 
-	const minDeltaC = 0.5;
-
 	const sensors = await getAllTemps();
-sensors.forEach(async (sensor) => {
-	const published = await sensor?.publish(sensor.value);
-});
-return;
-	const timestamp = new Date().getTime();
-sensors.forEach(async (sensor) => {
-	if (!sensorHistory[sensor.name]) {
-		sensorHistory[sensor.name] = [];
-	}
-
-	// Keep only the last 10 values
-	if (sensorHistory[sensor.name].length > 10) {
-		sensorHistory[sensor.name].shift();
-	}
-
-	// Calculate the running average
-	const average = sensorHistory[sensor.name].reduce((sum, val) => sum + val, 0) / sensorHistory[sensor.name].length;
-	if (Math.abs(average - sensor.valve) < 0.5){
-		// Add the current value to the history
-	  	sensorHistory[sensor.name].push(sensor.value);
-        }
-	const published = await sensor?.publish(average);
-});
-return;
-
+	
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
-		if (prevSensorValues[sensor.name] === undefined) {
-			return true;
-		}
-		const deltaC = Math.abs(sensor.value - prevSensorValues[sensor.name].value);
-return deltaC < 1;		
-		const deltaT = timestamp - prevSensorValues[sensor.name].timestamp;
-		const deltaSecs = deltaT / 1000;
-		const degPerMin = Math.abs(deltaC / (deltaSecs / 60));
-		const changed = (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
+		const changed = (prevSensorValues[sensor.name] !== sensor.value);
+		prevSensorValues[sensor.name] = changed ? sensor.value : prevSensorValues[sensor.name]; 
 		return changed;
-	});
+	});			
+
 	// Publish changes for sensors with different values
-	changedSensors.forEach(async (sensor) => {
-		const published = await sensor?.publish(sensor.value);
-		if (published){
-			console.log(prevSensorValues[sensor.name]);
-		}
-		//if (published){
-			const timestamp = new Date().getTime();
-			// Update previous sensor values
-			prevSensorValues[sensor.name] = {
-				value: sensor.value,
-				timestamp
-			};
-		//}
-	});
+	changedSensors.forEach(async (sensor) => await sensor?.publish(sensor.value));
 }
 
 module.exports = { 	
