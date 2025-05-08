@@ -91,7 +91,7 @@ module.exports = {
 			publishFanState = broker.create(FAN_DEF.name);
 			publishFanState(currentPower);
 			
-			tempKettleListener = broker.subscribe("TempKettle", tempKettleHandler);
+			tempKettleListener = broker.subscribe("Temp Kettle", tempKettleHandler);
 			
 			resolve(opt);
 		});

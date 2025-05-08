@@ -35,9 +35,9 @@ const brewlog = require('../brewstack/common/brewlog.js');
 
 const CHILLER_OUTPUT_TEMP = 20;
 const FLOW_RATE = 1000;
-const KETTLE_TEMP = "TempKettle";
-const MASHTUN_TEMP = "TempMash";
-const FERMENTER_TEMP = "TempFermenter";
+const KETTLE_TEMP = "Temp Kettle";
+const MASHTUN_TEMP = "Temp Mash";
+const FERMENTER_TEMP = "Temp Fermenter";
 const SIM_UPDATE_INTERVAL = 1000;
 
 let _speedupFactor = brewdefs.isRaspPi() ? 1 : 10;
@@ -111,9 +111,9 @@ let simInterval = null;
 let mashPumpChange              = change(pump.mashPumpName);
 let kettlePumpChange            = change(pump.kettlePumpName);
 let kettleTempChange            = change(KETTLE_TEMP);
-let glycolTempChange            = change("TempGlycol");
-let ambientTempChange           = change("TempAmbient");
-let fermenterTempChange         = change("TempFermenter");
+let glycolTempChange            = change("Temp Glycol");
+let ambientTempChange           = change("Temp Ambient");
+let fermenterTempChange         = change("Temp Fermenter");
 let kettleInValveChange         = change("ValveKettleIn");
 let mashInValveChange           = change("ValveMashIn");
 let powerChange                 = change("Power");
@@ -381,8 +381,8 @@ module.exports = {
 
             mashPumpListener = broker.subscribe(pump.mashPumpName,     mashPumpChange);
             kettlePumpListener = broker.subscribe(pump.kettlePumpName,   kettlePumpChange);
-            kettleTempListener = broker.subscribe("TempKettle",          kettleTempChange);
-            fermenterTempListener = broker.subscribe("TempFermenter",       fermenterTempChange);
+            kettleTempListener = broker.subscribe("Temp Kettle",          kettleTempChange);
+            fermenterTempListener = broker.subscribe("Temp Fermenter",       fermenterTempChange);
             progressListener = broker.subscribe("Progress",      progressChange);
             powerListener = broker.subscribe("Power",      powerChange);
             heaterListener = broker.subscribe("Heater",      heaterChange);

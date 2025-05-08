@@ -170,7 +170,7 @@ module.exports = {
 					ambientTemp = 9.9;
 				}else{
 					setPollInterval(10);
-					const ambientId = probeId('TempAmbient'); 
+					const ambientId = probeId("Temp Ambient"); 
 					ambientTemp = readSensor(ambientId);
 				}
 				started = true;

@@ -209,7 +209,7 @@ async function setKettleTemp (req, res, next, tempC, mins) {
 };
 
 async function getKettleTemp (req, res, next) {
-  const result = await tempService.getTemp("TempKettle");
+  const result = await tempService.getTemp("Temp Kettle");
   res.send(200, `${result}`);
 };
 
@@ -299,11 +299,11 @@ async function sensorStatus(req, res, next) {
       case "Temperatures":
         result = await temp.getStatus();
         break;
-      case "TempKettle":
-      case "TempMash":
-      case "TempFermenter":
-      case "TempGlycol":
-      case "TempAmbient":
+      case "Temp Kettle":
+      case "Temp Mash":
+      case "Temp Fermenter":
+      case "Temp Glycol":
+      case "Temp Ambient":
         result = await temp.getTemp(req.query.name);
         break
       case "All":
@@ -511,7 +511,7 @@ function doMashStep(step){
   return async function(){
     try {
       const {tempC, mins} = step;
-      const deltaT = await pipeHeatLoss(tempC, "TempMash");
+      const deltaT = await pipeHeatLoss(tempC, "Temp Mash");
       const temp = tempC + deltaT;
       await tempController.setTemp(
         temp, 

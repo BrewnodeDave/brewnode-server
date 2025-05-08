@@ -49,7 +49,7 @@ let currentPower = null;
 const heatTimer = new NanoTimer();
 
 let timeAtTemp = 0;
-let currentThermName = "TempKettle"; 
+let currentThermName = "Temp Kettle"; 
 
 let speedupFactor = 1;
 let tempListener;

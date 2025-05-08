@@ -173,7 +173,7 @@ module.exports = {
 							ambientTemp = 9.9;
 						}else{
 							setPollInterval(10);
-							ambientTemp = sensors.find(sensor => sensor.name === "TempAmbient")?.value;
+							ambientTemp = sensors.find(sensor => sensor.name === "Temp Ambient")?.value;
 						}
 						started = true;
 			
@@ -189,7 +189,7 @@ module.exports = {
 				ambientTemp = 9.9;
 			}else{
 				setPollInterval(10);
-				ambientTemp = sensors.find(sensor => sensor.name === "TempAmbient")?.value;
+				ambientTemp = sensors.find(sensor => sensor.name === "Temp Ambient")?.value;
 			}
 			started = true;
 

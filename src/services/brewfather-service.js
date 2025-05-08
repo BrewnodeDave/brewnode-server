@@ -20,9 +20,9 @@ const mysqlService = require("./mysql-service.js");
 let timer = null;
 
 async function getFermenterTemp() {
-    const fermenterT = await therm.getTemp("TempFermenter");
-    const glycolT = await therm.getTemp("TempGlycol");
-    const ambientT = await therm.getTemp("TempAmbient");
+    const fermenterT = await therm.getTemp("Temp Fermenter");
+    const glycolT = await therm.getTemp("Temp Glycol");
+    const ambientT = await therm.getTemp("Temp Ambient");
 
     await logTemps(fermenterT, ambientT, glycolT);
 }
