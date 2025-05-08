@@ -160,12 +160,11 @@ paths:
           - PumpKettle
           - PumpMash
           - PumpGlycol
-          - TempKettle
-          - TempAmbient
-          - TempMash
-          - TempGlycol
-          - TempWort
-          - TempFermenter
+          - Temp Kettle
+          - Temp Ambient
+          - Temp Mash
+          - Temp Glycol
+          - Temp Fermenter
           - ValveKettleIn
           - ValveMashIn
           - ValveChillWortIn
