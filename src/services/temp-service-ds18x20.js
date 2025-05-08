@@ -56,29 +56,34 @@ async function getAllTemps() {
 		});
 
 		probes.forEach(probe => {
-	if (!probe.sensorHistory) {
-		probe.sensorHistory = [];
-	}
+			if (!probe.sensorHistory) {
+				probe.sensorHistory = [];
+			}
 			for (const key in tempObj) {
 				if (key == probe.id) {
 					const value = tempObj[key];
 					const compensated = probe.compensate(value);
-	// Add the current value to the history
-	probe.sensorHistory.push(compensated);
+					// Add the current value to the history
+					probe.sensorHistory.push(compensated);
 
-	// Keep only the last 10 values
-	if (probe.sensorHistory.length > 10) {
-		probe.sensorHistory.shift();
-	}
+					// Keep only the last 10 values
+					if (probe.sensorHistory.length > 10) {
+						probe.sensorHistory.shift();
+					}
 
-	// Calculate the running average
-	const average = probe.sensorHistory.reduce((sum, val) => sum + val, 0) / probe.sensorHistory.length;
+					// Exclude the highest and lowest values
+					const sortedHistory = [...probe.sensorHistory].sort((a, b) => a - b);
+					const trimmedHistory = sortedHistory.slice(1, -1);
+
+					// Calculate the average of the trimmed history
+					const average = Math.round((trimmedHistory.reduce((sum, val) => sum + val, 0) / trimmedHistory.length) * 10) / 10;
+
 					result.push({ 
 						name: probe.name, 
-						value:average,//compensated, 
+						value: average, 
 						publish: probe.publishTemp 
 					});
-				}
+				}	
 			}
 		});
 		return result;
