@@ -85,6 +85,9 @@ function updateProbeValue(probe, value) {
 		probe.sensorHistory = [];
 	}
 
+	//avoid 85.0 which is a fail
+	if (value === 85) return;
+
 	const compensated = probe.compensate(value);
 	
 	// Add the current value to the history
@@ -158,7 +161,7 @@ module.exports = {
 						else{
 							probes.forEach(probe => {
 								const publish = broker.create(probe.name);
-								probe.publishTemp = (value, timestamp) => (value != 85) ? publish(value, timestamp) : null;
+								probe.publishTemp = (value, timestamp) => (value != 85) ? publish(value, timestamp) : false;
 
 								if (simulationSpeed !== 1){
 									ds18x20.set(probe.name, 9.9);
