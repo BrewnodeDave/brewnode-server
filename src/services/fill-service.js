@@ -51,7 +51,7 @@ module.exports = {
 	timedFill(strikeLitres) {
 		return new Promise((resolve, reject) => {
 			const FILL_VALVE_NAME = 'ValveKettleIn';
-			const mLPerSec = 200;
+			const mLPerSec = 190;//200;
 
 			//The time it takes to open & close, 1.0L pass.
 
