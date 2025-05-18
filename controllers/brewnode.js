@@ -263,8 +263,8 @@ async function sensorStatus(req, res, next) {
       case "Valve Chiller wort-in":
         result = valves.getStatus().find(v => v.name === "Valve Chiller wort-in").value;
         break;
-      case "Valve Chiller ferment-in":
-        result = valves.getStatus().find(v => v.name === "Valve Chiller ferment-in").value;
+      case "Valve Chiller wort-out":
+        result = valves.getStatus().find(v => v.name === "Valve Chiller wort-out").value;
         break;
       case "Pump Kettle":
         result = pumps.getStatus().find(p => p.name === "Pump Kettle").value;
@@ -610,7 +610,7 @@ module.exports = {
   extractor,
   fanStatus,
   ferment,
-  fermentInValve: getValve("Valve Chiller ferment-in"),
+  fermentInValve: getValve("Valve Chiller wort-out"),
   fill,
   getBrewData,
   getInventory,

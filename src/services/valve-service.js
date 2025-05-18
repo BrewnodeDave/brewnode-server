@@ -45,7 +45,7 @@ const VALVE_CLOSE_REQUEST = 1;//i2c.HIGH;
  @property {number} pinClosed - GPIO pin number connected to close signal from the valve.
 */
 const VALVE_DEFS = [{
-	name: "Valve Chiller ferment-in",//2
+	name: "Valve Chiller wort-out",//2
 	pinOpened: brewdefs.GPIO_VALVE1_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE1_CLOSED,
 	i2cPinOut: brewdefs.I2C_FERMENTER_VALVE_IN,

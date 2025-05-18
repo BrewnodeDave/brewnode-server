@@ -168,7 +168,7 @@ paths:
           - Valve Kettle-in
           - Valve Mash-in
           - Valve Chiller wort-in
-          - Valve Chiller ferment-in
+          - Valve Chiller wort-out
           - Heater
           - Glycol Heater
           - Glycol Chiller
