@@ -42,9 +42,9 @@ let mashPump;
 let kettlePump;
 let chillPump;
 
-const MASH_PUMP = "PumpMash";
-const KETTLE_PUMP = "PumpKettle";
-const GLYCOL_PUMP = "PumpGlycol";
+const MASH_PUMP = "Pump Mash";
+const KETTLE_PUMP = "Pump Kettle";
+const GLYCOL_PUMP = "Pump Glycol";
 
 
 const pumpStop = pump => {

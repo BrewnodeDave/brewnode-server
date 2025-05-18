@@ -114,8 +114,8 @@ let kettleTempChange            = change(KETTLE_TEMP);
 let glycolTempChange            = change("Temp Glycol");
 let ambientTempChange           = change("Temp Ambient");
 let fermenterTempChange         = change("Temp Fermenter");
-let kettleInValveChange         = change("ValveKettleIn");
-let mashInValveChange           = change("ValveMashIn");
+let kettleInValveChange         = change("Valve Kettle-in");
+let mashInValveChange           = change("Valve Mash-in");
 let powerChange                 = change("Power");
 let progressChange              = change("Progress");
 let heaterChange                = change("Heater");
@@ -387,8 +387,8 @@ module.exports = {
             powerListener = broker.subscribe("Power",      powerChange);
             heaterListener = broker.subscribe("Heater",      heaterChange);
             
-            kettleInValveListener = broker.subscribe("ValveKettleIn",  kettleInValveChange);
-            mashInValveListener = broker.subscribe("ValveMashIn",  mashInValveChange);
+            kettleInValveListener = broker.subscribe("Valve Kettle-in",  kettleInValveChange);
+            mashInValveListener = broker.subscribe("Valve Mash-in",  mashInValveChange);
             
 
             const foo = (valveStatii, name) => valveStatii.find(status => status.name === name);

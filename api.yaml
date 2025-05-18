@@ -157,21 +157,21 @@ paths:
           enum:
           - All
           - Temperatures
-          - PumpKettle
-          - PumpMash
-          - PumpGlycol
+          - Pump Kettle
+          - Pump Mash
+          - Pump Glycol
           - Temp Kettle
           - Temp Ambient
           - Temp Mash
           - Temp Glycol
           - Temp Fermenter
-          - ValveKettleIn
-          - ValveMashIn
-          - ValveChillWortIn
-          - ValveFermentIn
+          - Valve Kettle-in
+          - Valve Mash-in
+          - Valve Chiller wort-in
+          - Valve Chiller ferment-in
           - Heater
-          - GlycolHeater
-          - GlycolChiller
+          - Glycol Heater
+          - Glycol Chiller
           - Fan
           - Watchdog
           default: All

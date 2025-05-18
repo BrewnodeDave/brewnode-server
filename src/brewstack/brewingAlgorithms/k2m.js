@@ -31,11 +31,11 @@ module.exports = {
 	transfer: async function(options) {	
 		brewlog.info("Begin Kettle-to-Mash transfer");
 
-		valves.open("ValveMashIn");
+		valves.open("Valve Mash-in");
 		pump.kettleOnSync();
 		await flowStart();
 		await flowStop()
-		valves.close("ValveMashIn");
+		valves.close("Valve Mash-in");
 		pump.kettleOffSync();
 
 		return options;

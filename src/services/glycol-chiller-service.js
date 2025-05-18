@@ -36,7 +36,7 @@ let currentState = CHILL_OFF;
  @property {number} i2cPinOut - I2C pin number connected to the fan.
  */
 const CHILL_DEF = {
-	name:"GlycolChiller",		
+	name:"Glycol Chiller",		
 	i2cPinOut:brewdefs.I2C_GLYCOL_POWER
 }
 

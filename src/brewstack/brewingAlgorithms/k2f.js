@@ -40,12 +40,12 @@ let timeout;
 function modulateStart() {
 	const SLICE = 10 * 1000;
 	interval = setInterval(() => {
-		valves.open("ValveFermentIn");
-		valves.open("ValveChillWortIn");
+		valves.open("Valve Chiller ferment-in");
+		valves.open("Valve Chiller wort-in");
 		pump.kettleOffSync();
 		timeout = setTimeout(() => {
-			valves.close("ValveFermentIn");
-			valves.open("ValveChillWortIn");
+			valves.close("Valve Chiller ferment-in");
+			valves.open("Valve Chiller wort-in");
 			pump.kettleOnSync();
 		}, (SLICE / 2) - 500);
 	}, SLICE);
@@ -60,8 +60,8 @@ function modulateStart() {
 function modulateStop() {
 	clearInterval(interval);
 	clearTimeout(timeout);
-	valves.close("ValveChillWortIn");
-	valves.close("ValveFermentIn");
+	valves.close("Valve Chiller wort-in");
+	valves.close("Valve Chiller ferment-in");
 }
 
 module.exports = {
@@ -77,15 +77,15 @@ module.exports = {
 
 		console.log("k2f transfer")
 
-		valves.open("ValveChillWortIn");
-		valves.open("ValveFermentIn");
+		valves.open("Valve Chiller wort-in");
+		valves.open("Valve Chiller ferment-in");
 		pump.kettleOnSync();
 		await flow.wait("FlowKettleOut", startCond, timeoutSecs);
 		await flow.wait("FlowKettleOut", stopCond, timeoutSecs);
 				
 		pump.kettleOffSync();
-		valves.close("ValveChillWortIn");
-		valves.close("ValveFermentIn");
+		valves.close("Valve Chiller wort-in");
+		valves.close("Valve Chiller ferment-in");
 		
 		brewlog.info("... k2f end");
 		return opt;

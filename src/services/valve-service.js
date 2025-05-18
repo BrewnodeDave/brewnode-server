@@ -45,25 +45,25 @@ const VALVE_CLOSE_REQUEST = 1;//i2c.HIGH;
  @property {number} pinClosed - GPIO pin number connected to close signal from the valve.
 */
 const VALVE_DEFS = [{
-	name: "ValveFermentIn",//2
+	name: "Valve Chiller ferment-in",//2
 	pinOpened: brewdefs.GPIO_VALVE1_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE1_CLOSED,
 	i2cPinOut: brewdefs.I2C_FERMENTER_VALVE_IN,
 	power: 20
 }, {
-	name: "ValveChillWortIn",//3	
+	name: "Valve Chiller wort-in",//3	
 	pinOpened: brewdefs.GPIO_VALVE2_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE2_CLOSED,
 	i2cPinOut: brewdefs.I2C_CHILL_WORT_VALVE_IN,
 	power: 20
 }, {
-	name: "ValveKettleIn",//6	
+	name: "Valve Kettle-in",//6	
 	pinOpened: brewdefs.GPIO_VALVE5_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE5_CLOSED,
 	i2cPinOut: brewdefs.I2C_KETTLE_VALVE_IN,
 	power: 0.001 //non-zero implies open status
 }, {
-	name: "ValveMashIn",	//7
+	name: "Valve Mash-in",	//7
 	pinOpened: brewdefs.GPIO_VALVE6_OPENED,
 	pinClosed: brewdefs.GPIO_VALVE6_CLOSED,
 	i2cPinOut: brewdefs.I2C_MASH_IN_VALVE,

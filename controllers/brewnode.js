@@ -254,26 +254,26 @@ async function sensorStatus(req, res, next) {
     let f;
 
     switch(req.query.name){
-      case "ValveKettleIn":
-        result = valves.getStatus().find(v => v.name === "ValveKettleIn").value;
+      case "Valve Kettle-in":
+        result = valves.getStatus().find(v => v.name === "Valve Kettle-in").value;
         break; 
-      case "ValveMashIn": 
-        result = valves.getStatus().find(v => v.name === "ValveMashIn").value;
+      case "Valve Mash-in": 
+        result = valves.getStatus().find(v => v.name === "Valve Mash-in").value;
         break;
-      case "ValveChillWortIn":
-        result = valves.getStatus().find(v => v.name === "ValveChillWortIn").value;
+      case "Valve Chiller wort-in":
+        result = valves.getStatus().find(v => v.name === "Valve Chiller wort-in").value;
         break;
-      case "ValveFermentIn":
-        result = valves.getStatus().find(v => v.name === "ValveFermentIn").value;
+      case "Valve Chiller ferment-in":
+        result = valves.getStatus().find(v => v.name === "Valve Chiller ferment-in").value;
         break;
-      case "PumpKettle":
-        result = pumps.getStatus().find(p => p.name === "PumpKettle").value;
+      case "Pump Kettle":
+        result = pumps.getStatus().find(p => p.name === "Pump Kettle").value;
         break;
-      case "PumpMash":
-        result = pumps.getStatus().find(p => p.name === "PumpMash").value;
+      case "Pump Mash":
+        result = pumps.getStatus().find(p => p.name === "Pump Mash").value;
         break;
-      case "PumpGlycol":
-        result = pumps.getStatus().find(p => p.name === "PumpGlycol").value;
+      case "Pump Glycol":
+        result = pumps.getStatus().find(p => p.name === "Pump Glycol").value;
         break;
       case "Watchdog":
         result = wdog.getStatus();
@@ -281,10 +281,10 @@ async function sensorStatus(req, res, next) {
       case "Fan":
         result = fan.getStatus();
         break;
-      case "GlycolHeater":
+      case "Glycol Heater":
         result = glycolHeater.getStatus();
         break;
-      case "GlycolChiller":
+      case "Glycol Chiller":
         result = glycolChiller.getStatus();
         break;
       case "Heater":
@@ -585,9 +585,9 @@ async function setBrewname (req, res, next, name) {
   result.err ? res.status(500).send(res.err) : res.send(200, result);
 } 
 
-const kettlePump =  getPump("PumpKettle");
-const mashPump =  getPump("PumpMash");
-const glycolPump = getPump("PumpGlycol");
+const kettlePump =  getPump("Pump Kettle");
+const mashPump =  getPump("Pump Mash");
+const glycolPump = getPump("Pump Glycol");
 
 async function streamLog (req, res, next) {
   try {
@@ -606,11 +606,11 @@ async function streamLog (req, res, next) {
 module.exports = {
   boil,
   chill,
-  chillWortInValve: getValve("ValveChillWortIn"),
+  chillWortInValve: getValve("Valve Chiller wort-in"),
   extractor,
   fanStatus,
   ferment,
-  fermentInValve: getValve("ValveFermentIn"),
+  fermentInValve: getValve("Valve Chiller ferment-in"),
   fill,
   getBrewData,
   getInventory,
@@ -624,11 +624,11 @@ module.exports = {
   i2cSet,
   k2f: kettle2fermenter,
   k2m: kettle2mashtun,
-  kettleInValve: getValve("ValveKettleIn"),
+  kettleInValve: getValve("Valve Kettle-in"),
   kettlePump,
   m2k: mash2kettle,
   mash,
-  mashInValve: getValve("ValveMashIn"),
+  mashInValve: getValve("Valve Mash-in"),
   mashPump,
   pumpsStatus,
   restart,

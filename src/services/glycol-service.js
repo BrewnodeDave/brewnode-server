@@ -187,7 +187,6 @@ console.log({step});
 		pumpInterval = setInterval(() => {
 			therm.getTemp(FERMENT_TEMPNAME)
 			.then(t => {
-console.log(`pumpOnOff:${msToGo}`);
 				pumpOnOff(chillStep, desiredFermentTemp, t, (x) => {
 					//clearInterval(pumpInterval);
 					brewlog.info("Step Complete");
