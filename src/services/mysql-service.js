@@ -109,7 +109,7 @@ async function brewData(name, value, timestamp){
 		console.log("no brewname defined")
 		return false;
 	}
-	if ((name.includes("Progress") || (name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
+	if (name.includes("Progress") || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
 		return false;
 	}
 	const query = `INSERT INTO ${tablename} (name, value, timestamp) VALUES (?, ?, ?)`;
