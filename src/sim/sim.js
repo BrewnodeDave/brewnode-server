@@ -118,7 +118,7 @@ let kettleInValveChange         = change("Valve Kettle-in");
 let mashInValveChange           = change("Valve Mash-in");
 let powerChange                 = change("Power");
 let progressChange              = change("Progress");
-let heaterChange                = change("Heater");
+let heaterChange                = change("Kettle Heater");
 
 let coolingTimer = null;
 
@@ -385,7 +385,7 @@ module.exports = {
             fermenterTempListener = broker.subscribe("Temp Fermenter",       fermenterTempChange);
             progressListener = broker.subscribe("Progress",      progressChange);
             powerListener = broker.subscribe("Power",      powerChange);
-            heaterListener = broker.subscribe("Heater",      heaterChange);
+            heaterListener = broker.subscribe("Kettle Heater",      heaterChange);
             
             kettleInValveListener = broker.subscribe("Valve Kettle-in",  kettleInValveChange);
             mashInValveListener = broker.subscribe("Valve Mash-in",  mashInValveChange);

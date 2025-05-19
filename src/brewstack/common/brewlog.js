@@ -49,7 +49,7 @@ module.exports = {
 			if (sensorName === "Watchdog") {
 				//Don't write watchdog to logfile or console
 			}
-			else if (sensorName === "Heater") {
+			else if (sensorName === "Kettle Heater") {
 				//Don't write heater to console
 				gSensorLogger[sensorName].info(`${value}`);
 			}

@@ -141,7 +141,7 @@ module.exports = {
 			prevPower = 0;
 	
 			publishPower = broker.create(POWER);
-			publishHeater = broker.create("Heater");
+			publishHeater = broker.create("Kettle Heater");
 
 			//Define callbacks for PWM mark and space functions
 			pwm.init(powerOn, powerOff);
@@ -157,7 +157,7 @@ module.exports = {
 		pwm.stop();
 		powerOff();
 		broker.destroy(POWER);
-		broker.destroy("Heater");
+		broker.destroy("Kettle Heater");
 
 		brewlog.info("kettle-heater-service", "stopped");	
 	},

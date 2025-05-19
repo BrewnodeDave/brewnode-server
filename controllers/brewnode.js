@@ -287,7 +287,7 @@ async function sensorStatus(req, res, next) {
       case "Glycol Chiller":
         result = glycolChiller.getStatus();
         break;
-      case "Heater":
+      case "Kettle Heater":
         result = kettleHeater.getStatus();
         break;
       case "Pumps":
