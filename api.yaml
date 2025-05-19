@@ -169,7 +169,7 @@ paths:
           - Valve Mash-in
           - Valve Chiller wort-in
           - Valve Chiller wort-out
-          - Heater
+          - Kettle Heater
           - Glycol Heater
           - Glycol Chiller
           - Fan
