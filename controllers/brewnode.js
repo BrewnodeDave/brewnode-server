@@ -267,13 +267,13 @@ async function sensorStatus(req, res, next) {
         result = valves.getStatus().find(v => v.name === "Valve Chiller wort-out").value;
         break;
       case "Pump Kettle":
-        result = pumps.getStatus().find(p => p.name === "Pump Kettle").value;
+        result = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value;
         break;
       case "Pump Mash":
-        result = pumps.getStatus().find(p => p.name === "Pump Mash").value;
+        result = pumps.getStatus().find(p => p.name === "Pump Mash")?.value;
         break;
       case "Pump Glycol":
-        result = pumps.getStatus().find(p => p.name === "Pump Glycol").value;
+        result = pumps.getStatus().find(p => p.name === "Pump Glycol")?.value;
         break;
       case "Watchdog":
         result = wdog.getStatus();

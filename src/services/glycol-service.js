@@ -182,7 +182,8 @@ console.log({step});
 		const desiredFermentTemp = parseInt(tempC,10);
 
 		const tempAmbient = await therm.getTemp(AMBIENT_TEMPNAME);
-		const chillStep = tempC < tempAmbient;
+		const glycolTemp = await therm.getTemp(GLYCOL_TEMPNAME);
+		const chillStep = (desiredFermentTemp < glycolTemp); 
 
 		pumpInterval = setInterval(() => {
 			therm.getTemp(FERMENT_TEMPNAME)
