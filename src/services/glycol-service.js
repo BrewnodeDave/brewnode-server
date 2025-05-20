@@ -65,8 +65,9 @@ function timeToText(prefix, secs){
 		if (hours > 0){
 			timeString += ` ${hours} hours`;
 			timeString += ` ${min} mins`;
-		}else{
+		}else if (mins > 0){
 			timeString += ` ${mins} mins`;
+		} else {
 			timeString += ` ${sec} secs`;
 		}			
 	}
