@@ -190,6 +190,11 @@ console.log({step});
 				pumpOnOff(chillStep, desiredFermentTemp, t, (x) => {
 					//clearInterval(pumpInterval);
 					brewlog.info("Step Complete");
+					clearInterval(glycolInterval);
+					glycolInterval = null;
+					glycolChiller.switchOff();
+					glycolHeater.switchOff();
+					pump.off(pump.chillPumpName);
 					resolve(x);
 				}, msToGo, timeAtTemp, prevTimeAtTemp)
 			});

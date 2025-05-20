@@ -44,40 +44,31 @@ function setPollInterval(secs){
 
 async function getAllTemps() {
 	let result = [];
-	try {
-		const tempObj = await new Promise((resolve, reject) => {
-			ds18x20.getAll((err, tempObj) => {
-				if (err) {
-					reject(err);
-				} else {
-					resolve(tempObj);
+	ds18x20.getAll((err, tempObj) => {
+		if (err) {
+			brewlog.error("Failed to get all temperatures", err);
+		} else {
+			probes.forEach(probe => {
+				if (!probe.sensorHistory) {
+					probe.sensorHistory = [];
+				}
+				for (const key in tempObj) {
+					if (key == probe.id) {
+						const value = tempObj[key];
+	
+						updateProbeValue(probe, value);
+	
+						result.push({ 
+							name: probe.name, 
+							value: probe.value, 
+							publish: probe.publishTemp 
+						});
+					}	
 				}
 			});
-		});
-
-		probes.forEach(probe => {
-			if (!probe.sensorHistory) {
-				probe.sensorHistory = [];
-			}
-			for (const key in tempObj) {
-				if (key == probe.id) {
-					const value = tempObj[key];
-
-					updateProbeValue(probe, value);
-
-					result.push({ 
-						name: probe.name, 
-						value: probe.value, 
-						publish: probe.publishTemp 
-					});
-				}	
-			}
-		});
+		}
 		return result;
-	} catch (err) {
-		brewlog.error("Failed to get all temperatures", err);
-		return result;
-	}
+	});
 }
 
 function updateProbeValue(probe, value) {
