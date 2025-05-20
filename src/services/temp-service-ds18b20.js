@@ -109,6 +109,14 @@ async function pollTemperatures(deltaSecs){
 
 	const sensors = await getAllTemps();
 
+	if (sensors.length === 0){
+		brewlog.error("No sensors found");
+		return;
+	}
+	if (sensors.length !== sensorList.length){
+		brewlog.error("Not all sensors found");
+	}
+
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (prevSensorValues[sensor.name] === undefined) {
