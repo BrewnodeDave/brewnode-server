@@ -395,12 +395,12 @@ paths:
           description: Success
       x-swagger-router-controller: brewnode
 
-  /valve/fermentin:
+  /valve/chillwortout:
     put:
       tags:
       - Sensors
       summary: Open or close the chiller to fermenter valve
-      operationId: fermentInValve
+      operationId: chillWortOutValve
       parameters:
       - name: onOff
         in: query

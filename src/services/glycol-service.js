@@ -17,6 +17,15 @@ const brewfather = require('./brewfather-service.js');
 let _simulationSpeed = null;
 
 
+/**
+ * Executes an array of functions that return promises in series, ensuring
+ * that each function is executed only after the previous one has resolved.
+ * The results of each promise are collected into a single array.
+ *
+ * @param {Array<Function>} funcs - An array of functions, each returning a promise.
+ * @returns {Promise<Array>} A promise that resolves to an array containing the results
+ * of all the promises, in the same order as the input functions.
+ */
 const promiseSerial = funcs =>
   funcs.reduce((promise, f) =>
     promise.then(result => f().then(Array.prototype.concat.bind(result))),
@@ -78,7 +87,7 @@ console.log(timeString);
 //Circulate until ferment temp is reached
 function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDone, msToGo2, timeAtTemp, prevTimeAtTemp) {
 
-	console.log("pumpOnOff",chillStep,desiredFermentTemp, currentFermentTemp, msToGo2, timeAtTemp, prevTimeAtTemp);
+	console.log("pumpOnOff",{chillStep},{desiredFermentTemp}, {currentFermentTemp}, {msToGo2}, {timeAtTemp}, {prevTimeAtTemp});
 	if (msToGo2 === null) {
 		return;
 	}
@@ -87,7 +96,10 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 		? currentFermentTemp < (desiredFermentTemp + FERMENTER_OVERSHOOT)
 		: currentFermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT);
 
-	// timeToText(`Fermentation(${desiredFermentTemp}C)=`, msToGo2 / 1000);
+	const secsToGo = Math.trunc(msToGo2 / 1000);
+	const nsToGo = (msToGo2 * 1E6);
+	const hrTime = [secsToGo, nsToGo - (secsToGo * 1E9)];
+	// timeToText(`Fermentation(${desiredFermentTemp}C)=`, hrsecs(hrTime));
 
 	
 	if (reached) {
@@ -103,14 +115,15 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 		msToGo2 -= delta2;
 		msToGo2 = (msToGo2 < 0) ? 0 : msToGo2;
 		
-		const secsToGo = Math.trunc(msToGo2 / 1000);
-		const nsToGo = (msToGo2 * 1E6);
-		const hrTime = [secsToGo, nsToGo - (secsToGo * 1E9)];
 
 		pump.off(pump.chillPumpName);
 
+		const secsToGo = Math.trunc(msToGo2 / 1000);
+		const nsToGo = (msToGo2 * 1E6);
+		const hrTime = [secsToGo, nsToGo - (secsToGo * 1E9)];
 		timeToText(`Fermentation(${desiredFermentTemp}C)=`, hrsecs(hrTime));
 		if (msToGo2 <= 0) {
+			console.log("Fermentation Step Done");
 			fermentDone();
 		}
 	
@@ -172,7 +185,7 @@ module.exports = {
 function doStep(step) {	
 	return () => 
 	  new Promise(async (resolve, reject) => {
-console.log({step});
+console.log('New Step:',{step});
 		const {stepTemp:tempC, stepTime:days} = JSON.parse(step);
 
 		let pumpInterval = null;
@@ -184,7 +197,8 @@ console.log({step});
 
 		const tempAmbient = await therm.getTemp(AMBIENT_TEMPNAME);
 		const glycolTemp = await therm.getTemp(GLYCOL_TEMPNAME);
-		const chillStep = (desiredFermentTemp < glycolTemp); 
+		const fermentTemp = await therm.getTemp(FERMENT_TEMPNAME);
+		const chillStep = (desiredFermentTemp < fermentTemp); 
 
 		pumpInterval = setInterval(() => {
 			therm.getTemp(FERMENT_TEMPNAME)
@@ -193,10 +207,13 @@ console.log({step});
 					//clearInterval(pumpInterval);
 					brewlog.info("Step Complete");
 					clearInterval(glycolInterval);
+					clearInterval(pumpInterval);
+
 					glycolInterval = null;
 					glycolChiller.switchOff();
 					glycolHeater.switchOff();
 					pump.off(pump.chillPumpName);
+
 					resolve(x);
 				}, msToGo, timeAtTemp, prevTimeAtTemp)
 			});
@@ -222,12 +239,12 @@ console.log("HEAT", {tempC}, {tempAmbient}, {glycolTemp});
 		//**********
 		// ????????????
 		// still needed ???? */
-		therm.getTemp(FERMENT_TEMPNAME)
-		.then(currentFermentTemp => {
-			pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
-			therm.getTemp(GLYCOL_TEMPNAME)
-			.then(setGlycolTemp);
-		});
+		// therm.getTemp(FERMENT_TEMPNAME)
+		// .then(currentFermentTemp => {
+		// 	pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
+		// 	therm.getTemp(GLYCOL_TEMPNAME)
+		// 	.then(setGlycolTemp);
+		// });
 	  });
 }
 

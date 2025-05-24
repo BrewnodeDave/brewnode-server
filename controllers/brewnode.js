@@ -610,7 +610,7 @@ module.exports = {
   extractor,
   fanStatus,
   ferment,
-  fermentInValve: getValve("Valve Chiller wort-out"),
+  chillWortOutValve: getValve("Valve Chiller wort-out"),
   fill,
   getBrewData,
   getInventory,
