@@ -106,7 +106,6 @@ async function log(msg){
 async function brewData(name, value, timestamp){
 	const tablename = getSession();
 	if (tablename === undefined){
-		console.log("no brewname defined")
 		return false;
 	}
 	if (name.includes("Progress") || name.includes("Flow") || name.includes("log") || name.includes("Watchdog")){
