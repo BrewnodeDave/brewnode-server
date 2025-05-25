@@ -517,7 +517,7 @@ paths:
         schema:
           maximum: 100
           minimum: 0
-          type: integer
+          type: number
           example: 10
       - name: mins
         in: query
