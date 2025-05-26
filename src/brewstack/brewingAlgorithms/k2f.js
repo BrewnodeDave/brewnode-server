@@ -7,8 +7,8 @@
  */
 
 const valves = require('../../services/valve-service.js');
-const flow = require('../../services/flow-service.js');
-const pump = require('../../services/pump-service.js');
+// const flow = require('../../services/flow-service.js');
+const pumps= require('../../services/pump-service.js');
 const brewlog = require('../common/brewlog.js');
 
 const startCond = v => v > 0;
@@ -42,11 +42,11 @@ function modulateStart() {
 	interval = setInterval(() => {
 		valves.open("Valve Chiller wort-out");
 		valves.open("Valve Chiller wort-in");
-		pump.kettleOffSync();
+		pumps.kettleOffSync();
 		timeout = setTimeout(() => {
 			valves.close("Valve Chiller wort-out");
 			valves.open("Valve Chiller wort-in");
-			pump.kettleOnSync();
+			pumps.kettleOnSync();
 		}, (SLICE / 2) - 500);
 	}, SLICE);
 }
@@ -79,11 +79,11 @@ module.exports = {
 
 		valves.open("Valve Chiller wort-in");
 		valves.open("Valve Chiller wort-out");
-		pump.kettleOnSync();
-		await flow.wait("FlowKettleOut", startCond, timeoutSecs);
-		await flow.wait("FlowKettleOut", stopCond, timeoutSecs);
+		pumps.kettleOnSync();
+		// await flow.wait("FlowKettleOut", startCond, timeoutSecs);
+		// await flow.wait("FlowKettleOut", stopCond, timeoutSecs);
 				
-		pump.kettleOffSync();
+		pumps.kettleOffSync();
 		valves.close("Valve Chiller wort-in");
 		valves.close("Valve Chiller wort-out");
 		

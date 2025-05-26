@@ -22,7 +22,7 @@ const glycolChiller = require('../src/services/glycol-chiller-service.js');
 const fillService = require('../src/services/fill-service.js');
 const therm = require('../src/services/temp-service.js');
 const pumps = require('../src/services/pump-service.js');
-const flow = require('../src/services/flow-service.js');
+// const flow = require('../src/services/flow-service.js');
 const wdog = require('../src/services/wdog-service.js');
 const fan = require('../src/services/fan-service.js');
 const temp = require('../src/services/temp-service.js');
@@ -310,7 +310,7 @@ async function sensorStatus(req, res, next) {
         const tempStatus = await temp.getStatus();
         result.push(tempStatus.flat());
         result.push(pumps.getStatus().flat());
-        result.push(flow.getStatus().flat());
+        // result.push(flow.getStatus().flat());
         result.push(wdog.getStatus());
         result.push(fan.getStatus());
         result.push(glycolHeater.getStatus());

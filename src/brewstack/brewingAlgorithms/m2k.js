@@ -8,8 +8,8 @@
 
 
 const brewlog = require('../common/brewlog.js');
-const flow = require('../../services/flow-service.js');
-const pump = require('../../services/pump-service.js');
+// const flow = require('../../services/flow-service.js');
+const pumps = require('../../services/pump-service.js');
 
 const startCond = v => v>0;
 const stopCond = v => v == 0;
@@ -18,15 +18,15 @@ const stopCond = v => v == 0;
 module.exports = {	
 	transfer: async function(options) {
 		const flowName = "FlowMashOut";
-		const flowStart = () => flow.wait(flowName, startCond, options.flowTimeoutSecs);
-		const flowStop = () => flow.wait(flowName, stopCond, options.flowTimeoutSecs);
+		// const flowStart = () => flow.wait(flowName, startCond, options.flowTimeoutSecs);
+		// const flowStop = () => flow.wait(flowName, stopCond, options.flowTimeoutSecs);
 		
 		brewlog.info("Begin Mash-to-Kettle transfer ");
 	
-		pump.mashOnSync();
-		await flowStart()
-		await flowStop()
-		pump.mashOffSync();
+		pumps.mashOnSync();
+		// await flowStart()
+		// await flowStop()
+		pumps.mashOffSync();
 		return options;
 	},
 
@@ -35,9 +35,9 @@ module.exports = {
 		let opt = options;
 		brewlog.info("Begin MINIMUM Mash-to-Kettle TRANSFER ");
 
-		await pump.mashOn();
+		await pumps.mashOn();
 		await timeout();
-		await pump.mashOff();
+		await pumps.mashOff();
 		return opt;
 	
 		async function timeout(){

@@ -149,19 +149,16 @@ module.exports = {
 				return;
 			}
 
-			mashPump = new Pump(MASH_PUMP, brewdefs.I2C_MASH_PUMP);
-			
+			mashPump = new Pump(MASH_PUMP, brewdefs.I2C_MASH_PUMP);			
 			mashPump.publishState = broker.create(MASH_PUMP);
-			// mashPump.publishState(0);
-			module.exports.mashOnSync = mashPump.onSync;
-			module.exports.mashOffSync = mashPump.offSync;
 			module.exports.mashOn = mashPump.on;
+			module.exports.mashOnSync = mashPump.onSync;
 			module.exports.mashOff = mashPump.off;
+			module.exports.mashOffSync = mashPump.offSync;
 			mashPump.offSync();
 			
 			kettlePump = new Pump(KETTLE_PUMP, brewdefs.I2C_KETTLE_PUMP);
 			kettlePump.publishState = broker.create(KETTLE_PUMP);
-			// kettlePump.publishState(0);
 			module.exports.kettleOn = kettlePump.on;
 			module.exports.kettleOnSync = kettlePump.onSync;
 			module.exports.kettleOff = kettlePump.off;
@@ -170,7 +167,6 @@ module.exports = {
 
 			chillPump = new Pump(GLYCOL_PUMP, brewdefs.I2C_GLYCOL_PUMP);
 			chillPump.publishState = broker.create(GLYCOL_PUMP);
-			// chillPump.publishState(0);
 			module.exports.chillPumpOn = chillPump.on;
 			module.exports.chillPumpOnSync = chillPump.onSync;
 			module.exports.chillPumpOff = chillPump.off;
@@ -199,47 +195,25 @@ module.exports = {
 	 */
 	getStatus() {
 		let result = [];
-		let mashState;
+		function foo(pump) {
+			const state = pump.state;
+			const value = (state === OFF) ? 0 : POWER;
+			return {name:pump.name, value};
+		}
 		if (mashPump){
-			mashState = mashPump.state;
-			if (mashState === OFF){
-				// mashPump.publishState(0);
-				result.push({name:mashPump.name, value:0});
-			}
-			else if (mashState === ON){
-				// mashPump.publishState(POWER);
-				result.push({name:mashPump.name, value:POWER});
-			}
+			result.push(foo(mashPump));
 		}else{
 			brewlog.error("getStatus: Mash pump has not been started")
 		}
 		
-		let kettleState;
 		if( kettlePump){
-			kettleState = kettlePump.state;		
-			if (kettleState === OFF){
-				// kettlePump.publishState(0);
-				result.push({name:kettlePump.name, value:0});
-			}
-			else if (kettleState === ON){
-				// kettlePump.publishState(POWER);
-				result.push({name:kettlePump.name, value:POWER});
-			}
+			result.push(foo(kettlePump));
 		}else{
 			brewlog.error("getStatus: Kettle pump has not been started")
 		}
 
-		let chillState;
 		if(chillPump){
-			chillState = chillPump.state;		
-			if (chillState === OFF){
-				// chillPump.publishState(0);
-				result.push({name:chillPump.name, value:0});
-			}
-			else if (chillState === ON){
-				// chillPump.publishState(POWER);
-				result.push({name:chillPump.name, value:POWER});
-			}
+			result.push(foo(chillPump));
 		}else{
 			brewlog.error("getStatus: Chill pump has not been started")
 		}

@@ -8,15 +8,15 @@
 
 
 const brewlog	= require('../common/brewlog.js');
-const flow = require('../../services/flow-service.js');
+// const flow = require('../../services/flow-service.js');
 const valves 	= require('../../services/valve-service.js');
-const pump = require('../../services/pump-service.js');
+const pumps = require('../../services/pump-service.js');
 
 let startCond = v => v > 0;
 let stopCond = v => v == 0;
 const flowName = "FlowKettleOut";
-const flowStart = () => flow.wait(flowName, startCond, options.flowTimeoutSecs);
-const flowStop = () => flow.wait(flowName, stopCond, options.flowTimeoutSecs);
+// const flowStart = () => flow.wait(flowName, startCond, options.flowTimeoutSecs);
+// const flowStop = () => flow.wait(flowName, stopCond, options.flowTimeoutSecs);
 
 
 //Transfer contents of kettle to mash tun 
@@ -32,11 +32,11 @@ module.exports = {
 		brewlog.info("Begin Kettle-to-Mash transfer");
 
 		valves.open("Valve Mash-in");
-		pump.kettleOnSync();
-		await flowStart();
-		await flowStop()
+		pumps.kettleOnSync();
+		// await flowStart();
+		// await flowStop();
 		valves.close("Valve Mash-in");
-		pump.kettleOffSync();
+		pumps.kettleOffSync();
 
 		return options;
 	}

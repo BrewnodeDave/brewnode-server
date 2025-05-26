@@ -29,7 +29,7 @@ const broker = require('../broker.js');
 const pump = require('../services/pump-service.js');
 const valve = require('../services/valve-service.js');
 const ds18x20 = require('./ds18b20.js');
-const flow = require('../services/flow-service.js');
+// const flow = require('../services/flow-service.js');
 const brewdefs = require('../brewstack/common/brewdefs.js');
 const brewlog = require('../brewstack/common/brewlog.js');
 
@@ -143,9 +143,9 @@ function simFlowRate(id, mLPerSec){
         toggleInterval[id] = null;
     }
     
-    if (mLPerSec !== 0){
-        toggleInterval[id] = flow.simToggleInterval(id, mLPerSec);
-    }
+    // if (mLPerSec !== 0){
+    //     toggleInterval[id] = flow.simToggleInterval(id, mLPerSec);
+    // }
 }
 
 let simPowerTime = null;
@@ -228,16 +228,16 @@ function simStateChange(){
     //Kettle Input
     if (isValveKettleInOpen){
         //Kettle In Open
-        simFlowRate(flow.ID_FLOW_KETTLE_IN, FLOW_RATE); 
+        // simFlowRate(flow.ID_FLOW_KETTLE_IN, FLOW_RATE); 
         simState.KettleVolume += (FLOW_RATE/1000) * (SIM_UPDATE_INTERVAL/1000);
     }else{
         //Kettle In Closed
         if (isPumpMashOn){
             if (!isMashEmpty){ 
-                simFlowRate(flow.ID_FLOW_KETTLE_IN, FLOW_RATE); 
+                // simFlowRate(flow.ID_FLOW_KETTLE_IN, FLOW_RATE); 
                 simState.KettleVolume += FLOW_RATE / SIM_UPDATE_INTERVAL;
 
-                simFlowRate(flow.ID_FLOW_MASH_OUT,  FLOW_RATE);
+                // simFlowRate(flow.ID_FLOW_MASH_OUT,  FLOW_RATE);
                 simState.MashVolume -= FLOW_RATE / SIM_UPDATE_INTERVAL;
                 ds18x20.set("TempMashOut", ds18x20.getByName(MASHTUN_TEMP));
                 ds18x20.set(KETTLE_TEMP, ds18x20.getByName(MASHTUN_TEMP));
@@ -245,16 +245,16 @@ function simStateChange(){
 //                    simFlowRate(flow.ID_FLOW_MASH_IN,    FLOW_RATE);
                     simState.MashVolume += FLOW_RATE / SIM_UPDATE_INTERVAL;
 
-                    simFlowRate(flow.ID_FLOW_KETTLE_OUT, FLOW_RATE);
+                    // simFlowRate(flow.ID_FLOW_KETTLE_OUT, FLOW_RATE);
                     simState.KettleVolume -= FLOW_RATE / SIM_UPDATE_INTERVAL;
                 }
             }else{
-                simFlowRate(flow.ID_FLOW_KETTLE_IN, 0);
-                simFlowRate(flow.ID_FLOW_MASH_OUT, 0);
+                // simFlowRate(flow.ID_FLOW_KETTLE_IN, 0);
+                // simFlowRate(flow.ID_FLOW_MASH_OUT, 0);
             }
         }else{
-            simFlowRate(flow.ID_FLOW_KETTLE_IN, 0);
-            simFlowRate(flow.ID_FLOW_MASH_OUT, 0);
+            // simFlowRate(flow.ID_FLOW_KETTLE_IN, 0);
+            // simFlowRate(flow.ID_FLOW_MASH_OUT, 0);
 
             //Ferment Temp Input
             if (isValveFermentTempInOpen && isPumpKettleOn){
@@ -269,7 +269,7 @@ function simStateChange(){
                     heatTransferKettleToFermenter(heatTransferSecs);   
                 }
             }else{
-                simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
+                // simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
             }
         }
     }
@@ -281,14 +281,14 @@ function simStateChange(){
                 const mashTemp = ds18x20.getByName(MASHTUN_TEMP) + 0.05 * (ds18x20.getByName(KETTLE_TEMP) - ds18x20.getByName(MASHTUN_TEMP));
                 ds18x20.set("TempMashIn", mashTemp);
                 ds18x20.set(MASHTUN_TEMP, mashTemp);
-                simFlowRate(flow.ID_FLOW_KETTLE_OUT, FLOW_RATE);
+                // simFlowRate(flow.ID_FLOW_KETTLE_OUT, FLOW_RATE);
                 simState.KettleVolume -= FLOW_RATE / SIM_UPDATE_INTERVAL;
 
                 // simFlowRate(flow.ID_FLOW_MASH_IN,    FLOW_RATE);
                 simState.MashVolume += FLOW_RATE / SIM_UPDATE_INTERVAL;
 
             }else{
-                simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
+                // simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
                 // simFlowRate(flow.ID_FLOW_MASH_IN,    0);
             }
         }
@@ -305,14 +305,14 @@ function simStateChange(){
         if (isValveFermentInOpen && isValveChillWortInOpen){
             ds18x20.set("TempFermentIn", CHILLER_OUTPUT_TEMP);  
             if (!isKettleEmpty){
-                simFlowRate(flow.ID_FLOW_KETTLE_OUT, FLOW_RATE);
-                simFlowRate(flow.ID_FLOW_FERMENT_IN, FLOW_RATE);
+                // simFlowRate(flow.ID_FLOW_KETTLE_OUT, FLOW_RATE);
+                // simFlowRate(flow.ID_FLOW_FERMENT_IN, FLOW_RATE);
                 simState.FermenterVolume += FLOW_RATE / SIM_UPDATE_INTERVAL;
  
                 ds18x20.set(FERMENTER_TEMP, CHILLER_OUTPUT_TEMP);
             }else{
-                simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
-                simFlowRate(flow.ID_FLOW_FERMENT_IN, 0);
+                // simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
+                // simFlowRate(flow.ID_FLOW_FERMENT_IN, 0);
             }
         }
     }else{
@@ -320,15 +320,15 @@ function simStateChange(){
             if (isValveMashInOpen){
                 ds18x20.set("TempMashIn", ds18x20.getByName(KETTLE_TEMP));
                 if (!isKettleEmpty){
-                    simFlowRate(flow.ID_FLOW_KETTLE_OUT, 20);
-                    simState.KettleVolume -= FLOW_RATE / SIM_UPDATE_INTERVAL;
+                    // simFlowRate(flow.ID_FLOW_KETTLE_OUT, 20);
+                    // simState.KettleVolume -= FLOW_RATE / SIM_UPDATE_INTERVAL;
                     // simFlowRate(flow.ID_FLOW_MASH_IN, 20);
                 }else{
-                    simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
+                    // simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
                     // simFlowRate(flow.ID_FLOW_MASH_IN, 0);
                 }
             }else{
-                simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
+                // simFlowRate(flow.ID_FLOW_KETTLE_OUT, 0);
                 // simFlowRate(flow.ID_FLOW_MASH_IN, 0);
             }
         }

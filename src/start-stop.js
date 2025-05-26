@@ -1,6 +1,6 @@
 const i2c 		= require('./services/i2c_raspi-service.js');
-const pump 		= require('./services/pump-service.js');
-const flow 		= require('./services/flow-service.js');
+const pumps 	= require('./services/pump-service.js');
+// const flow 		= require('./services/flow-service.js');
 const fan 		= require('./services/fan-service.js');
 const valves 	= require('./services/valve-service.js');
 const wdog 		= require('./services/wdog-service.js');
@@ -30,15 +30,15 @@ async function start() {
 		console.log(err.message);
 	}
 
-	await pump.start();
+	await pumps.start();
 	await fan.start();
 	await valves.start(simulationSpeed);
 	await wdog.start();
-	try{
-		await flow.start(simulationSpeed);
-	}catch(err){
-		console.log(err.message);
-	}
+	// try{
+	// 	await flow.start(simulationSpeed);
+	// }catch(err){
+	// 	console.log(err.message);
+	// }
 	await kettleHeater.start(simulationSpeed);
 	await glycolHeater.start();
 	await glycolChiller.start();
@@ -77,7 +77,7 @@ async function stop() {
 	await kettleHeater.stop();
 	await glycolHeater.stop();
 
-	await pump.stop();
+	await pumps.stop();
 	await temp.stop();
 	await fan.stop();
 	await valves.stop();
