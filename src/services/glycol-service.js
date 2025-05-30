@@ -95,7 +95,7 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 	const reached = (chillStep)
 		? currentFermentTemp < (desiredFermentTemp + FERMENTER_OVERSHOOT)
 		: currentFermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT);
-
+console.log({reached},{chillStep});
 	const secsToGo = Math.trunc(msToGo2 / 1000);
 	const nsToGo = (msToGo2 * 1E6);
 	const hrTime = [secsToGo, nsToGo - (secsToGo * 1E9)];
@@ -198,7 +198,7 @@ console.log('New Step:',{step});
 		const tempAmbient = await therm.getTemp(AMBIENT_TEMPNAME);
 		const glycolTemp = await therm.getTemp(GLYCOL_TEMPNAME);
 		const fermentTemp = await therm.getTemp(FERMENT_TEMPNAME);
-		const chillStep = (desiredFermentTemp < fermentTemp); 
+		const chillStep = (desiredFermentTemp < tempAmbient); 
 
 		pumpInterval = setInterval(() => {
 			therm.getTemp(FERMENT_TEMPNAME)
@@ -220,13 +220,13 @@ console.log('New Step:',{step});
 		}, 60 * 1000 / _simulationSpeed);
 
 		//glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
-
 		if (chillStep) {
 console.log("CHILL", {tempC}, {tempAmbient}, {glycolTemp});
-			glycolChiller.switchOn();
-			clearInterval(glycolInterval);
-			glycolHeater.switchOff();
+				glycolChiller.switchOn();
+				clearInterval(glycolInterval);
+				glycolHeater.switchOff();
 		}else{
+			const reached  = fermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT);
 console.log("HEAT", {tempC}, {tempAmbient}, {glycolTemp});
 			glycolChiller.switchOff();
 			glycolInterval = maintainGlycolTemp(desiredFermentTemp);			
