@@ -22,12 +22,14 @@ async function start() {
 	publishLog = broker.create('log'); 
 
 	const simulationSpeed = getSimulationSpeed();
+	
 
-	await i2c.start(simulationSpeed);
 	try {
-		await temp.start(simulationSpeed)
+		await i2c.start(simulationSpeed);
+		await temp.start(simulationSpeed);
 	}catch(err){
 		console.log(err.message);
+		return false;
 	}
 
 	await pumps.start();
@@ -59,7 +61,7 @@ async function start() {
 
 	await sim.start(simulationSpeed);
 
-	return ;
+	return true;
 }
 
 async function stop() {

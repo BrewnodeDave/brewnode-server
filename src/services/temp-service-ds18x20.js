@@ -58,8 +58,8 @@ async function getAllTemps() {
 						if (key == probe.id) {
 							const value = tempObj[key];
 		
-							updateProbeValue(probe, value);
-		
+//							updateProbeValue(probe, value);
+probe.value = value;		
 							result.push({ 
 								name: probe.name, 
 								value: probe.value, 

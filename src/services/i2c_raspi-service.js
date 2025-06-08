@@ -176,8 +176,10 @@ function init(i2c){
 		}else{
 			brewlog.critical("I2C init error", err.message)
 		}
+		return false;
 	}
 	brewlog.debug("INIT I2C DONE");
+	return true;
 }
 
 function toString(bytes){
@@ -199,7 +201,13 @@ module.exports = {
 				raspi = require('raspi');
 				I2C = require('raspi-i2c').I2C;
 				_i2c = new I2C();
-				raspi.init(()=>init(_i2c));
+				const ok = init(_i2c);
+				if (!ok) {
+					reject(new Error("Failed to initialise I2C"));
+					return;
+				}
+				brewlog.debug("Raspi I2C initialised");
+				raspi.init(()=>ok);
 			}else{
 				_i2c = require('../sim/raspi-i2c.js');
 				init(_i2c);
