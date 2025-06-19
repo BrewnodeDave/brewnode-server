@@ -234,7 +234,7 @@ module.exports = {
 					if (err){
 						reject(err);
 					}else{
-						updateProbeValue(probe, temp);
+						// updateProbeValue(probe, temp);
 						resolve(probe.value);
 					}
 				});
