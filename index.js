@@ -51,8 +51,13 @@ insertMiddleware(app, corsMiddleware);
 // Initialize the Swagger middleware
 const httpServer = http.createServer(app).listen(serverPort, async function () {
   
-  await start();
+  const started = await start();
 
+  if (!started) {
+    console.error("Failed to start the server due to initialization errors.");
+    process.exit(1);
+  }
+  console.log("Server started successfully");
   console.log(
     "Your server is listening on http://localhost:%d",
     serverPort
