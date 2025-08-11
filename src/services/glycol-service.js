@@ -6,7 +6,7 @@
  * you can buy me a beer in return.
  */
 
-const pump = require('./pump-service.js');
+const pumps = require('./pump-service.js');
 const brewlog = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
 const therm = require('./temp-service.js');
@@ -116,7 +116,7 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 		msToGo2 = (msToGo2 < 0) ? 0 : msToGo2;
 		
 
-		pump.off(pump.chillPumpName);
+		pumps.off(pumps.chillPumpName);
 
 		const secsToGo = Math.trunc(msToGo2 / 1000);
 		const nsToGo = (msToGo2 * 1E6);
@@ -131,11 +131,11 @@ function pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, fermentDon
 	} else {
 		if (chillStep){
 			if (currentFermentTemp >= getGlycolTemp()){
-				pump.on(pump.chillPumpName);
+				pumps.on(pumps.chillPumpName);
 			}
 		}else{
 			if (currentFermentTemp < getGlycolTemp()){
-				pump.on(pump.chillPumpName);
+				pumps.on(pumps.chillPumpName);
 			}
 		}
 	}
@@ -172,7 +172,7 @@ module.exports = {
 			
 			glycolHeater.switchOff();
 			
-			pump.off(pump.chillPumpName);
+			pumps.off(pumps.chillPumpName);
 
 			// brewfather.stop();
 			brewlog.info("glycol-ferment.js", "stopped");
@@ -212,7 +212,7 @@ console.log('New Step:',{step});
 					glycolInterval = null;
 					glycolChiller.switchOff();
 					glycolHeater.switchOff();
-					pump.off(pump.chillPumpName);
+					pumps.off(pumps.chillPumpName);
 
 					resolve(x);
 				}, msToGo, timeAtTemp, prevTimeAtTemp)

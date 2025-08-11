@@ -128,7 +128,7 @@ async function brewData(name, value, timestamp){
 		connection.query(query, values, function (error, results, fields) {
 			connection.end();
 			if (error) {
-				console.log(err);
+				console.log(error);
 				return false;
 			}else{
 				return true;
