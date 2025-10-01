@@ -195,13 +195,9 @@ class GlycolService {
 Real-time gravity and temperature monitoring via Bluetooth:
 
 ```javascript
-// tilt.js
-const Bleacon = require('bleacon');
-
-Bleacon.on('discover', function(bleacon) {
-  const tiltData = parseTiltData(bleacon);
-  broker.create('tilt-data')(tiltData);
-});
+// Tilt integration (future feature)
+// Requires: npm install bleacon
+// Implementation available upon request
 ```
 
 ### Tilt Data Format

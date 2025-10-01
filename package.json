@@ -6,7 +6,9 @@
   "scripts": {
     "prestart": "npm install",
     "start": "node index.js",
-    "test": "echo \"No test specified\""
+    "test": "jest --forceExit",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "keywords": [
     "swagger"
@@ -33,6 +35,10 @@
   },
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
-    "@commitlint/config-conventional": "^19.5.0"
+    "@commitlint/config-conventional": "^19.5.0",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "cross-env": "^7.0.3",
+    "socket.io-client": "^4.8.0"
   }
 }

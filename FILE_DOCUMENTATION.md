@@ -220,13 +220,10 @@ All core services are located in the `src/` directory.
 - `pwm(mark_ms, space_ms)` - Generate PWM signals
 - Timing-based control algorithms
 
-#### `tilt.js`
-**Purpose:** Tilt Hydrometer integration
-**Hardware:** Bluetooth-enabled gravity sensors
-**Features:**
-- Bluetooth Low Energy (BLE) communication
-- Gravity and temperature readings
-- Real-time fermentation monitoring
+#### `tilt.js` (Removed)
+**Status:** File removed due to missing dependencies
+**Previous Purpose:** Tilt Hydrometer integration for Bluetooth gravity sensors
+**Note:** Feature can be re-implemented when dependencies are available
 
 ---
 
@@ -268,8 +265,8 @@ The services directory contains specialized hardware control modules:
 - `mysql-service.js` - Database service layer
 
 #### User Interfaces
-- `temp.html` - Temperature monitoring web interface
-- `beer-survey.html` - Beer quality survey form
+- Web interfaces served via main server application
+- API documentation available at `/docs` endpoint
 
 ---
 
@@ -401,8 +398,7 @@ brewnode-server/
 │   ├── broker.js                # Event broker
 │   ├── start-stop.js            # Lifecycle management
 │   ├── probes*.js               # Temperature sensing
-│   ├── pwm.js                   # PWM control
-│   └── tilt.js                  # Tilt hydrometer
+│   └── pwm.js                   # PWM control
 ├── 🔧 Hardware Services
 │   └── services/                # Specialized hardware control
 ├── 🎭 Simulation

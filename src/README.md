@@ -95,24 +95,14 @@ const { pwm } = require('./pwm');
 pwm(1000, 1000);
 ```
 
-### 📱 `tilt.js` - Tilt Hydrometer Integration
+### 📱 Tilt Hydrometer Integration (Future Feature)
 **Hardware:** Bluetooth Low Energy gravity sensors
-**Functionality:**
+**Status:** Currently not implemented
+**Planned Functionality:**
 - Real-time gravity readings
-- Temperature compensation
+- Temperature compensation  
 - Battery level monitoring
 - Multiple color support (Red, Green, Blue, etc.)
-
-**Data Format:**
-```javascript
-{
-  color: 'Red',
-  gravity: 1.045,
-  temperature: 68.5,
-  battery: 85,
-  timestamp: '2025-09-29T12:00:00Z'
-}
-```
 
 ## Service Architecture
 

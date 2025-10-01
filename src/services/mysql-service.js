@@ -267,4 +267,26 @@ module.exports = {
 	getBrewname,
 	log,
 	setBrewname,
+	setSession,
+	getSession,
+	sanitizeBrewName,
+	deSanitizeBrewName,
+	connect,
+	query: async function(connection, sql, params) {
+		return new Promise((resolve, reject) => {
+			const callback = (error, results, fields) => {
+				if (error) {
+					reject(error);
+				} else {
+					resolve(results);
+				}
+			};
+			
+			if (params) {
+				connection.query(sql, params, callback);
+			} else {
+				connection.query(sql, callback);
+			}
+		});
+	}
 }

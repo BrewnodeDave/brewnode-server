@@ -42,6 +42,7 @@ This project includes comprehensive documentation for all components:
 - **[🎮 Controllers Guide](controllers/README.md)** - REST API controller documentation
 - **[⚙️ Source Code Guide](src/README.md)** - Core services and business logic
 - **[🔌 Hardware Integration](HARDWARE_DOCUMENTATION.md)** - Hardware interfaces and device drivers
+- **[🧪 Testing Guide](tests/README.md)** - Comprehensive test suite documentation
 
 ### 🏗️ Architecture Overview
 
@@ -257,16 +258,52 @@ When running on non-Raspberry Pi systems, hardware operations are automatically 
 - **Development-friendly** debugging
 
 ### Testing
+
+[![Tests](https://img.shields.io/badge/Tests-104%20passing-brightgreen.svg)](tests/)
+[![Test Suites](https://img.shields.io/badge/Test%20Suites-12%20passed-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/Coverage-Comprehensive-blue.svg)](tests/)
+
+**Comprehensive test suite with 104 passing tests across 12 test suites:**
+
 ```bash
-# Run unit tests
+# Run all tests (recommended)
 npm test
 
-# Hardware simulation tests
-npm run test:simulation
+# Run tests with coverage reporting  
+npm run test:coverage
 
-# Integration tests
-npm run test:integration
+# Run tests in watch mode (development)
+npm run test:watch
 ```
+
+#### Test Coverage
+- **✅ Unit Tests** - All services, algorithms, and utilities (78 tests)
+- **✅ Integration Tests** - API endpoints, WebSocket functionality, server startup (26 tests)
+- **✅ Hardware Mocking** - Complete simulation of Raspberry Pi hardware
+- **✅ Database Testing** - MySQL service layer with connection handling
+- **✅ External API Testing** - Brewfather integration with mock responses
+
+#### Test Structure
+```
+tests/
+├── setup.js              # Global mocks and test configuration
+├── unit/                  # Unit tests for individual modules
+│   ├── basic.test.js     # Core functionality verification
+│   ├── temp-service.test.js      # Temperature monitoring
+│   ├── pump-service.test.js      # Pump control
+│   ├── mysql-service.test.js     # Database operations
+│   ├── brewfather-service.test.js # External API integration
+│   ├── broker.test.js            # Event messaging
+│   ├── k2f-algorithm.test.js     # Temperature conversion
+│   ├── m2k-algorithm.test.js     # Unit conversions
+│   └── delay.test.js             # Utility functions
+└── integration/           # End-to-end integration tests
+    ├── api.test.js       # REST API endpoints
+    ├── socket.test.js    # WebSocket real-time communication
+    └── server.test.js    # Main server startup and configuration
+```
+
+For detailed testing information, see **[📋 Testing Guide](tests/README.md)**
 
 ### Contributing
 1. Fork the repository

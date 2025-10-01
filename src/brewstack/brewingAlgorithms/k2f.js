@@ -89,5 +89,34 @@ module.exports = {
 		
 		brewlog.info("... k2f end");
 		return opt;
+	},
+
+	start: function(volume) {
+		brewlog.info("k2f start", `volume: ${volume}`);
+		if (volume > 0) {
+			modulateStart();
+			return true;
+		}
+		return false;
+	},
+
+	stop: function() {
+		brewlog.info("k2f stop", "Stopping K2F process");
+		if (interval) {
+			clearInterval(interval);
+			interval = null;
+		}
+		if (timeout) {
+			clearTimeout(timeout);
+			timeout = null;
+		}
+		return true;
+	},
+
+	getStatus: function() {
+		return {
+			running: interval !== null,
+			hasTimeout: timeout !== null
+		};
 	}
 }

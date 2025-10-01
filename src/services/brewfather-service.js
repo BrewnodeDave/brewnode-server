@@ -51,16 +51,28 @@ function logTemps(fermenter, ambient, glycol) {
 }
 
 module.exports = {
-    start: async () => {
+    start: (intervalMinutes = 15) => {
         brewlog.info("brewfather-service", "Start");
-        const mins15  = 15 * 60 * 1000;
-        timer = setInterval(() => getFermenterTemp(mins15));
+        
+        // Clear existing timer if any
+        if (timer !== null) {
+            clearInterval(timer);
+        }
+        
+        const intervalMs = intervalMinutes * 60 * 1000;
+        timer = setInterval(() => getFermenterTemp(), intervalMs);
         return;
     },
     stop: () => {
         brewlog.info("brewfather-service", "Stop");
-        clearInterval(timer);
-    }
+        if (timer !== null) {
+            clearInterval(timer);
+            timer = null;
+        }
+    },
+
+    getFermenterTemp,
+    logTemps
 }
 
 

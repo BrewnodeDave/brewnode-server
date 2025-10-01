@@ -166,14 +166,16 @@ function create(sensorName) {
         if (exists(socket) === false) {
 			clients.push(socket);
 			console.log(`New Attached client ${socket.conn.remoteAddress}`);
+			
+			// Catch socket disconnect
+			_socket.on('disconnect', () => {
+				console.log(`Socket ${_socket.id} disconnected`);
+				// Perform any necessary cleanup or logging here
+			});
+			
+			return true;
         }
-
-
-		// Catch socket disconnect
-		_socket.on('disconnect', () => {
-			console.log(`Socket ${_socket.id} disconnected`);
-			// Perform any necessary cleanup or logging here
-		});
+		return false;
     },
 		
 	/**
@@ -182,17 +184,22 @@ function create(sensorName) {
 	 */
 	detach({conn}) {
 		console.log(`Detached client ${conn.remoteAddress}`);
-		// return;
-		clients.forEach(({conn}, index) => {
-			if (conn.remoteAddress == conn.remoteAddress){
+		let found = false;
+		
+		clients.forEach(({conn: clientConn}, index) => {
+			if (clientConn.remoteAddress == conn.remoteAddress){
 				clients[index] = null;
 				clients.splice(index, 1);
-
+				found = true;
 				console.log(`Detached client ${conn.remoteAddress}`);
 			}
 		});
 
-		_socket = null;
+		if (found) {
+			_socket = null;
+		}
+		
+		return found;
 	},
 
 	progressPublish,
@@ -201,5 +208,47 @@ function create(sensorName) {
 	remainingBoilMinutes: create("remainingBoilMinutes"),
 	remainingKettleMinutes: create("remainingKettleMinutes"),
 	remainingMashMinutes: create("remainingMashMinutes"),
-	remainingFermentDays:create("remainingFermentDays")
+	remainingFermentDays:create("remainingFermentDays"),
+
+	// Additional exports needed for testing
+	setEmitFn: function(emitFn) {
+		_emit = emitFn;
+	},
+
+	getEmitFn: function() {
+		return _emit;
+	},
+
+	temperaturePublish: create("temperature"),
+	pumpPublish: create("pump"),
+	valvePublish: create("valve"),
+	sensorPublish: async function(sensorName, oldValue, newValue) {
+		if (oldValue !== newValue) {
+			await mysqlService.doublePublish(
+				(value, timestamp) => this.publish(sensorName, value, timestamp),
+				oldValue, 
+				newValue
+			);
+		}
+	},
+
+	setDebug: function(enabled) {
+		debug = enabled;
+	},
+
+	getDebug: function() {
+		return debug;
+	},
+
+	// EventEmitter methods for testing
+	on: function(event, listener) {
+		sensor.on(event, listener);
+	},
+
+	emit: function(event, data) {
+		sensor.emit(event, data);
+	},
+
+	// Export the create function for services
+	create: create
   }

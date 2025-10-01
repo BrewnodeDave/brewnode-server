@@ -236,5 +236,16 @@ module.exports = {
 		} catch (err) {
 			console.log(name);			
 		}
+	},
+
+	setSampleInterval: setPollInterval,
+
+	stop: () => {
+		brewlog.info("temp.js", "stop");
+		if (pollInterval !== null) {
+			clearInterval(pollInterval);
+			pollInterval = null;
+		}
+		started = false;
 	}
 }
