@@ -9,6 +9,7 @@ on:
       - "*"
   pull_request:
     branches: [ "develop", "devices-tab"  ]
+  workflow_dispatch:  # <-- This enables the manual "Run workflow" button
 
 jobs:
   build:
