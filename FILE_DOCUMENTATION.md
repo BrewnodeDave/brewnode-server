@@ -240,20 +240,40 @@ The services directory contains specialized hardware control modules:
 - `temp-controller-service.js` - PID temperature control
 
 #### I2C Device Services
-- `i2c_raspi-service.js` - Raspberry Pi I2C interface
-- `i2c_raspi-service.test.js` - I2C service unit tests
-- `i2c-set.js` - I2C device configuration
+- `i2c_raspi-service.js` - **Primary I2C Interface**
+  - **Purpose:** Raspberry Pi I2C bus control for 32-bit GPIO expansion
+  - **Hardware:** Dual MCP23017 I2C expanders (0x20, 0x21)
+  - **Features:** Bit-level read/write, direction control, hardware abstraction
+  - **Devices:** Controls 18 brewery automation devices via I2C pins
+- `i2c_raspi-service.test.js` - I2C service comprehensive unit tests
+- `i2c-set.js` - **I2C Device Configuration Utility**
+  - **Purpose:** Command-line tool for direct I2C pin control
+  - **Usage:** `node i2c-set.js <bit> <value>`
+  - **Features:** Individual pin testing and debugging
 
 #### Brewing Equipment Services
-- `kettle-heater-service.js` - Heating element control
-- `pump-service.js` - Pump operation management
-- `valve-service.js` - Valve positioning control
-- `fan-service.js` - Cooling fan management
+- `kettle-heater-service.js` - **Heating Element Control**
+  - **I2C Bit:** 17 (Kettle Heater - 3000W main heating element)
+  - **Features:** PWM modulation, temperature control, safety interlocks
+- `pump-service.js` - **Pump Operation Management**
+  - **I2C Bits:** 0 (Glycol), 7 (Fermenter), 8 (Kettle), 9 (Mash)
+  - **Features:** Individual pump control, status monitoring, flow management
+- `valve-service.js` - **Valve Positioning Control**
+  - **I2C Bits:** 1 (Fermenter), 2 (Chill Wort), 5 (Kettle), 6 (Mash In)
+  - **Features:** Open/close control, position feedback, safety verification
+- `fan-service.js` - **Cooling Fan Management**
+  - **I2C Bit:** 10 (Cooling system fan)
+  - **Features:** Variable speed control, temperature-based automation
 
 #### Glycol System Services
-- `glycol-service.js` - Main glycol system coordinator
-- `glycol-chiller-service.js` - Chilling system control
-- `glycol-heater-service.js` - Heating system control
+- `glycol-service.js` - **Main Glycol System Coordinator**
+  - **I2C Bits:** 13 (Glycol Power), 0 (Glycol Pump), 11 (Glycol Heater)
+  - **Features:** Temperature control, pump management, heating/cooling automation
+- `glycol-chiller-service.js` - **Chilling System Control**
+  - **Purpose:** Cooling system control and monitoring
+- `glycol-heater-service.js` - **Heating System Control**
+  - **I2C Bit:** 11 (Glycol heater for temperature adjustment)
+  - **Features:** Precise temperature control, safety monitoring
 
 #### Process Services
 - `flow-service.js` - Flow rate monitoring

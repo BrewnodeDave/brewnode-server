@@ -69,40 +69,129 @@ const pidConfig = {
 
 ## I2C Device Integration
 
-### AB Electronics I2C Boards
-The system integrates with AB Electronics expansion boards for additional I/O capabilities.
+### Hardware Configuration
+The BrewNode system uses the Raspberry Pi's hardware I2C bus with dual MCP23017 GPIO expanders for comprehensive brewery automation control.
 
-#### Supported Boards
+**Physical I2C Connections:**
+- **Pin 3 (SDA)** - I2C Data Line  
+- **Pin 5 (SCL)** - I2C Clock Line
+- **Bus Speed:** 100kHz standard mode
+- **Voltage:** 5V logic levels
 
-##### ADC Pi - Analog to Digital Converter
-- **Resolution:** 18-bit
-- **Channels:** 8 differential/16 single-ended
-- **Sample Rate:** 3.75 SPS to 860 SPS
-- **Applications:** Pressure sensors, flow meters, pH probes
+**I2C Expansion Boards:**
+- **Chip 0x20** - Primary MCP23017 expander (bits 0-15)
+- **Chip 0x21** - Secondary MCP23017 expander (bits 16-31)
+- **Total Capacity:** 32 digital I/O pins
 
-##### IO Pi - Digital I/O Expander
-- **Channels:** 32 digital I/O pins
-- **Voltage:** 5V tolerant inputs
-- **Current:** 25mA per pin
-- **Applications:** Valve control, pump switching, status LEDs
+### Complete I2C Pin Mapping
 
-##### Expander Pi - Multi-function Board
-- **ADC:** 8-channel 12-bit
-- **DAC:** 2-channel 12-bit
-- **Digital I/O:** 16 pins
-- **RTC:** Real-time clock with battery backup
+#### 🚰 Pump Control (3 devices)
+| Bit | Chip | Pin | Device | Purpose | Service |
+|-----|------|-----|--------|---------|---------|
+| **0** | 0x20 | 8 | **Glycol Pump** | Cooling system circulation | `pump-service.js` |
+| **8** | 0x20 | 3 | **Kettle Pump** | Wort transfer from kettle | `pump-service.js` |
+| **9** | 0x20 | 11 | **Mash Pump** | Mash recirculation | `pump-service.js` |
+
+#### 🚪 Valve Control (4 devices)
+| Bit | Chip | Pin | Device | Purpose | Service |
+|-----|------|-----|--------|---------|---------|
+| **1** | 0x20 | 9 | **Fermenter Valve In** | Chiller wort output | `valve-service.js` |
+| **2** | 0x20 | 10 | **Chill Wort Valve In** | Chiller wort input | `valve-service.js` |
+| **5** | 0x20 | 5 | **Kettle Valve In** | Kettle input control | `valve-service.js` |
+| **6** | 0x20 | 6 | **Mash In Valve** | Mash input control | `valve-service.js` |
+
+#### 🔥 Heating Elements (2 devices)
+| Bit | Chip | Pin | Device | Purpose | Service |
+|-----|------|-----|--------|---------|---------|
+| **11** | 0x20 | 11 | **Glycol Heater** | Glycol temperature control | `glycol-heater-service.js` |
+| **17** | 0x21 | 22 | **Kettle Heater** | Main heating element (3000W) | `kettle-heater-service.js` |
+
+#### 💨 Cooling & Control (7 devices)
+| Bit | Chip | Pin | Device | Purpose | Service |
+|-----|------|-----|--------|---------|---------|
+| **10** | 0x20 | 13 | **Fan** | Cooling system fan | `fan-service.js` |
+| **3** | 0x20 | 11 | **Switch 4** | General purpose | `i2c_raspi-service.js` |
+| **4** | 0x20 | 12 | **Switch 5** | General purpose | `i2c_raspi-service.js` |
+| **12** | 0x20 | 6 | **Relay 4** | General control | `i2c_raspi-service.js` |
+| **13** | 0x20 | 13 | **Glycol Power** | System power control | `glycol-service.js` |
+| **14** | 0x20 | 14 | **Relay 2** | General control | `i2c_raspi-service.js` |
+| **15** | 0x20 | 15 | **Relay 1** | General control | `i2c_raspi-service.js` |
+
+#### 📊 Monitoring & Status (2 devices)
+| Bit | Chip | Pin | Device | Purpose | Service |
+|-----|------|-----|--------|---------|---------|
+| **16** | 0x21 | 22 | **Watchdog LED** | System status indicator | `i2c_raspi-service.js` |
+| **7** | 0x20 | 15 | **Fermenter Pump** | Secondary pump control | `pump-service.js` |
+
+#### 📈 Flow Sensors (Currently Disabled)
+| Bit | Chip | Pin | Device | Purpose | Status |
+|-----|------|-----|--------|---------|--------|
+| **24** | 0x21 | 24 | Flow Sensor 0 | Kettle flow monitoring | Commented out |
+| **25** | 0x21 | 25 | Flow Sensor 1 | Mash flow monitoring | Commented out |
+| **27** | 0x21 | 27 | Flow Sensor 3 | Ferment flow monitoring | Commented out |
 
 ### I2C Service Implementation
+
+**Core Service Module:** `src/services/i2c_raspi-service.js`
+
 ```javascript
-// i2c_raspi-service.js
+// MCP23017 Register Addresses
+const REGx20 = 0x20;  // Primary expansion chip
+const REGx21 = 0x21;  // Secondary expansion chip
+
+// Direction Control (1=input, 0=output)
+const DIR_INPUT = 1;
+const DIR_OUTPUT = 0;
+
+// Initialize I2C service
 const i2c = require('raspi-i2c').I2C;
 const bus = new i2c();
 
-// Read from I2C device
-function readDevice(address, register) {
-  return bus.readByteSync(address, register);
+// Write a single bit
+function writeBit(bit, value) {
+  if (bit < 16) {
+    if (bit < 8) {
+      // Write to REGx20, register 0x12 (bits 0-7)
+      writeReg(REGx20, 0x12, dataByte[0], bit, value);
+    } else {
+      // Write to REGx20, register 0x13 (bits 8-15)
+      writeReg(REGx20, 0x13, dataByte[1], bit - 8, value);
+    }
+  } else {
+    if (bit < 24) {
+      // Write to REGx21, register 0x12 (bits 16-23)
+      writeReg(REGx21, 0x12, dataByte[2], bit - 16, value);
+    } else {
+      // Write to REGx21, register 0x13 (bits 24-31)
+      writeReg(REGx21, 0x13, dataByte[3], bit - 24, value);
+    }
+  }
 }
 ```
+
+**Usage Examples:**
+
+```javascript
+// Turn on glycol pump (bit 0)
+i2c.writeBit(0, 1);
+
+// Open kettle valve (bit 5)
+i2c.writeBit(5, 0);  // 0 = open, 1 = close
+
+// Read watchdog status (bit 16)
+const status = i2c.readBit(16);
+```
+
+### Device Usage Summary
+
+**Active I2C Devices:** 18 out of 32 available pins
+- **Pumps:** 4 devices (bits 0, 7, 8, 9)
+- **Valves:** 4 devices (bits 1, 2, 5, 6) 
+- **Heaters:** 2 devices (bits 11, 17)
+- **Control:** 7 devices (bits 3, 4, 10, 12-15)
+- **Monitoring:** 1 device (bit 16)
+
+**Available for Expansion:** 14 unused pins for future brewery automation features
 
 ## Pulse Width Modulation (PWM)
 
