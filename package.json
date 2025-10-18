@@ -1,20 +1,72 @@
 {
-  "name": "brewnode",
+  "name": "@brewnode/server",
   "version": "2.0.0",
-  "description": "Backend NodeJS server for BrewNode",
+  "description": "Comprehensive Node.js backend server for brewery automation and monitoring with BrewNode hardware integration",
   "main": "index.js",
   "scripts": {
     "prestart": "npm install",
     "start": "node index.js",
     "test": "jest --forceExit",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "prepare": "npm test",
+    "docs": "echo 'Documentation available at https://github.com/BrewnodeDave/brewnode-server#readme'"
   },
   "keywords": [
-    "swagger"
+    "brewery",
+    "automation", 
+    "brewing",
+    "raspberry-pi",
+    "iot",
+    "hardware-control",
+    "temperature-monitoring",
+    "brewery-control",
+    "beer",
+    "brewfather",
+    "brewing-software",
+    "node.js",
+    "express",
+    "socket.io",
+    "i2c",
+    "onewire",
+    "industrial-automation",
+    "swagger",
+    "openapi"
   ],
+  "author": {
+    "name": "Dave Leitch",
+    "email": "dave@brewnode.com",
+    "url": "https://github.com/BrewnodeDave"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BrewnodeDave/brewnode-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BrewnodeDave/brewnode-server/issues"
+  },
+  "homepage": "https://github.com/BrewnodeDave/brewnode-server#readme",
   "license": "Beerware",
-  "private": true,
+  "engines": {
+    "node": ">=18.20.5",
+    "npm": ">=8.0.0"
+  },
+  "os": ["linux", "darwin", "win32"],
+  "cpu": ["x64", "arm64", "arm"],
+  "files": [
+    "index.js",
+    "api.yaml",
+    "controllers/",
+    "src/",
+    "docs/",
+    "README.md",
+    "API_DOCUMENTATION.md",
+    "FILE_DOCUMENTATION.md", 
+    "HARDWARE_DOCUMENTATION.md",
+    "HARDWARE_REQUIREMENTS.md",
+    "package.json",
+    "jest.config.js"
+  ],
   "dependencies": {
     "axios": "^1.7.7",
     "connect": "^3.2.0",

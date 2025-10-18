@@ -1,5 +1,6 @@
 # 🍺 BrewNode Server
 
+[![npm version](https://badge.fury.io/js/%40brewnode%2Fserver.svg)](https://www.npmjs.com/package/@brewnode/server)
 [![Node.js](https://img.shields.io/badge/Node.js-18.20.5+-green.svg)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-Beerware-blue.svg)](LICENSE)
 [![Raspberry Pi](https://img.shields.io/badge/Platform-Raspberry%20Pi-red.svg)](https://www.raspberrypi.org/)
@@ -8,13 +9,27 @@
 
 BrewNode Server provides REST APIs, real-time data streaming, and hardware integration for complete brewery control. Designed to run on Raspberry Pi with custom hardware, but includes full simulation support for development on any platform.
 
-## 🚀 Quick Start
+## � Installation
 
-### Installation
+### From NPM
+```bash
+npm install @brewnode/server
+```
+
+### From Source
 ```bash
 git clone https://github.com/BrewnodeDave/brewnode-server.git
 cd brewnode-server
 npm install
+```
+
+## 🚀 Quick Start
+
+### Basic Usage
+```javascript
+const brewnode = require('@brewnode/server');
+// Start the BrewNode server
+brewnode.start();
 ```
 
 ### Development
