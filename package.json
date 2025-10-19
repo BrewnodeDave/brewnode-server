@@ -1,6 +1,6 @@
 {
   "name": "@brewnode/server",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Comprehensive Node.js backend server for brewery automation and monitoring with BrewNode hardware integration",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   },
   "keywords": [
     "brewery",
-    "automation", 
+    "automation",
     "brewing",
     "raspberry-pi",
     "iot",
@@ -51,8 +51,16 @@
     "node": ">=18.20.5",
     "npm": ">=8.0.0"
   },
-  "os": ["linux", "darwin", "win32"],
-  "cpu": ["x64", "arm64", "arm"],
+  "os": [
+    "linux",
+    "darwin",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64",
+    "arm"
+  ],
   "files": [
     "index.js",
     "api.yaml",
@@ -61,7 +69,7 @@
     "docs/",
     "README.md",
     "API_DOCUMENTATION.md",
-    "FILE_DOCUMENTATION.md", 
+    "FILE_DOCUMENTATION.md",
     "HARDWARE_DOCUMENTATION.md",
     "HARDWARE_REQUIREMENTS.md",
     "package.json",
