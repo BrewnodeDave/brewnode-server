@@ -1,0 +1,45 @@
+# Development files
+.git/
+.gitignore
+node_modules/
+coverage/
+*.log
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Development tools
+.eslintrc*
+.prettierrc*
+.vscode/
+.idea/
+commitlint.config.js
+
+# Test files (unless you want to include them)
+tests/
+test/
+*.test.js
+*.spec.js
+jest.config.js
+
+# Documentation build files
+docs/_site/
+docs/.jekyll-cache/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Keep these documentation files for npm
+!README.md
+!API_DOCUMENTATION.md
+!FILE_DOCUMENTATION.md
+!HARDWARE_DOCUMENTATION.md
+!HARDWARE_REQUIREMENTS.md

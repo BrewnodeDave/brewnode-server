@@ -1,5 +1,6 @@
 # 🍺 BrewNode Server
 
+[![npm version](https://badge.fury.io/js/%40brewnode%2Fserver.svg)](https://www.npmjs.com/package/@brewnode/server)
 [![Node.js](https://img.shields.io/badge/Node.js-18.20.5+-green.svg)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-Beerware-blue.svg)](LICENSE)
 [![Raspberry Pi](https://img.shields.io/badge/Platform-Raspberry%20Pi-red.svg)](https://www.raspberrypi.org/)
@@ -8,13 +9,27 @@
 
 BrewNode Server provides REST APIs, real-time data streaming, and hardware integration for complete brewery control. Designed to run on Raspberry Pi with custom hardware, but includes full simulation support for development on any platform.
 
-## 🚀 Quick Start
+## � Installation
 
-### Installation
+### From NPM
+```bash
+npm install @brewnode/server
+```
+
+### From Source
 ```bash
 git clone https://github.com/BrewnodeDave/brewnode-server.git
 cd brewnode-server
 npm install
+```
+
+## 🚀 Quick Start
+
+### Basic Usage
+```javascript
+const brewnode = require('@brewnode/server');
+// Start the BrewNode server
+brewnode.start();
 ```
 
 ### Development
@@ -42,6 +57,7 @@ This project includes comprehensive documentation for all components:
 - **[🎮 Controllers Guide](controllers/README.md)** - REST API controller documentation
 - **[⚙️ Source Code Guide](src/README.md)** - Core services and business logic
 - **[🔌 Hardware Integration](HARDWARE_DOCUMENTATION.md)** - Hardware interfaces and device drivers
+- **[🛠️ Hardware Requirements](HARDWARE_REQUIREMENTS.md)** - Complete hardware specification & procurement guide
 - **[🧪 Testing Guide](tests/README.md)** - Comprehensive test suite documentation
 
 ### 🏗️ Architecture Overview
@@ -192,11 +208,32 @@ GND (Black)  → Ground (Pin 6)
 DQ (Yellow)  → GPIO4 (Pin 7) + 4.7kΩ pullup to 3.3V
 ```
 
-### I2C Expansion Boards
-Supports AB Electronics boards for additional I/O:
-- **ADC Pi** - 18-bit analog to digital converter
-- **IO Pi** - 32-channel digital I/O expander
-- **Expander Pi** - Multi-function board with ADC, DAC, I/O, and RTC
+### I2C Expansion & Device Control
+**Complete brewery automation via I2C bus expansion**
+
+**Hardware Setup:**
+- **I2C Bus:** Uses Raspberry Pi pins 3 (SDA) & 5 (SCL)
+- **Dual MCP23017 Expanders:** 32 digital I/O pins total
+- **Addresses:** 0x20 (primary), 0x21 (secondary)
+
+**Controlled Devices (18 total):**
+- **4 Pumps:** Glycol, Kettle, Mash, Fermenter circulation
+- **4 Valves:** Flow direction control for brewing process
+- **2 Heaters:** 3000W kettle heater + glycol temperature control
+- **7 Relays/Switches:** General purpose control & power switching
+- **1 Fan:** Cooling system temperature management
+
+**API Control:**
+```bash
+# Control any I2C device via REST API
+PUT /i2c?bit=8&value=1  # Turn on kettle pump (bit 8)
+PUT /i2c?bit=17&value=1 # Turn on kettle heater (bit 17)
+```
+
+**Development Features:**
+- Complete hardware simulation for cross-platform development
+- Individual device testing via command-line utilities
+- Real-time monitoring and status feedback
 
 ### Bluetooth Devices
 - **Tilt Hydrometers** - Real-time gravity and temperature monitoring

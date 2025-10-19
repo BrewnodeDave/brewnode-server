@@ -80,6 +80,78 @@ The API proxies the complete Brewfather v2 API, providing seamless integration:
 - `POST /stream` - Send telemetry data to Brewfather
 - WebSocket integration for live updates
 
+### 🔌 Hardware Control Endpoints
+
+#### I2C Device Control
+```yaml
+/i2c:
+  put:
+    summary: Set I2C pin state
+    operationId: i2cSet
+    parameters:
+      - name: bit
+        in: query
+        description: I2C bit number (0-31)
+        required: true
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 31
+          example: 8
+      - name: value
+        in: query
+        description: Pin state (0=off, 1=on)
+        required: true
+        schema:
+          type: integer
+          minimum: 0
+          maximum: 1
+          example: 1
+    responses:
+      200:
+        description: Success - returns hex value of I2C state
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                result: 
+                  type: string
+                  example: "0x00000100"
+```
+
+**I2C Device Bit Mapping:**
+- **Bit 0:** Glycol Pump
+- **Bit 1:** Fermenter Valve In
+- **Bit 2:** Chill Wort Valve In
+- **Bit 3:** Switch 4 (General Purpose)
+- **Bit 4:** Switch 5 (General Purpose)
+- **Bit 5:** Kettle Valve In
+- **Bit 6:** Mash In Valve
+- **Bit 7:** Fermenter Pump
+- **Bit 8:** Kettle Pump
+- **Bit 9:** Mash Pump
+- **Bit 10:** Fan
+- **Bit 11:** Glycol Heater
+- **Bit 12:** Relay 4
+- **Bit 13:** Glycol Power
+- **Bit 14:** Relay 2
+- **Bit 15:** Relay 1
+- **Bit 16:** Watchdog LED
+- **Bit 17:** Kettle Heater (3000W)
+
+**Usage Examples:**
+```bash
+# Turn on kettle pump
+curl -X PUT "http://localhost:3000/i2c?bit=8&value=1"
+
+# Open mash valve
+curl -X PUT "http://localhost:3000/i2c?bit=6&value=0"
+
+# Turn on kettle heater
+curl -X PUT "http://localhost:3000/i2c?bit=17&value=1"
+```
+
 ## Request/Response Schemas
 
 ### Standard Response Format
