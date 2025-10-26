@@ -364,7 +364,7 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
         // Simulate a basic brewery operation sequence
         const brewerySequence = () => {
           // 1. Open mash valve
-          valveService.open('ValveMashIn');
+          valveService.open('Valve Mash-in');
           
           // 2. Start mash pump
           pumpService.mashOnSync();
@@ -373,7 +373,7 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
           pumpService.mashOffSync();
           
           // 4. Close mash valve
-          valveService.close('ValveMashIn');
+          valveService.close('Valve Mash-in');
           
           // 5. Check system status
           const pumpStatus = pumpService.getStatus();
