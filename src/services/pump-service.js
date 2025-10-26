@@ -156,6 +156,7 @@ module.exports = {
 			module.exports.mashOnSync = mashPump.onSync;
 			module.exports.mashOff = mashPump.off;
 			module.exports.mashOffSync = mashPump.offSync;
+			module.exports.mashPumpName = MASH_PUMP;
 			mashPump.offSync();
 			
 			kettlePump = new Pump(KETTLE_PUMP, brewdefs.I2C_KETTLE_PUMP);
@@ -164,6 +165,7 @@ module.exports = {
 			module.exports.kettleOnSync = kettlePump.onSync;
 			module.exports.kettleOff = kettlePump.off;
 			module.exports.kettleOffSync = kettlePump.offSync;
+			module.exports.kettlePumpName = KETTLE_PUMP;
 			kettlePump.offSync();
 
 			chillPump = new Pump(GLYCOL_PUMP, brewdefs.I2C_GLYCOL_PUMP);
