@@ -24,10 +24,9 @@ async function start() {
 	publishLog = broker.create('log'); 
 
 	const NO_SIMULATION = 1;
-	setSimulationSpeed(brewdefs.isRaspPi() ? NO_SIMULATION : 10);
-	
-	const simulationSpeed = getSimulationSpeed();
-	
+
+	const simulationSpeed = brewdefs.isRaspPi() ? NO_SIMULATION : 10;
+	setSimulationSpeed(simulationSpeed);
 
 	try {
 		await i2c.start(simulationSpeed);
