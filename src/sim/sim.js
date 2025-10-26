@@ -108,8 +108,9 @@ let toggleInterval = [];
 let flowRate = [];
 let simInterval = null;
 
-let mashPumpChange              = change(pump.mashPumpName);
-let kettlePumpChange            = change(pump.kettlePumpName);
+// Lazy initialization of change functions to avoid circular dependency
+let mashPumpChange;
+let kettlePumpChange;
 let kettleTempChange            = change(KETTLE_TEMP);
 let glycolTempChange            = change("Temp Glycol");
 let ambientTempChange           = change("Temp Ambient");
@@ -378,6 +379,10 @@ module.exports = {
             simState.TempFermentIn   = ambientTemp;
             simState.TempFermenter   = ambientTemp;
             simState.coil.temperature= ambientTemp;
+
+            // Initialize pump change functions when needed to avoid circular dependency
+            mashPumpChange = mashPumpChange || change(pump.mashPumpName);
+            kettlePumpChange = kettlePumpChange || change(pump.kettlePumpName);
 
             mashPumpListener = broker.subscribe(pump.mashPumpName,     mashPumpChange);
             kettlePumpListener = broker.subscribe(pump.kettlePumpName,   kettlePumpChange);
