@@ -72,6 +72,7 @@
     "controllers/",
     "src/",
     "docs/",
+    "LICENCE",
     "README.md",
     "API_DOCUMENTATION.md",
     "FILE_DOCUMENTATION.md",
