@@ -1,0 +1,40 @@
+name: Create Github release
+
+on:
+  push:
+    tags:
+    - 'v*.*.*'
+  workflow_dispatch:  # <-- This enables the manual "Run workflow" button
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build step (customize)
+      - name: Build artifacts
+        run: |
+          # example: npm run build or go build, etc.
+          mkdir -p artifacts
+          echo "fake binary" > artifacts/brewnode-server-${GITHUB_REF#refs/tags/}.txt
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: ${{ github.ref_name }}
+          body: |
+            Release created from tag ${{ github.ref_name }}.
+            Add release notes here.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
