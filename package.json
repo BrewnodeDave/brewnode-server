@@ -10,6 +10,10 @@
     "test": "jest --forceExit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
+    "test:pi": "jest --config jest.pi.config.js --forceExit",
+    "test:pi:watch": "jest --config jest.pi.config.js --watch",
+    "test:pi:coverage": "jest --config jest.pi.config.js --coverage --forceExit",
+    "test:all": "npm test && npm run test:pi",
     "prepare": "npm test",
     "docs": "echo 'Documentation available at https://github.com/BrewnodeDave/brewnode-server#readme'"
   },

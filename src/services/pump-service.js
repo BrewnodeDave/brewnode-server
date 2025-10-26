@@ -142,9 +142,10 @@ module.exports = {
 	mashPumpName: MASH_PUMP,
 	kettlePumpName: KETTLE_PUMP,
 	chillPumpName: GLYCOL_PUMP,
+	isStarted: () => started,
 	start(opt) {			
 		return new Promise((resolve, reject) => {
-			if (started === true){
+			if (started === true) {
 				resolve(opt);
 				return;
 			}

@@ -1,40 +1,55 @@
  # 🧪 BrewNode Server Test Suite
 
-[![Tests](https://img.shields.io/badge/Tests-104%20passing-brightgreen.svg)](#test-results)
-[![Test Suites](https://img.shields.io/badge/Test%20Suites-12%20passed-brightgreen.svg)](#test-results)
+[![Tests](https://img.shields.io/badge/Tests-126%20total-brightgreen.svg)](#test-results)
+[![Test Suites](https://img.shields.io/badge/Test%20Suites-13%20total-brightgreen.svg)](#test-results)
 [![Jest](https://img.shields.io/badge/Framework-Jest-orange.svg)](https://jestjs.io/)
 [![Coverage](https://img.shields.io/badge/Coverage-Comprehensive-blue.svg)](#coverage-areas)
+[![Pi Tests](https://img.shields.io/badge/Pi%20Tests-22%20hardware-orange.svg)](hardware/)
 
-**Comprehensive test suite ensuring reliability and quality of the BrewNode brewery automation server.**
+**Comprehensive multi-environment test suite ensuring reliability across development and production hardware.**
 
-## 📊 Current Test Status
+## 📊 Test Status Overview
 
+### � Development Tests (Cross-Platform)
 ```
 Test Suites: 12 passed, 12 total
-Tests:       104 passed, 1 skipped, 105 total
+Tests:       104 passed, 1 skipped, 105 total  
 Time:        ~6-7 seconds
 Status:      ✅ All tests passing
 ```
 
-## 📁 Test Structure
+### 🍺 Raspberry Pi Hardware Tests
+```
+Test Suites: 1 suite (22 tests total)
+Tests:       22 skipped on non-Pi systems | 22 executed on Pi hardware
+Time:        ~1-30 seconds (depending on hardware)
+Status:      ✅ Automatic platform detection
+```
+
+## 📁 Complete Test Structure
 
 ```
 tests/
 ├── 📄 setup.js                    # Global test configuration and hardware mocks
-├── 📁 unit/                       # Unit tests (78 tests)
+├── 📁 unit/                       # Unit tests (78 tests) - Cross-platform
 │   ├── basic.test.js              # ✅ Core functionality verification (9 tests)
 │   ├── temp-service.test.js       # ✅ Temperature monitoring service (7 tests)
-│   ├── pump-service.test.js       # ✅ Pump control service (4 tests)
+│   ├── pump-service.test.js       # ✅ Pump control service (2 tests) - Fixed circular dependency
 │   ├── mysql-service.test.js      # ✅ Database operations (17 tests)
 │   ├── brewfather-service.test.js # ✅ External API integration (14 tests)
 │   ├── broker.test.js             # ✅ Event messaging system (21 tests)
 │   ├── k2f-algorithm.test.js      # ✅ Kelvin to Fahrenheit conversion (7 tests)
 │   ├── m2k-algorithm.test.js      # ✅ Mass to Kelvin conversion (7 tests)
 │   └── delay.test.js              # ✅ Utility delay functions (10 tests)
-└── 📁 integration/                # Integration tests (26 tests)
-    ├── api.test.js                # ✅ REST API endpoints (10 tests)
-    ├── socket.test.js             # ✅ WebSocket real-time communication (8 tests)
-    └── server.test.js             # ✅ Server startup and configuration (8 tests)
+├── 📁 integration/                # Integration tests (26 tests) - Cross-platform
+│   ├── api.test.js                # ✅ REST API endpoints (10 tests)
+│   ├── socket.test.js             # ✅ WebSocket real-time communication (8 tests)
+│   └── server.test.js             # ✅ Server startup and configuration (8 tests)
+└── 📁 hardware/                   # 🍺 Raspberry Pi hardware tests (22 tests)
+    ├── pi-hardware.test.js        # 🔧 Real hardware integration testing
+    ├── setup-pi-tests.js          # 🛠️ Pi environment setup and validation
+    ├── README.md                  # 📖 Pi hardware testing documentation
+    └── PI-TESTS-SUMMARY.md        # 📊 Implementation summary and usage guide
 ```
 
 ## 🚀 Running Tests
@@ -48,15 +63,16 @@ npm install
 
 ### Available Commands
 
+#### 💻 Development Testing (Cross-Platform)
 ```bash
-# Run all tests (recommended)
-npm test
+# Run all development tests (recommended)
+npm test                          # 104 tests across 12 suites
 
-# Run tests with coverage reporting  
-npm run test:coverage
+# Development tests with coverage reporting  
+npm run test:coverage             # Includes coverage report
 
-# Run tests in watch mode (for development)
-npm run test:watch
+# Development tests in watch mode (for active development)
+npm run test:watch                # Auto-rerun on file changes
 
 # Run specific test files
 npx jest tests/unit/temp-service.test.js
@@ -65,6 +81,22 @@ npx jest tests/integration/api.test.js
 # Run tests by pattern
 npx jest --testNamePattern="temperature"
 npx jest --testPathPattern="unit"
+```
+
+#### 🍺 Raspberry Pi Hardware Testing
+```bash
+# Pi hardware tests (Pi only - auto-skipped elsewhere)
+npm run test:pi                   # 22 hardware integration tests
+npm run test:pi:coverage          # Pi tests with hardware coverage
+npm run test:pi:watch             # Watch mode for Pi development
+
+# Pi test helper script (includes prerequisite checks)
+./scripts/run-pi-tests.sh         # Comprehensive Pi test runner
+./scripts/run-pi-tests.sh --coverage  # With coverage
+./scripts/run-pi-tests.sh --watch     # Watch mode
+
+# Combined testing
+npm run test:all                  # Run both development and Pi tests
 ```
 
 ## ⚙️ Test Configuration
@@ -167,25 +199,57 @@ Tests automatically detect and adapt to the environment:
 - **Middleware Stack**: CORS, authentication, and logging
 - **Graceful Shutdown**: Proper cleanup and resource management
 
+### 🍺 Raspberry Pi Hardware Tests (22 tests)
+
+**Real hardware integration testing - automatically skipped on non-Pi systems:**
+
+#### Platform Detection (2 tests)
+- **Hardware Identification**: Verify running on actual Raspberry Pi
+- **System Files**: Access to Pi-specific `/proc/cpuinfo` and `/etc/os-release`
+
+#### Hardware Interfaces (7 tests)  
+- **I2C Bus Interface**: Real I2C device communication with MCP23017 expanders
+- **GPIO Interface**: Physical GPIO pin access and filesystem availability
+- **OneWire Interface**: DS18B20 temperature sensor bus and device detection
+
+#### Device Control (8 tests)
+- **Pump Hardware**: Real I2C pump switching and status monitoring
+- **Valve Hardware**: Physical GPIO valve control and feedback  
+- **Temperature Sensors**: Live DS18B20/DS18X20 sensor reading and validation
+- **Watchdog Timer**: Hardware watchdog functionality verification
+
+#### Performance & Integration (5 tests)
+- **Hardware Timing**: Real hardware operation performance validation
+- **Concurrent Operations**: Multi-device coordination without conflicts
+- **Complete Brewery Cycle**: End-to-end hardware automation sequence
+- **Error Recovery**: Hardware fault tolerance and safe failure modes
+- **Resource Cleanup**: Proper hardware state reset and resource management
+
+> **🔧 Note**: Pi hardware tests use `brewdefs.isRaspPi()` for automatic platform detection. 
+> Tests run only on actual Raspberry Pi hardware and are safely skipped elsewhere.
+
 ## 🎯 Coverage Areas
 
 ### ✅ Fully Covered
-- All service layer functionality
-- Complete API endpoint coverage
-- Real-time communication features
-- Database operations and migrations
-- External API integrations
-- Hardware abstraction layer
-- Error handling and recovery
-- Authentication and authorization
+- **Service Layer**: All hardware services (pumps, valves, temperature, I2C)
+- **API Endpoints**: Complete REST API coverage with authentication
+- **Real-time Features**: WebSocket communication and event broadcasting
+- **Database Operations**: MySQL connections, queries, and migrations
+- **External Integrations**: Brewfather API synchronization and streaming
+- **Hardware Abstraction**: Cross-platform mocking and Pi hardware validation
+- **Error Handling**: Comprehensive error recovery and safety mechanisms
+- **Security**: Authentication, authorization, and input validation
 
 ### 🔍 Test Quality Features
-- **Comprehensive Mocking**: No external dependencies during testing
-- **Realistic Scenarios**: Tests use actual brewing data patterns
-- **Edge Case Testing**: Handles network failures, hardware errors, timeouts
-- **Performance Testing**: Validates response times and memory usage
+- **Multi-Environment**: Development (mocked) + Production (Pi hardware) testing
+- **Comprehensive Mocking**: No external dependencies during development testing
+- **Hardware Validation**: Real Pi hardware interface testing when available
+- **Realistic Scenarios**: Tests use actual brewing data patterns and workflows
+- **Edge Case Testing**: Network failures, hardware errors, timeouts, and recovery
+- **Performance Testing**: Response times, memory usage, and hardware operation timing
 - **Security Testing**: Authentication, authorization, and input validation
-- **Cross-Platform**: Runs identically on all development platforms
+- **Cross-Platform Development**: Identical behavior across all development platforms
+- **Automatic Detection**: Platform-aware test execution with proper skipping
 
 - **API Tests**: REST endpoints and HTTP functionality
 - **WebSocket Tests**: Real-time communication via Socket.IO

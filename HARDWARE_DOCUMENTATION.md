@@ -416,6 +416,48 @@ GET /hardware/i2c/scan
 POST /hardware/pwm/test
 ```
 
+#### Automated Hardware Tests
+Comprehensive test suite for validating Pi hardware integration:
+
+**Pi Hardware Test Suite** (`tests/hardware/pi-hardware.test.js`):
+- **22 automated tests** covering all hardware interfaces
+- **Automatic platform detection** - skips on non-Pi systems
+- **Safe hardware validation** - includes safety checks
+- **Real hardware testing** - validates actual GPIO/I2C/OneWire interfaces
+
+**Test Categories:**
+1. **Platform Detection** - Raspberry Pi environment validation
+2. **GPIO Service** - Digital I/O and PWM functionality
+3. **Temperature Services** - DS18B20 and DS18X20 sensors
+4. **I2C Interface** - MCP23017 GPIO expander communication
+5. **Service Integration** - Multi-service coordination tests
+6. **Flow Control** - Pump and valve operations
+7. **Temperature Control** - Heating/cooling system validation
+8. **Safety Systems** - Watchdog and failsafe mechanisms
+
+**Running Pi Tests:**
+```bash
+# Run Pi hardware tests (skips on non-Pi)
+npm run test:pi
+
+# Run with coverage report
+npm run test:pi:coverage
+
+# Run in watch mode for development
+npm run test:pi:watch
+
+# Run specific test category
+npm test -- --testPathPattern=pi-hardware --testNamePattern="GPIO"
+```
+
+**Test Configuration:**
+- Extended timeouts for hardware operations (10s default, 30s for complex tests)
+- Automatic environment validation before test execution
+- Hardware safety checks to prevent damage
+- Comprehensive error reporting for debugging
+
+See `tests/hardware/README.md` for detailed test documentation.
+
 #### Log Analysis
 ```bash
 # View hardware logs
