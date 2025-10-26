@@ -80,6 +80,7 @@ module.exports = {
 	stop: () => new Promise((resolve,reject) => {
 		broker.destroy(CHILL_DEF.name);
 		setState(CHILL_OFF);
+		publishState = null;
 		resolve();	
 	}),
 	

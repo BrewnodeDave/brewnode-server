@@ -78,6 +78,8 @@ module.exports = {
 
 			setState(HEAT_OFF);
 			brewlog.info("gylcol-heater.js", "stopped");
+
+			publishState = null;
 			resolve();	
 		})
 	},

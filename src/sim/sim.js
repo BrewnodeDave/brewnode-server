@@ -40,8 +40,16 @@ const MASHTUN_TEMP = "Temp Mash";
 const FERMENTER_TEMP = "Temp Fermenter";
 const SIM_UPDATE_INTERVAL = 1000;
 
-let _speedupFactor = brewdefs.isRaspPi() ? 1 : 10;
+let _speedupFactor = null; // Will be initialized lazily to avoid circular dependency
 const ambientTemp = 10;
+
+// Lazy initialization to avoid circular dependency issues
+function getSpeedupFactor() {
+    if (_speedupFactor === null) {
+        _speedupFactor = brewdefs.isRaspPi() ? 1 : 10;
+    }
+    return _speedupFactor;
+}
 
 let simState = {
     PumpMash:           0,

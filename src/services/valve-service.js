@@ -208,8 +208,10 @@ module.exports = {
 			const allClosed = _valves.map(({ close }) => close)
 	
 			Promise.all(allClosed).then(() => {
-				_valves.forEach(({ name }) => {
-					broker.destroy(name);
+				_valves.forEach((v) => {
+					v.publish = null;
+					broker.destroy(v.name);
+					v = null;
 				});
 				_started = false;
 				brewlog.info("valve.js", "stopped");

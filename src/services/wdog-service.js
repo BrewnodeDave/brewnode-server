@@ -85,7 +85,7 @@ module.exports = {
 			heartbeat = null;
 			broker.destroy(WATCHDOG_EVENT_NAME);
 			brewlog.info("wdog.js", "stopped");
-
+			bark = null;
 			resolve();
 		});
 	},
