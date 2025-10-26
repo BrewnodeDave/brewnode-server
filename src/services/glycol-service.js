@@ -67,20 +67,20 @@ function timeToText(prefix, secs){
         const min = Math.trunc(mins  - (hours * MINS_PER_HOUR));
         const sec = Math.trunc(secs  - (mins  * SECS_PER_MIN));
 	if (days > 0){
-		timeString += ` ${days} days`;
-		timeString += ` ${hour} hours`;
-		timeString += ` ${min} mins`;
+		timeString += ` ${days} d`;
+		timeString += ` ${hour} h`;
+		timeString += ` ${min} m`;
 	}else{
 		if (hours > 0){
-			timeString += ` ${hours} hours`;
-			timeString += ` ${min} mins`;
+			timeString += ` ${hours} h`;
+			timeString += ` ${min} m`;
 		}else if (mins > 0){
-			timeString += ` ${mins} mins`;
+			timeString += ` ${mins} m`;
 		} else {
-			timeString += ` ${sec} secs`;
+			timeString += ` ${sec} s`;
 		}			
 	}
-console.log(timeString);
+	console.log(timeString);
 	broker.progressPublish(timeString);
 }
 
