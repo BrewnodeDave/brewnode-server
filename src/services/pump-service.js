@@ -17,7 +17,6 @@
  * @requires promise
  * @desc There are two pumps in the system. This module is used to switch them on and off. An event is emitted when the state of the pump changes.
  */
-const { mash } = require('../../controllers/brewnode.js');
 const brewdefs = require('../brewstack/common/brewdefs.js');
 const brewlog  = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
