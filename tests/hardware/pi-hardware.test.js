@@ -177,13 +177,13 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
         
           // Test pump operations (should not cause I2C errors on Pi)
           expect(() => {
-            pumpService.mashPumpOnSync();
-            pumpService.mashPumpOffSync();
+            pumpService.mashOnSync();
+            pumpService.mashOffSync();
           }).not.toThrow();
           
           expect(() => {
-            pumpService.kettlePumpOnSync();
-            pumpService.kettlePumpOffSync();
+            pumpService.kettleOnSync();
+            pumpService.kettleOffSync();
           }).not.toThrow();
           
           expect(() => {
@@ -286,8 +286,8 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
         
         // Perform multiple I2C operations
         for (let i = 0; i < 10; i++) {
-          pumpService.mashPumpOnSync();
-          pumpService.mashPumpOffSync();
+          pumpService.mashOnSync();
+          pumpService.mashOffSync();
         }
         
         const duration = Date.now() - startTime;
@@ -311,9 +311,9 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
         
         // Concurrent operations should not interfere
         const operations = [
-          () => pumpService.mashPumpOnSync(),
+          () => pumpService.mashOnSync(),
           () => valveService.open('ValveFermentIn'),
-          () => pumpService.mashPumpOffSync(),
+          () => pumpService.mashOffSync(),
           () => valveService.close('ValveFermentIn')
         ];
         
@@ -367,10 +367,10 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
           valveService.open('ValveMashIn');
           
           // 2. Start mash pump
-          pumpService.mashPumpOnSync();
+          pumpService.mashOnSync();
           
           // 3. Stop mash pump
-          pumpService.mashPumpOffSync();
+          pumpService.mashOffSync();
           
           // 4. Close mash valve
           valveService.close('ValveMashIn');
@@ -398,16 +398,16 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
         expect(() => {
           // Try to operate pumps even if some I2C operations might fail
           try {
-            pumpService.mashPumpOnSync();
-            pumpService.kettlePumpOnSync();
+            pumpService.mashOnSync();
+            pumpService.kettleOnSync();
             pumpService.chillPumpOnSync();
           } catch (error) {
             // Hardware errors should be logged but not crash the system
             expect(error.message).toMatch(/i2c|hardware|gpio/i);
           } finally {
             // Always attempt cleanup
-            pumpService.mashPumpOffSync();
-            pumpService.kettlePumpOffSync();  
+            pumpService.mashOffSync();
+            pumpService.kettleOffSync();  
             pumpService.chillPumpOffSync();
           }
         }).not.toThrow();
