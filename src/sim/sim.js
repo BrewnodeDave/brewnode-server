@@ -169,7 +169,7 @@ function simPowerChange(){
     let deltaSecs = ds;
 
     if (simState.KettleVolume > 0){    
-        let dTemp =  (simState.power * deltaSecs * getSpeedupFactor()) / ((simState.KettleVolume) * C);
+        let dTemp =  (simState.power * deltaSecs * getSimulationSpeed()) / ((simState.KettleVolume) * C);
         if (dTemp > 0){
             let t = dTemp + ds18x20.getByName(KETTLE_TEMP);
             t = (t > 100) ? 100 : t;
@@ -201,7 +201,7 @@ function heatTransferKettleToFermenter(deltaSecs){
     const COIL_CONDUCTION = 0.001;
     const COIL_VOLUME = 2;
 
-    const heatFlow = COIL_CONDUCTION * COIL_VOLUME * (kettleTemp-fermenterTemp) * deltaSecs * getSpeedupFactor();
+    const heatFlow = COIL_CONDUCTION * COIL_VOLUME * (kettleTemp-fermenterTemp) * deltaSecs * getSimulationSpeed();
     const deltaFermenterTemp = simState.FermenterVolume ? (heatFlow / (simState.FermenterVolume)) : 0;
     fermenterTemp +=  deltaFermenterTemp
 
