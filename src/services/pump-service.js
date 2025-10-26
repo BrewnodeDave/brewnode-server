@@ -181,15 +181,21 @@ module.exports = {
 	
 	stop(opt) {
 		return new Promise((resolve, reject) => {
-			pumpStop(mashPump);
-			mashPump.publishState = null;
-			mashPump = null;
-			pumpStop(kettlePump);
-			kettlePump.publishState = null;
-			kettlePump = null;
-			pumpStop(chillPump);
-			chillPump.publishState = null;
-			chillPump = null;
+			if (mashPump) {
+				pumpStop(mashPump);
+				mashPump.publishState = null;
+				mashPump = null;
+			}
+			if (kettlePump) {
+				pumpStop(kettlePump);
+				kettlePump.publishState = null;
+				kettlePump = null;
+			}
+			if (chillPump) {
+				pumpStop(chillPump);
+				chillPump.publishState = null;
+				chillPump = null;
+			}
 			started = false;
 			brewlog.info("pump.js", "stopped");
 			resolve(opt);		

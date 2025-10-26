@@ -67,7 +67,10 @@ describe('Pump Service', () => {
   });
 
   describe('pump status', () => {
-    test('should return pump status as array', () => {
+    test('should return pump status as array', async () => {
+      // Start the pump service first to initialize the pumps
+      await pumpService.start();
+      
       const status = pumpService.getStatus();
       
       expect(Array.isArray(status)).toBe(true);
