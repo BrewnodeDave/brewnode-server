@@ -237,10 +237,10 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
         
         // Test valve operations (should not cause GPIO errors on Pi)
         const valveNames = [
-          'ValveFermentIn',
-          'ValveKettleIn', 
-          'ValveMashIn',
-          'ValveFermentTempIn'
+          'Valve Chiller wort-out',
+          'Valve Chiller wort-in', 
+          'Valve Kettle-in',
+          'Valve Mash-in'
         ];
         
         valveNames.forEach(valveName => {
@@ -312,9 +312,9 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
         // Concurrent operations should not interfere
         const operations = [
           () => pumpService.mashOnSync(),
-          () => valveService.open('ValveFermentIn'),
+          () => valveService.open('Valve Mash-in'),
           () => pumpService.mashOffSync(),
-          () => valveService.close('ValveFermentIn')
+          () => valveService.close('Valve Mash-in')
         ];
         
         await expect(Promise.all(operations.map(op => 
@@ -364,7 +364,7 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
         // Simulate a basic brewery operation sequence
         const brewerySequence = () => {
           // 1. Open mash valve
-          valveService.open('ValveMashIn');
+          valveService.open('Valve Mash-in');
           
           // 2. Start mash pump
           pumpService.mashOnSync();
@@ -373,7 +373,7 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
           pumpService.mashOffSync();
           
           // 4. Close mash valve
-          valveService.close('ValveMashIn');
+          valveService.close('Valve Mash-in');
           
           // 5. Check system status
           const pumpStatus = pumpService.getStatus();
