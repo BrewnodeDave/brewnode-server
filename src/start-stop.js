@@ -11,7 +11,9 @@ const glycol 	= require('./services/glycol-service.js');
 const fill 		= require('./services/fill-service.js');
 const kettleHeater 	= require('./services/kettle-heater-service.js');
 const tempController 	= require('./services/temp-controller-service.js');
-const {getSimulationSpeed} = require('./sim/sim.js');
+const {getSimulationSpeed, setSimulationSpeed} = require('./sim/sim.js');
+
+const brewdefs = require('../src/brewstack/common/brewdefs.js');
 
 const sim 		= require('./sim/sim.js');
 const broker 	= require('./broker.js');
@@ -21,6 +23,9 @@ async function start() {
 
 	publishLog = broker.create('log'); 
 
+	const NO_SIMULATION = 1;
+	setSimulationSpeed(brewdefs.isRaspPi() ? NO_SIMULATION : 10);
+	
 	const simulationSpeed = getSimulationSpeed();
 	
 

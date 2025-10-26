@@ -30,7 +30,6 @@ const pump = require('../services/pump-service.js');
 const valve = require('../services/valve-service.js');
 const ds18x20 = require('./ds18b20.js');
 // const flow = require('../services/flow-service.js');
-const brewdefs = require('../brewstack/common/brewdefs.js');
 const brewlog = require('../brewstack/common/brewlog.js');
 
 const CHILLER_OUTPUT_TEMP = 20;
@@ -42,14 +41,6 @@ const SIM_UPDATE_INTERVAL = 1000;
 
 let _speedupFactor = null; // Will be initialized lazily to avoid circular dependency
 const ambientTemp = 10;
-
-// Lazy initialization to avoid circular dependency issues
-function getSpeedupFactor() {
-    if (_speedupFactor === null) {
-        _speedupFactor = brewdefs.isRaspPi() ? 1 : 10;
-    }
-    return _speedupFactor;
-}
 
 let simState = {
     PumpMash:           0,
@@ -178,7 +169,7 @@ function simPowerChange(){
     let deltaSecs = ds;
 
     if (simState.KettleVolume > 0){    
-        let dTemp =  (simState.power * deltaSecs * _speedupFactor) / ((simState.KettleVolume) * C);
+        let dTemp =  (simState.power * deltaSecs * getSpeedupFactor()) / ((simState.KettleVolume) * C);
         if (dTemp > 0){
             let t = dTemp + ds18x20.getByName(KETTLE_TEMP);
             t = (t > 100) ? 100 : t;
@@ -210,7 +201,7 @@ function heatTransferKettleToFermenter(deltaSecs){
     const COIL_CONDUCTION = 0.001;
     const COIL_VOLUME = 2;
 
-    const heatFlow = COIL_CONDUCTION * COIL_VOLUME * (kettleTemp-fermenterTemp) * deltaSecs * _speedupFactor;
+    const heatFlow = COIL_CONDUCTION * COIL_VOLUME * (kettleTemp-fermenterTemp) * deltaSecs * getSpeedupFactor();
     const deltaFermenterTemp = simState.FermenterVolume ? (heatFlow / (simState.FermenterVolume)) : 0;
     fermenterTemp +=  deltaFermenterTemp
 
@@ -346,10 +337,10 @@ function simStateChange(){
 }
 
 const delay = (delaySecs, name="") => new Promise((resolve, reject) => {
-    const reportSecs = 60 / _speedupFactor;
+    const reportSecs = 60 / getSimulationSpeed();
     const secs2mins = secs => Math.ceil((secs / 60));
 
-    let toGoSecs = delaySecs / _speedupFactor;
+    let toGoSecs = delaySecs / getSimulationSpeed();
     brewlog.info(`${name} delay for ${secs2mins(delaySecs)} mins`);
  
     const report =  setInterval(() => {
@@ -360,7 +351,7 @@ const delay = (delaySecs, name="") => new Promise((resolve, reject) => {
     setTimeout(() => {
         clearInterval(report);
         resolve();
-    }, delaySecs*1000 / _speedupFactor);
+    }, delaySecs*1000 / getSimulationSpeed());
 });
 
 module.exports = {
@@ -369,12 +360,12 @@ module.exports = {
     getKettleVolume: () => simState.KettleVolume,
     setKettleVolume: vol => simState.KettleVolume = vol,
     getSimulationSpeed: () => _speedupFactor,
-    setSimulationSpeed: (factor) => _speedupFactor = brewdefs.isRaspPi() ? 1 : factor,
-    start(speedupFactor) {
+    setSimulationSpeed: (factor) => _speedupFactor = factor,
+    start() {
         return new Promise((resolve, reject) => {
             brewlog.debug("Sim Service", "Start");
 
-            _speedupFactor = speedupFactor;
+            _speedupFactor = getSimulationSpeed();
            //Do nothing if we're not simulating
            if (_speedupFactor === 1){
                 resolve();
