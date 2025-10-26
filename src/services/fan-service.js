@@ -107,6 +107,7 @@ module.exports = {
 			broker.destroy(FAN_DEF.name);
 			brewlog.info("fan-service", "Stop");
 
+			publishFanState = null;
 			resolve();
 		});
 	},
