@@ -111,7 +111,6 @@ function create(sensorName) {
 	 * @param {String} sensorName
 	 */
 	destroy(sensorName) {	
-		brewlog.info("DESTROY", sensorName)
 		brewlog.sensorStop(sensorName);
 		
 		//Remove entry from array

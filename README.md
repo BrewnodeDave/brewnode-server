@@ -296,27 +296,33 @@ When running on non-Raspberry Pi systems, hardware operations are automatically 
 
 ### Testing
 
-[![Tests](https://img.shields.io/badge/Tests-104%20passing-brightgreen.svg)](tests/)
-[![Test Suites](https://img.shields.io/badge/Test%20Suites-12%20passed-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-126%20total-brightgreen.svg)](tests/)
+[![Test Suites](https://img.shields.io/badge/Test%20Suites-13%20total-brightgreen.svg)](tests/)
 [![Coverage](https://img.shields.io/badge/Coverage-Comprehensive-blue.svg)](tests/)
+[![Pi Tests](https://img.shields.io/badge/Pi%20Tests-22%20hardware-orange.svg)](tests/hardware/)
 
-**Comprehensive test suite with 104 passing tests across 12 test suites:**
+**Comprehensive test suite with 126+ tests across multiple environments:**
 
 ```bash
-# Run all tests (recommended)
-npm test
+# Development Testing (cross-platform)
+npm test                  # Run all development tests (104 tests)
+npm run test:coverage     # Run with coverage reporting  
+npm run test:watch        # Run in watch mode (development)
 
-# Run tests with coverage reporting  
-npm run test:coverage
+# Raspberry Pi Hardware Testing (Pi only)
+npm run test:pi           # Run Pi hardware tests (22 tests)
+npm run test:pi:coverage  # Pi tests with hardware coverage
+./scripts/run-pi-tests.sh # Helper script with prerequisites check
 
-# Run tests in watch mode (development)
-npm run test:watch
+# Complete Testing
+npm run test:all          # Run both development and Pi tests
 ```
 
 #### Test Coverage
 - **✅ Unit Tests** - All services, algorithms, and utilities (78 tests)
 - **✅ Integration Tests** - API endpoints, WebSocket functionality, server startup (26 tests)
-- **✅ Hardware Mocking** - Complete simulation of Raspberry Pi hardware
+- **✅ Hardware Simulation** - Complete mocking for cross-platform development
+- **✅ Pi Hardware Tests** - Real hardware validation on Raspberry Pi (22 tests)
 - **✅ Database Testing** - MySQL service layer with connection handling
 - **✅ External API Testing** - Brewfather integration with mock responses
 
@@ -324,20 +330,24 @@ npm run test:watch
 ```
 tests/
 ├── setup.js              # Global mocks and test configuration
-├── unit/                  # Unit tests for individual modules
+├── unit/                  # Unit tests for individual modules (78 tests)
 │   ├── basic.test.js     # Core functionality verification
 │   ├── temp-service.test.js      # Temperature monitoring
-│   ├── pump-service.test.js      # Pump control
+│   ├── pump-service.test.js      # Pump control (fixed circular dependency)
 │   ├── mysql-service.test.js     # Database operations
 │   ├── brewfather-service.test.js # External API integration
 │   ├── broker.test.js            # Event messaging
 │   ├── k2f-algorithm.test.js     # Temperature conversion
 │   ├── m2k-algorithm.test.js     # Unit conversions
 │   └── delay.test.js             # Utility functions
-└── integration/           # End-to-end integration tests
-    ├── api.test.js       # REST API endpoints
-    ├── socket.test.js    # WebSocket real-time communication
-    └── server.test.js    # Main server startup and configuration
+├── integration/           # End-to-end integration tests (26 tests)
+│   ├── api.test.js       # REST API endpoints
+│   ├── socket.test.js    # WebSocket real-time communication
+│   └── server.test.js    # Main server startup and configuration
+└── hardware/              # Raspberry Pi hardware tests (22 tests)
+    ├── pi-hardware.test.js       # Real hardware integration tests
+    ├── setup-pi-tests.js         # Pi hardware test environment setup
+    └── README.md                 # Pi hardware testing documentation
 ```
 
 For detailed testing information, see **[📋 Testing Guide](tests/README.md)**

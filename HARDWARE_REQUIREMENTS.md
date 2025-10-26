@@ -313,6 +313,43 @@ The BrewNode Server requires specific hardware components for complete brewery a
 3. **Remote monitoring hardware**
 4. **Backup/redundancy systems**
 
+## 🔍 Hardware Validation & Testing
+
+### Automated Hardware Testing
+The BrewNode Server includes comprehensive hardware validation:
+
+**Pi Hardware Test Suite:**
+- **22 automated tests** covering all hardware interfaces
+- **Platform detection** - tests automatically skip on non-Pi systems  
+- **Safe validation** - includes hardware safety checks
+- **Real-time verification** - validates actual GPIO/I2C/OneWire communication
+
+**Test Coverage:**
+1. **Raspberry Pi Detection** - Environment validation
+2. **GPIO Interface** - Digital I/O and PWM functionality
+3. **I2C Communication** - MCP23017 GPIO expander validation
+4. **Temperature Sensors** - DS18B20/DS18X20 OneWire interface
+5. **Service Integration** - Multi-hardware coordination
+6. **Safety Systems** - Watchdog and failsafe validation
+
+**Running Hardware Tests:**
+```bash
+# Run Pi hardware tests (auto-skips on non-Pi)
+npm run test:pi
+
+# Development tests with simulation
+npm test
+```
+
+### Manual Validation Checklist
+Before system deployment, verify:
+- [ ] All I2C devices detected: `i2cdetect -y 1`
+- [ ] Temperature sensors enumerated: `ls /sys/bus/w1/devices/`
+- [ ] GPIO pin assignments correct: `gpio readall`
+- [ ] Power supply ratings adequate
+- [ ] Safety systems functional
+- [ ] Network connectivity established
+
 ### Estimated Budget Range
 - **Phase 1 (Core System):** $2,500 - $4,000 USD
 - **Phase 2 (Advanced Features):** $1,000 - $2,000 USD

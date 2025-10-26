@@ -43,6 +43,13 @@ BrewNode Server is a Node.js backend application designed to run on a Raspberry 
 - `ds18x20` - Temperature sensor library
 - `raspi-i2c` - Raspberry Pi I2C interface (optional dependency)
 
+**Development Scripts:**
+- `npm test` - Run all development tests (104 tests)
+- `npm run test:pi` - Run Pi hardware tests (22 tests, skips on non-Pi)
+- `npm run test:pi:coverage` - Pi tests with coverage report
+- `npm run test:pi:watch` - Pi tests in watch mode
+- `npm run test:coverage` - Development tests with coverage report
+
 ### `commitlint.config.js`
 **Purpose:** Git commit message linting configuration
 **Contents:** Enforces conventional commit format for better changelog generation
@@ -397,6 +404,106 @@ The services directory contains specialized hardware control modules:
 
 ---
 
+## Test Suite Architecture
+
+### `tests/` Directory
+**Purpose:** Comprehensive multi-environment testing framework ensuring code quality and hardware reliability
+
+#### Test Structure Overview
+```
+tests/
+├── 📄 setup.js                    # Global test configuration and mocks
+├── 📄 jest.config.js              # Standard Jest configuration
+├── 📄 jest.pi.config.js           # Raspberry Pi specific test configuration
+├── 📁 unit/                       # Unit tests (78 tests) - Cross-platform
+├── 📁 integration/                # Integration tests (26 tests) - Cross-platform
+├── 📁 hardware/                   # Pi hardware tests (22 tests) - Pi only
+└── 📁 scripts/                    # Test utilities and runners
+```
+
+#### Development Tests (104 tests)
+**Files:** `unit/` and `integration/` directories
+**Purpose:** Cross-platform development testing with complete hardware mocking
+
+**Unit Tests (78 tests):**
+- `basic.test.js` - Core functionality verification (9 tests)
+- `temp-service.test.js` - Temperature monitoring service (7 tests)  
+- `pump-service.test.js` - Pump control service (2 tests)
+- `mysql-service.test.js` - Database operations (17 tests)
+- `brewfather-service.test.js` - External API integration (14 tests)
+- `broker.test.js` - Event messaging system (21 tests)
+- `k2f-algorithm.test.js` - Temperature conversion algorithms (7 tests)
+- `m2k-algorithm.test.js` - Mass conversion algorithms (7 tests)
+- `delay.test.js` - Utility delay functions (10 tests)
+
+**Integration Tests (26 tests):**
+- `api.test.js` - REST API endpoints (10 tests)
+- `socket.test.js` - WebSocket real-time communication (8 tests)
+- `server.test.js` - Server startup and configuration (8 tests)
+
+#### Raspberry Pi Hardware Tests (22 tests)
+**File:** `hardware/pi-hardware.test.js`
+**Purpose:** Real hardware validation on Raspberry Pi - automatically skipped on other systems
+
+**Hardware Test Categories:**
+- **Platform Detection** (2 tests) - Pi hardware identification
+- **I2C Interface** (3 tests) - MCP23017 expander communication
+- **GPIO Interface** (2 tests) - Physical pin control and access
+- **Temperature Sensors** (3 tests) - DS18B20/OneWire sensor validation
+- **Pump Hardware** (3 tests) - Real I2C pump switching operations
+- **Valve Hardware** (2 tests) - GPIO valve control verification
+- **Performance Testing** (2 tests) - Hardware operation timing validation
+- **Integration Testing** (5 tests) - Complete brewery automation cycles
+
+#### Test Configuration Files
+
+**`setup.js`**
+- Global test environment configuration
+- Hardware mocking for cross-platform compatibility  
+- Database and external API mocking
+- Mock implementations for Raspberry Pi hardware interfaces
+
+**`jest.config.js`** 
+- Standard Jest configuration for development tests
+- Coverage collection settings
+- Test timeout and environment configuration
+- Module name mapping and transforms
+
+**`jest.pi.config.js`**
+- Raspberry Pi specific test configuration
+- Extended timeouts for hardware operations
+- Hardware-focused coverage settings
+- Pi environment detection and setup
+
+**`scripts/run-pi-tests.sh`**
+- Comprehensive Pi hardware test runner
+- Hardware prerequisite validation
+- User permission checking (gpio, i2c groups)
+- Command-line options for different test modes
+
+#### Test Environment Features
+
+**Automatic Platform Detection:**
+- Uses `brewdefs.isRaspPi()` to detect Raspberry Pi hardware
+- Development systems: Hardware tests automatically skip
+- Pi systems: Hardware tests execute with real device validation
+
+**Hardware Safety Measures:**
+- Non-destructive testing operations
+- Emergency cleanup on process signals
+- Resource management and proper shutdown
+- Timeout protection for all hardware operations
+
+**Mocking Strategy:**
+- Complete hardware abstraction for development
+- GPIO operations simulated with virtual responses
+- I2C bus operations mocked with device emulation
+- Temperature sensors provide realistic simulated data
+- Database operations use test-specific configuration
+- External APIs return predefined mock responses
+
+---
+
 ## File Organization Summary
 
 ```
@@ -425,11 +532,19 @@ brewnode-server/
 │   └── sim/                     # Hardware simulation
 ├── 📚 Third-Party Libraries
 │   └── ABElectronics_NodeJS_Libraries/
+├── 🧪 Test Suites
+│   ├── tests/unit/              # Unit tests (78 tests)
+│   ├── tests/integration/       # Integration tests (26 tests)
+│   ├── tests/hardware/          # Raspberry Pi hardware tests (22 tests)
+│   ├── setup.js                 # Global test configuration
+│   ├── jest.config.js           # Jest test configuration
+│   ├── jest.pi.config.js        # Pi-specific test configuration
+│   └── scripts/run-pi-tests.sh  # Pi hardware test runner
 └── 📖 Documentation
     └── docs/                    # Project documentation
 ```
 
-**Total Estimated Lines of Code:** ~10,000+ lines
+**Total Estimated Lines of Code:** ~12,000+ lines
 **Primary Language:** JavaScript (Node.js)
 **Architecture:** Microservices with hardware abstraction
 **Deployment Target:** Raspberry Pi (with simulation fallback)

@@ -218,10 +218,16 @@ Robust error handling with graceful degradation:
 6. Include comprehensive error handling
 
 ### Testing Strategy
-- Unit tests for individual services
-- Integration tests for service communication
-- Hardware simulation for CI/CD
-- Performance testing with realistic loads
+- **Unit tests** for individual services (104 development tests)
+- **Integration tests** for service communication
+- **Pi hardware tests** for real Raspberry Pi validation (22 tests)
+- **Hardware simulation** for CI/CD and development
+- **Performance testing** with realistic loads
+
+**Test Execution:**
+- `npm test` - Development tests with mocked hardware
+- `npm run test:pi` - Pi hardware tests (auto-skips on non-Pi)
+- Tests automatically detect platform and adjust accordingly
 
 ### Performance Considerations
 - Sensor polling intervals optimized for brewing timescales

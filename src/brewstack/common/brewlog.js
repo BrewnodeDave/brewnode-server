@@ -69,6 +69,7 @@ module.exports = {
 	},
 
 	info(msg, data = '') {
+		return; //temp disable logging
 		if (data) {
 			if (gLogger) {
 				gLogger.info(msg, ` ${data}`);
