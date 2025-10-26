@@ -17,6 +17,7 @@
  * @requires promise
  * @desc There are two pumps in the system. This module is used to switch them on and off. An event is emitted when the state of the pump changes.
  */
+const { mash } = require('../../controllers/brewnode.js');
 const brewdefs = require('../brewstack/common/brewdefs.js');
 const brewlog  = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
@@ -181,8 +182,14 @@ module.exports = {
 	stop(opt) {
 		return new Promise((resolve, reject) => {
 			pumpStop(mashPump);
+			mashPump.publishState = null;
+			mashPump = null;
 			pumpStop(kettlePump);
+			kettlePump.publishState = null;
+			kettlePump = null;
 			pumpStop(chillPump);
+			chillPump.publishState = null;
+			chillPump = null;
 			started = false;
 			brewlog.info("pump.js", "stopped");
 			resolve(opt);		
