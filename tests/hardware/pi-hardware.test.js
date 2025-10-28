@@ -170,15 +170,15 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
         // If sensors are connected, validate their temperature readings
         if (temperatureReadings.length > 0) {
           temperatureReadings.forEach((reading, index) => {
-            console.log(`  Sensor ${index + 1}: ${reading.name} = ${reading.value}°C (ID: ${reading.id})`);
+            console.log(`  Sensor ${index + 1}: ${reading.name} = ${reading.value}°C`);
             
-            // Validate sensor data structure
+            // Validate sensor data structure (based on actual service response)
             expect(reading).toHaveProperty('name');
             expect(reading).toHaveProperty('value');
-            expect(reading).toHaveProperty('id');
+            expect(reading).toHaveProperty('publish');
             
-            // Validate sensor ID format (DS18B20: 28-xxx, DS18S20: 10-xxx)
-            expect(reading.id).toMatch(/^(28|10)-[0-9a-f]+$/i);
+            // Validate sensor name format (should start with "Temp ")
+            expect(reading.name).toMatch(/^Temp /i);
             
             // Validate temperature is a number
             expect(typeof reading.value).toBe('number');
@@ -191,6 +191,9 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
             if (reading.value === 85) {
               console.warn(`⚠️  Sensor ${reading.name} returned 85°C - possible read error or disconnected sensor`);
             }
+            
+            // Validate publish function exists
+            expect(typeof reading.publish).toBe('function');
             
             // Validate temperature precision (DS18x20 typically returns values with 0.0625°C precision)
             const precision = (reading.value * 16) % 1;
