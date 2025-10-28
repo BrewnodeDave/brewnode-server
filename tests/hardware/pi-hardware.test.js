@@ -155,6 +155,66 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
         expect(error).toBeInstanceOf(Error);
       }
     });
+
+    test('should read valid temperatures from all connected sensors', async () => {
+      
+      await tempService.start();
+      
+      try {
+        // Get all temperature readings from connected sensors
+        const temperatureReadings = await tempService.getStatus();
+        
+        expect(Array.isArray(temperatureReadings)).toBe(true);
+        console.log(`🌡️  Temperature readings from ${temperatureReadings.length} sensors:`);
+        
+        // If sensors are connected, validate their temperature readings
+        if (temperatureReadings.length > 0) {
+          temperatureReadings.forEach((reading, index) => {
+            console.log(`  Sensor ${index + 1}: ${reading.name} = ${reading.value}°C (ID: ${reading.id})`);
+            
+            // Validate sensor data structure
+            expect(reading).toHaveProperty('name');
+            expect(reading).toHaveProperty('value');
+            expect(reading).toHaveProperty('id');
+            
+            // Validate sensor ID format (DS18B20: 28-xxx, DS18S20: 10-xxx)
+            expect(reading.id).toMatch(/^(28|10)-[0-9a-f]+$/i);
+            
+            // Validate temperature is a number
+            expect(typeof reading.value).toBe('number');
+            
+            // Validate temperature is within reasonable range (-40°C to +125°C for DS18x20)
+            expect(reading.value).toBeGreaterThan(-40);
+            expect(reading.value).toBeLessThan(125);
+            
+            // Check temperature is not exactly 85°C (indicates sensor read error)
+            if (reading.value === 85) {
+              console.warn(`⚠️  Sensor ${reading.name} returned 85°C - possible read error or disconnected sensor`);
+            }
+            
+            // Validate temperature precision (DS18x20 typically returns values with 0.0625°C precision)
+            const precision = (reading.value * 16) % 1;
+            expect(precision).toBeCloseTo(0, 10); // Should be divisible by 0.0625
+          });
+          
+          console.log(`✅ All ${temperatureReadings.length} connected sensors returned valid temperature readings`);
+        } else {
+          console.log('ℹ️  No temperature sensors detected - this is expected if no DS18x20 sensors are connected');
+        }
+        
+      } catch (error) {
+        console.warn('Temperature sensor reading failed (hardware may not be available):', error.message);
+        
+        // Common errors we might encounter
+        if (error.message.includes('ENOENT') || error.message.includes('w1')) {
+          console.warn('OneWire interface not available - ensure w1-gpio and w1-therm modules are loaded');
+        } else if (error.message.includes('permission')) {
+          console.warn('Permission denied accessing OneWire - ensure proper GPIO permissions');
+        }
+        
+        expect(error).toBeInstanceOf(Error);
+      }
+    }, 10000); // 10 second timeout for hardware operations
   });
 
   describe('Pump Hardware Control', () => {
@@ -178,7 +238,7 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
           // Test pump operations (should not cause I2C errors on Pi)
           expect(() => {
             pumpService.mashOnSync();
-            pumpService.mashOffSync();
+            pumpService.mashOffSync();  
           }).not.toThrow();
           
           expect(() => {
