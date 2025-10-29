@@ -2,6 +2,7 @@
 
 const path = require("path");
 const http = require("http");
+const { execSync } = require("child_process");
 
 const cors = require("cors");
 const broker = require("./src/broker.js");
@@ -9,9 +10,66 @@ const socketio = require("socket.io");
 const oas3Tools = require("oas3-tools");
 
 const {start} = require("./src/start-stop.js");
+const brewdefs = require("./src/brewstack/common/brewdefs.js");
 
 const serverPort = 8080;
 const wsPort = 4000;
+
+/**
+ * Run Pi hardware validation tests before server startup
+ * @returns {Promise<boolean>} True if tests pass or not on Pi, false if tests fail
+ */
+async function validatePiHardware() {
+  // Only run Pi tests if we're actually on a Raspberry Pi
+  if (!brewdefs.isRaspPi()) {
+    console.log("ℹ️  Not running on Raspberry Pi - skipping hardware validation tests");
+    return true;
+  }
+
+  // Allow skipping hardware validation for development/debugging
+  if (process.env.SKIP_HARDWARE_TESTS === 'true') {
+    console.log("⚠️  SKIP_HARDWARE_TESTS=true - bypassing hardware validation (NOT RECOMMENDED FOR PRODUCTION)");
+    return true;
+  }
+
+  console.log("🔧 Running Pi hardware validation tests before server startup...");
+  
+  try {
+    // Run Pi hardware tests with timeout
+    const testCommand = "npm run test:pi --silent";
+    const startTime = Date.now();
+    
+    execSync(testCommand, { 
+      stdio: ['ignore', 'pipe', 'pipe'],
+      timeout: 30000 // 30 second timeout
+    });
+    
+    const duration = Date.now() - startTime;
+    console.log(`✅ Pi hardware tests passed in ${duration}ms - server startup approved`);
+    return true;
+    
+  } catch (error) {
+    console.error("❌ Pi hardware validation tests FAILED:");
+    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    
+    if (error.stdout) {
+      console.error("Test Output:");
+      console.error(error.stdout.toString());
+    }
+    
+    if (error.stderr) {
+      console.error("Test Errors:");
+      console.error(error.stderr.toString());
+    }
+    
+    console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.error("🛑 Server startup BLOCKED due to hardware validation failures");
+    console.error("   Please fix hardware issues before starting the brewery server");
+    console.error("   Check connections for: I2C devices, GPIO access, temperature sensors");
+    
+    return false;
+  }
+}
 
 // swaggerRouter configuration
 const options = {
@@ -51,22 +109,27 @@ insertMiddleware(app, corsMiddleware);
 // Initialize the Swagger middleware
 const httpServer = http.createServer(app).listen(serverPort, async function () {
   
-  const started = await start();
-
-  if (!started) {
-    console.error("Failed to start the server due to initialization errors.");
+  // Step 1: Validate Pi hardware if running on Raspberry Pi
+  const hardwareValid = await validatePiHardware();
+  if (!hardwareValid) {
+    console.error("🚨 CRITICAL: Hardware validation failed - shutting down server");
     process.exit(1);
   }
-  console.log("Server started successfully");
-  console.log(
-    "Your server is listening on http://localhost:%d",
-    serverPort
-  );
 
-  console.log(
-    "Swagger-ui is available on http://localhost:%d/docs",
-    serverPort
-  );
+  // Step 2: Start all brewery services
+  const started = await start();
+  if (!started) {
+    console.error("❌ Failed to start the server due to service initialization errors.");
+    process.exit(1);
+  }
+  
+  console.log("🎉 Server started successfully");
+  console.log("🌐 Your server is listening on http://localhost:%d", serverPort);
+  console.log("📚 Swagger-ui is available on http://localhost:%d/docs", serverPort);
+  
+  if (brewdefs.isRaspPi()) {
+    console.log("🔧 Running on Raspberry Pi - hardware validation completed");
+  }
 });
 
 const serverSocket = socketio(httpServer);
