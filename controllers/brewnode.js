@@ -234,8 +234,13 @@ async function setSimulationSpeed (req, res, next, factor) {
 };
 
 async function restart (req, res, next) {
-  await startStop.restart();
-  res.send(200, "Restarted server");
+  try {
+    await startStop.restart();
+    res.send(200, "Restarted server");
+  } catch (error) {
+    console.error("Error restarting server:", error);
+    res.send(500, "Internal Server Error");
+  }
 };
 
 async function glycolChill(req, res, next, onOff) {

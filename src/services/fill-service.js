@@ -43,7 +43,6 @@ module.exports = {
 	),
 	stop() {
 		return new Promise((resolve, reject) => {
-			brewlog.info("fill.js", "stopped");
 			resolve();
 		})
 	},

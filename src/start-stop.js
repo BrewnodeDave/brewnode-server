@@ -88,7 +88,7 @@ async function stop() {
 	await fan.stop();
 	await valves.stop();
 	await wdog.stop();
-	await flow.stop();
+	// await flow.stop();
 
 }
 

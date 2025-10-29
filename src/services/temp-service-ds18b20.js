@@ -205,6 +205,7 @@ module.exports = {
 				pollInterval = null;
 				
 				started = false;
+				probe.publishTemp = null;
 				probes.forEach(({name}) => broker.destroy(name));
 			}
 			brewlog.info("temp.js", "stopped");

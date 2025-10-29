@@ -365,7 +365,6 @@ module.exports = {
         return new Promise((resolve, reject) => {
             brewlog.debug("Sim Service", "Start");
 
-            _speedupFactor = getSimulationSpeed();
            //Do nothing if we're not simulating
            if (_speedupFactor === 1){
                 resolve();

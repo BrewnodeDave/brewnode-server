@@ -325,8 +325,7 @@ module.exports = {
 			});
 			
 			started = false;
-			brewlog.info("flow.js", "stopped");
-
+		
 			resolve();
 		});
 	},
