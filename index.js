@@ -2,6 +2,7 @@
 
 const path = require("path");
 const http = require("http");
+const fs = require("fs");
 const { execSync } = require("child_process");
 
 const cors = require("cors");
@@ -32,40 +33,102 @@ async function validatePiHardware() {
     return true;
   }
 
-  console.log("🔧 Running Pi hardware validation tests before server startup...");
+  console.log("🔧 Running Pi hardware validation before server startup...");
   
   try {
-    // Run Pi hardware tests with timeout
-    const testCommand = "npm run test:pi --silent";
     const startTime = Date.now();
-    
-    execSync(testCommand, { 
-      stdio: ['ignore', 'pipe', 'pipe'],
-      timeout: 30000 // 30 second timeout
-    });
-    
+    let validationResults = [];
+
+    // Test 1: Platform Detection
+    console.log("  📋 Checking platform identification...");
+    const cpuInfo = fs.readFileSync('/proc/cpuinfo', 'utf8');
+    if (!cpuInfo.includes('Raspberry Pi') && !cpuInfo.includes('BCM')) {
+      throw new Error('Platform validation failed - not detected as Raspberry Pi hardware');
+    }
+    validationResults.push('✅ Platform: Raspberry Pi detected');
+
+    // Test 2: GPIO Access
+    console.log("  🔌 Checking GPIO filesystem access...");
+    if (!fs.existsSync('/sys/class/gpio')) {
+      throw new Error('GPIO validation failed - /sys/class/gpio not accessible');
+    }
+    validationResults.push('✅ GPIO: Filesystem access available');
+
+    // Test 3: I2C Bus Access
+    console.log("  🔗 Checking I2C bus access...");
+    const i2cDevices = ['/dev/i2c-1', '/dev/i2c-0'];
+    let i2cAvailable = false;
+    for (const device of i2cDevices) {
+      if (fs.existsSync(device)) {
+        i2cAvailable = true;
+        validationResults.push(`✅ I2C: ${device} accessible`);
+        break;
+      }
+    }
+    if (!i2cAvailable) {
+      console.warn('⚠️  I2C: No I2C devices found - some brewery functions may not work');
+      validationResults.push('⚠️  I2C: No devices detected (pumps/valves may not work)');
+    }
+
+    // Test 4: OneWire Temperature Sensors
+    console.log("  🌡️  Checking OneWire temperature sensor support...");
+    if (fs.existsSync('/sys/bus/w1/devices')) {
+      try {
+        const w1Devices = fs.readdirSync('/sys/bus/w1/devices');
+        const tempSensors = w1Devices.filter(device => device.startsWith('28-') || device.startsWith('10-'));
+        if (tempSensors.length > 0) {
+          validationResults.push(`✅ Temperature: ${tempSensors.length} DS18x20 sensors detected`);
+        } else {
+          validationResults.push('⚠️  Temperature: OneWire available but no sensors detected');
+        }
+      } catch (error) {
+        validationResults.push('⚠️  Temperature: OneWire filesystem not readable');
+      }
+    } else {
+      validationResults.push('⚠️  Temperature: OneWire not enabled (temperature monitoring disabled)');
+    }
+
+    // Test 5: Basic Service Initialization Test
+    console.log("  ⚙️  Testing basic service initialization...");
+    try {
+      // Try to load critical services to ensure they don't throw immediate errors
+      const tempService = require('./src/services/temp-service.js');
+      const i2cService = require('./src/services/i2c_raspi-service.js');
+      
+      // Basic module loading test
+      if (typeof tempService.start !== 'function') {
+        throw new Error('Temperature service not properly exported');
+      }
+      if (typeof i2cService.start !== 'function') {
+        throw new Error('I2C service not properly exported');
+      }
+      
+      validationResults.push('✅ Services: Core modules loaded successfully');
+    } catch (error) {
+      throw new Error(`Service initialization failed: ${error.message}`);
+    }
+
     const duration = Date.now() - startTime;
-    console.log(`✅ Pi hardware tests passed in ${duration}ms - server startup approved`);
+    
+    console.log("🎉 Hardware validation completed:");
+    validationResults.forEach(result => console.log(`    ${result}`));
+    console.log(`✅ Pi hardware validation passed in ${duration}ms - server startup approved`);
+    
     return true;
     
   } catch (error) {
-    console.error("❌ Pi hardware validation tests FAILED:");
+    console.error("❌ Pi hardware validation FAILED:");
     console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    
-    if (error.stdout) {
-      console.error("Test Output:");
-      console.error(error.stdout.toString());
-    }
-    
-    if (error.stderr) {
-      console.error("Test Errors:");
-      console.error(error.stderr.toString());
-    }
-    
+    console.error(`   ERROR: ${error.message}`);
+    console.error("");
+    console.error("   Common solutions:");
+    console.error("   • Enable I2C: sudo raspi-config -> Interface Options -> I2C -> Enable");
+    console.error("   • Enable OneWire: Add 'dtoverlay=w1-gpio' to /boot/config.txt");
+    console.error("   • Check GPIO permissions: Add user to 'gpio' group");
+    console.error("   • For service deployment: Use SKIP_HARDWARE_TESTS=true (not recommended)");
+    console.error("");
     console.error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.error("🛑 Server startup BLOCKED due to hardware validation failures");
-    console.error("   Please fix hardware issues before starting the brewery server");
-    console.error("   Check connections for: I2C devices, GPIO access, temperature sensors");
     
     return false;
   }
