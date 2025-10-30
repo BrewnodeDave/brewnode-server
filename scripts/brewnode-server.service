@@ -1,0 +1,38 @@
+[Unit]
+Description=BrewNode Server - Raspberry Pi Brewery Automation
+Documentation=https://github.com/BrewnodeDave/brewnode-server
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=dave
+Group=gpio
+WorkingDirectory=/home/dave/git/brewnode-server
+Environment=NODE_ENV=production
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Use the startup script that handles I2C module loading
+ExecStart=/home/dave/git/brewnode-server/scripts/start-brewery-service.sh
+
+# Restart configuration
+Restart=always
+RestartSec=10
+StartLimitInterval=60s
+StartLimitBurst=3
+
+# Security and resource limits
+MemoryLimit=512M
+CPUQuota=80%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=brewnode-server
+
+# Required capabilities for GPIO/I2C access
+AmbientCapabilities=CAP_SYS_ADMIN
+CapabilityBoundingSet=CAP_SYS_ADMIN
+
+[Install]
+WantedBy=multi-user.target

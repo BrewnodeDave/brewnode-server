@@ -3,7 +3,6 @@
 const path = require("path");
 const http = require("http");
 const fs = require("fs");
-const { execSync } = require("child_process");
 
 const cors = require("cors");
 const broker = require("./src/broker.js");
