@@ -9,6 +9,7 @@
     "start": "node index.js",
     "start:safe": "echo 'Starting with hardware validation...' && node index.js",
     "start:skip-tests": "SKIP_HARDWARE_TESTS=true node index.js",
+    "start:service": "./scripts/start-brewery-service.sh",
     "test": "jest --forceExit",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
