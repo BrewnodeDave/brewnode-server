@@ -354,12 +354,15 @@ const delay = (delaySecs, name="") => new Promise((resolve, reject) => {
     }, delaySecs*1000 / getSimulationSpeed());
 });
 
+function    getSimulationSpeed () {return _speedupFactor}
+
+
 module.exports = {
     delay,
     setKettleTemp: temp => ds18x20.set(KETTLE_TEMP, temp),
     getKettleVolume: () => simState.KettleVolume,
     setKettleVolume: vol => simState.KettleVolume = vol,
-    getSimulationSpeed: () => _speedupFactor,
+    getSimulationSpeed,
     setSimulationSpeed: (factor) => _speedupFactor = factor,
     start() {
         return new Promise((resolve, reject) => {

@@ -121,7 +121,7 @@ console.log({reached},{chillStep});
 		const secsToGo = Math.trunc(msToGo2 / 1000);
 		const nsToGo = (msToGo2 * 1E6);
 		const hrTime = [secsToGo, nsToGo - (secsToGo * 1E9)];
-		timeToText(`Fermentation(${desiredFermentTemp}C)=`, hrsecs(hrTime));
+		timeToText(`Ferment(${desiredFermentTemp}C)=`, hrsecs(hrTime));
 		if (msToGo2 <= 0) {
 			console.log("Fermentation Step Done");
 			fermentDone();
