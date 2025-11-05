@@ -247,7 +247,7 @@ module.exports = {
 
 	stop: () => {
 		_simulationSpeed = 1;
-		brewlog.info("temp-controller-service", "Stop");
+		brewlog.warn("temp-controller-service", "Stop");
 		pause();
 		broker.unSubscribe(tempListener);
 		broker.unSubscribe(tempListener);

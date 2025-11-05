@@ -27,7 +27,6 @@
 
 const broker = require('../broker.js');
 const pump = require('../services/pump-service.js');
-const valve = require('../services/valve-service.js');
 const ds18x20 = require('./ds18b20.js');
 // const flow = require('../services/flow-service.js');
 const brewlog = require('../brewstack/common/brewlog.js');
@@ -125,7 +124,6 @@ let coolingTimer = null;
 function change(item){
     return value => {
         if (simState[item] !== value){
-            console.log("Sim change",item, simState[item], value);
             simState[item] = value;
             simStateChange();
         }
@@ -473,7 +471,7 @@ module.exports = {
             clearInterval(simInterval);
             simInterval = null;
 
-            brewlog.info("sim.js", "stopped");
+            brewlog.warn("sim.js", "stopped");
 
             resolve();
         });

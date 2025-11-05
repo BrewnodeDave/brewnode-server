@@ -7,7 +7,6 @@
  */
 
 'use strict';
-const path = require('path');
 const fs = require('fs');
 
 const tempService = require('../src/services/temp-service.js');
@@ -29,7 +28,7 @@ const temp = require('../src/services/temp-service.js');
 const valves = require('../src/services/valve-service.js');
 const tempController = require('../src/services/temp-controller-service.js');
 const startStop = require('../src/start-stop.js');
-const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/broker.js');
+const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/publish.js');
 
 const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
@@ -38,6 +37,7 @@ const {getSimulationSpeed} = require('../src/sim/sim.js');
 const {DIR_OUTPUT, setDir, writeBit} = require('../src/services/i2c_raspi-service.js');
 const flowTimeoutSecs = 5;
 
+const brewlog = require('../src/brewstack/common/brewlog.js');
 
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
@@ -235,6 +235,7 @@ async function setSimulationSpeed (req, res, next, factor) {
 
 async function restart (req, res, next) {
   try {
+    brewlog.warn("Restarting server...");
     await startStop.restart();
     res.send(200, "Restarted server");
   } catch (error) {
@@ -596,11 +597,9 @@ const glycolPump = getPump("Pump Glycol");
 
 async function streamLog (req, res, next) {
   try {
-  const filePath = path.join(__dirname, '../log.txt'); 
-  const fileStream = fs.createReadStream(filePath);
-
-  res.setHeader('Content-Type', 'text/plain');
-  fileStream.pipe(res);
+    const fileStream = fs.createReadStream(brewlog.filePath());
+    res.setHeader('Content-Type', 'text/plain');
+    fileStream.pipe(res);
   }catch (err) {
     console.error('Error:', err);
     res.status(500).send('Internal Server Error');

@@ -105,7 +105,7 @@ module.exports = {
 			setState(0);
 			broker.unSubscribe(tempKettleListener);
 			broker.destroy(FAN_DEF.name);
-			brewlog.info("fan-service", "Stop");
+			brewlog.warn("fan-service", "Stop");
 
 			publishFanState = null;
 			resolve();

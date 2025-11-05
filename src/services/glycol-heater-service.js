@@ -77,7 +77,7 @@ module.exports = {
 			broker.destroy(HEAT_DEF.name);
 
 			setState(HEAT_OFF);
-			brewlog.info("gylcol-heater.js", "stopped");
+			brewlog.warn("gylcol-heater.js", "stopped");
 
 			publishState = null;
 			resolve();	

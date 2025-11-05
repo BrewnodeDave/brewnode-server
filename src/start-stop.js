@@ -18,11 +18,10 @@ const brewdefs = require('../src/brewstack/common/brewdefs.js');
 const sim 		= require('./sim/sim.js');
 const broker 	= require('./broker.js');
 const brewfatherService = require('./services/brewfather-service.js');
+const brewlog = require('./brewstack/common/brewlog.js');
 
 async function start() {
-
-	publishLog = broker.create('log'); 
-
+	brewlog.info("Starting BrewNode services...");
 	const NO_SIMULATION = 1;
 
 	const simulationSpeed = brewdefs.isRaspPi() ? NO_SIMULATION : 10;
@@ -69,6 +68,7 @@ async function start() {
 }
 
 async function stop() {
+	brewlog.warn("Shutting down BrewNode services...");
 	broker.destroy('log');
 
 	// brewfather.stop();

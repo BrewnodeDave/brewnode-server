@@ -12,12 +12,16 @@
  * @desc Provides functions to logs all messages to Rollbar and a local text file.
  */
 
+const path = require('path');
+const fs = require('fs');
+const {logPublish} = require('../../publish.js');
 
 const brewdefs = require('./brewdefs.js');
 let rollbar;
 const Rollbar = require('rollbar');
 const mysqlService = require('../../services/mysql-service.js');
 
+								
 let prevPower = null;
 if (brewdefs.ROLLBAR === true) {
 	rollbar = new Rollbar({
@@ -29,21 +33,53 @@ if (brewdefs.ROLLBAR === true) {
 	rollbar = { init() { }, debug(a, b) { }, info(a, b) { }, warning(a, b) { }, error(a, b) { }, critical(a, b) { } };
 }
 
-let gLogger = console;
+function filePath() {
+	const logFile = path.join(__dirname, '../log.txt');
+	if (!fs.existsSync(logFile)) {
+		fs.writeFileSync(logFile, '');
+	}
 
-const gSensorLogger = [];
+	return logFile;
+}
+
+function log(type, message, data='') {
+	const logFile = filePath();
+	const timeStamp = new Date().toISOString();
+
+	// Add icons for each log type
+	const icons = {
+		info: 'ℹ️',
+		warn: '⚠️',
+		error: '❌',
+		debug: '🐛'
+	};
+	
+	const icon = icons[type] || '';
+	const string = `${timeStamp} ${icon} ${message} : ${data}`;
+	fs.appendFileSync(logFile, `${string}\n`);
+
+	logPublish(string);
+
+}
+
+const gLogger = {
+	info: (message, data) => log('info', message, data),
+	warn: (message, data) => log('warn', message, data),
+	error: (message, data) => log('error', message, data),
+	debug: (message, data) => log('debug', message, data)
+}
 
 let _debug = false;
 
-
 module.exports = {
+	filePath,
 	sensorStop(sensorName) {
-		gSensorLogger[sensorName] = undefined;
+		gLogger = undefined;
 	},
 
 	/** append data value to sensor log file */
 	sensorLog(sensorName, value) {
-		if (gSensorLogger[sensorName] === undefined) {
+		if (gLogger === undefined) {
 			return;
 		} else {
 			if (sensorName === "Watchdog") {
@@ -51,79 +87,84 @@ module.exports = {
 			}
 			else if (sensorName === "Kettle Heater") {
 				//Don't write heater to console
-				gSensorLogger[sensorName].info(`${value}`);
+				gLogger.info(`${value}`);
 			}
 			else if (sensorName.substring(0, 4) === "Flow") {
-				gSensorLogger[sensorName].info(`${value.rate},${value.delta}`);
+				gLogger.info(`${value.rate},${value.delta}`);
 			}
 			else if (sensorName === "Power") {
-				gSensorLogger[sensorName].info(`${value}`);
+				gLogger.info(`${value}`);
 				//Only write delta to console		
 				if (value !== prevPower) {
 				}
 				prevPower = value;
 			} else {
-				const entry = gSensorLogger[sensorName].info(`${value}`);
+				gLogger.info(`${value}`);
 			}
 		}
 	},
 
 	info(msg, data = '') {
-		return; //temp disable logging
-		if (data) {
-			if (gLogger) {
-				gLogger.info(msg, ` ${data}`);
-			}
+		if (gLogger === undefined) {
+			return;
 		} else {
-			if (gLogger) {
+			if (data) {
+				gLogger.info(msg, ` ${data}`);
+			} else {
 				gLogger.info(msg);
 			}
 		}
 		mysqlService.log(`${msg}: ${data}`);
 	},
 
-	warning(msg, data = '') {
+	warn(msg, data = '') {
 		//_publishLog(`${msg} ${data}`);
 		rollbar.warning(msg);
-		if (data) {
-			gLogger.warn(msg, ` ${data}`);
+		if (gLogger === undefined) {
+			return;
 		} else {
-			gLogger.warn(msg);
+			if (data) {
+				gLogger.warn(msg, ` ${data}`);
+			} else {
+				gLogger.warn(msg);
+			}
 		}
 	},
 
 	error(msg, data = '') {
-		//_publishLog(`${msg} ${data}`);
-console.log(msg,data);
-//		rollbar.error(msg, data, (err, data2) => {
-//			if (err) {
-//				console.log("ROLLBAR: an error occurred", err);
-//			}
-		//});
-
-		if (data) {
-			gLogger.error(msg, ` ${data}`);
+		if (gLogger === undefined) {
+			return;
 		} else {
-			gLogger.error(msg);
-		}
+			rollbar.error(msg);
+			if (data) {
+				gLogger.error(msg, ` ${data}`);
+			} else {
+				gLogger.error(msg);
+			}
+		}	
 	},
 
 	critical(msg, data = '') {
-		console.log(data);
-		rollbar.critical(msg);
-		if (data) {
-			gLogger.error(msg, ` ${data}`);
+		if (gLogger === undefined) {
+			return;
 		} else {
-			gLogger.error(msg);
+			rollbar.critical(msg);
+			if (data) {
+				gLogger.error(msg, ` ${data}`);
+			} else {
+				gLogger.error(msg);
+			}
 		}
 	},
 
 	debug(msg, data = '') {
-		//rollbar.debug(msg);
-		//_publishLog(`${msg} ${data}`);
-
-		if (_debug) {
-			gLogger.debug(msg, ` ${data}`);
+		if (gLogger === undefined) {
+			return;
+		} else {
+			//rollbar.debug(msg);
+			if (_debug) {
+				gLogger.debug(msg, ` ${data}`);
+			}
 		}
 	},
 

@@ -74,7 +74,6 @@ module.exports = {
 	 * Stop the Watchdog service
  	*/
 	stop() {
-		brewlog.info("Stop the Watchdog service");
 		return new Promise((resolve, reject) => {
 			if (started === false){
 				resolve();
@@ -84,7 +83,7 @@ module.exports = {
 			clearInterval(heartbeat);
 			heartbeat = null;
 			broker.destroy(WATCHDOG_EVENT_NAME);
-			brewlog.info("wdog.js", "stopped");
+			brewlog.warn("wdog.js", "stopped");
 			bark = null;
 			resolve();
 		});

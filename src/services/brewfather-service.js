@@ -64,7 +64,7 @@ module.exports = {
         return;
     },
     stop: () => {
-        brewlog.info("brewfather-service", "Stop");
+        brewlog.warn("brewfather-service", "Stop");
         if (timer !== null) {
             clearInterval(timer);
             timer = null;
