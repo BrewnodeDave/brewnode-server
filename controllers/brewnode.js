@@ -30,14 +30,14 @@ const tempController = require('../src/services/temp-controller-service.js');
 const startStop = require('../src/start-stop.js');
 const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/publish.js');
 
+const {brewlog, deleteAllLogs} = require('../src/brewstack/common/brewlog.js');
+
 const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
 const mysqlService = require('../src/services/mysql-service.js');
 const {getSimulationSpeed} = require('../src/sim/sim.js');
 const {DIR_OUTPUT, setDir, writeBit} = require('../src/services/i2c_raspi-service.js');
 const flowTimeoutSecs = 5;
-
-const brewlog = require('../src/brewstack/common/brewlog.js');
 
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
@@ -607,10 +607,20 @@ async function streamLog (req, res, next) {
   }
 };
 
+async function deleteLogs (req, res, next, onOff) {
+  const result = deleteAllLogs();
+  if (result) {
+    res.send(200, "All logs deleted");
+  } else {
+    res.send(404, "No logs to delete");
+  }
+};
+
 module.exports = {
   boil,
   chill,
   chillWortInValve: getValve("Valve Chiller wort-in"),
+  deleteLogs,
   extractor,
   fanStatus,
   ferment,

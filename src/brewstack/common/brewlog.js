@@ -42,6 +42,15 @@ function filePath() {
 	return logFile;
 }
 
+function deleteAllLogs() {
+	const logFile = filePath();
+	if (fs.existsSync(logFile)) {
+		fs.unlinkSync(logFile);
+		return true;
+	}
+	return false;
+}
+
 function log(type, message, data='') {
 	const logFile = filePath();
 	const timeStamp = new Date().toISOString();
@@ -72,6 +81,7 @@ const gLogger = {
 let _debug = false;
 
 module.exports = {
+	deleteAllLogs,
 	filePath,
 	sensorStop(sensorName) {
 		gLogger = undefined;
