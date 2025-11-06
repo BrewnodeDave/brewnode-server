@@ -46,7 +46,7 @@ function deleteAllLogs() {
 	const logFile = filePath();
 	if (fs.existsSync(logFile)) {
 		fs.unlinkSync(logFile);
-		return true;
+		return true; 
 	}
 	return false;
 }
