@@ -45,7 +45,8 @@ function logTemps(fermenter, ambient, glycol) {
         "aux_temp": glycol, //Fridge Temp
         "comment": "Brewnode",
         "beer": brewname,
-        "ext_temp": ambient,
+        "ext_temp": ambient,//Room Temp,
+        "report_source": "Brewnode"
     });
     return post(data);
 }

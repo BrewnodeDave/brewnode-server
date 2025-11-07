@@ -53,7 +53,7 @@ async function start() {
 		console.log(err.message);
 	}
 
-	await brewfatherService.start();
+	await brewfatherService.start(15/simulationSpeed);
 
 	await fill.start(simulationSpeed);
 	try{
