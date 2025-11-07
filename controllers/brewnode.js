@@ -30,7 +30,7 @@ const tempController = require('../src/services/temp-controller-service.js');
 const startStop = require('../src/start-stop.js');
 const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/publish.js');
 
-const {brewlog, deleteAllLogs} = require('../src/brewstack/common/brewlog.js');
+const brewlog = require('../src/brewstack/common/brewlog.js');
 
 const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
@@ -608,7 +608,7 @@ async function streamLog (req, res, next) {
 };
 
 async function deleteLogs (req, res, next, onOff) {
-  const result = deleteAllLogs();
+  const result = brewlog.deleteAllLogs();
   if (result) {
     res.send(200, "All logs deleted");
   } else {
