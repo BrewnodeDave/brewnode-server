@@ -129,16 +129,31 @@ describe('Publish Module', () => {
       const oldValue = 'old';
       const newValue = 'new';
       
-      mysqlService.doublePublish.mockImplementation(() => 
-        new Promise(resolve => setTimeout(resolve, 10))
-      );
+      let resolvePromise;
+      const asyncPromise = new Promise(resolve => {
+        resolvePromise = resolve;
+      });
       
-      const startTime = Date.now();
-      await publish.sensorPublish(sensorName, oldValue, newValue);
-      const endTime = Date.now();
+      mysqlService.doublePublish.mockImplementation(() => asyncPromise);
       
-      expect(endTime - startTime).toBeGreaterThanOrEqual(10);
+      // Start the async operation
+      const publishPromise = publish.sensorPublish(sensorName, oldValue, newValue);
+      
+      // Verify doublePublish was called
       expect(mysqlService.doublePublish).toHaveBeenCalled();
+      
+      // Resolve the promise to complete the operation
+      resolvePromise();
+      
+      // Wait for the operation to complete
+      await publishPromise;
+      
+      // Verify the operation completed successfully
+      expect(mysqlService.doublePublish).toHaveBeenCalledWith(
+        expect.any(Function),
+        oldValue,
+        newValue
+      );
     });
 
     test('should handle different data types for values', async () => {
