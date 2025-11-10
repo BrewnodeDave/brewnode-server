@@ -72,9 +72,11 @@ async function whatsBrewing (req, res, next) {
       recipe.name = `${recipe.name}-${response.data[0].batchNo}`;
       res.send(200, recipe);
     } else {
+      progressPublish.error(`Multiple brews in progress!`);
       res.send(400, `Multiple brews in progress!`);
     }
   } catch (error) {
+    progressPublish.critical(`Error getting brew info: ${error.message}`);
     res.send(500, error.message);
   }
 }
@@ -85,6 +87,7 @@ async function i2cSet(req, res, next, bit, value) {
     const result = writeBit(bit, value);
     res.send(200, result);
   } catch (error) {
+    progressPublish.critical(`Error in i2cSet: ${error.message}`);
     res.send(500, error.message);
   }
 }
@@ -95,6 +98,7 @@ async function getBrewData (req, res, next) {
     const latest = latestTimestamp ? latestTimestamp : '';
     res.send(200, {highcharts, latestTimestamp:latest});
   }catch (err) {
+    progressPublish.critical(`Error getting brew data: ${err.message}`);
     res.send(500, err.message);
   }
 }
@@ -123,8 +127,10 @@ async function getInventory (req, res, next) {
     if (error.response && error.response.status === 429) {
       const retryAfter = error.response.headers['retry-after'];
       const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : 0;
+      progressPublish.critical(`Rate limit exceeded. Retry after ${retryAfterSeconds} seconds.`);
       res.send(429, `Too many requests. Please retry after ${retryAfterSeconds} seconds.`);
     } else {
+      progressPublish.critical(`Error getting inventory: ${error.message}`);
       res.status(error.response ? error.response.status : 500).send(error.message);
     }
   };
@@ -239,7 +245,7 @@ async function restart (req, res, next) {
     await startStop.restart();
     res.send(200, "Restarted server");
   } catch (error) {
-    console.error("Error restarting server:", error);
+    progressPublish.error("Error restarting server:", error);
     res.send(500, "Internal Server Error");
   }
 };
@@ -327,14 +333,13 @@ async function sensorStatus(req, res, next) {
         result = result.flat();
         break;
       default:
-        console.log(`Unknown sensor name: ${req.query.name}`);
+        progressPublish.error(`Unknown sensor name: ${req.query.name}`);
         res.send(400, `Unknown sensor name: ${req.query.name}`);
         return;
     }
-    console.log(result);
     res.status(200).json(result);
   } catch (error) {
-    console.log('Error getting status:', error);
+    progressPublish.error(`Error getting status: ${error.message}`);
     res.send(500, 'Internal Server Error');
   }
 }
@@ -351,7 +356,7 @@ async function pumpsStatus(req, res, next) {
   try {
     res.status(200).json(pumps.getStatus().flat());
   } catch (error) {
-    console.log('Error getting status:', error);
+    progressPublish.error(`Error getting status: ${error.message}`);
     res.send(500, 'Internal Server Error');
   }
 }
@@ -368,7 +373,7 @@ async function valvesStatus(req, res, next) {
   try {
     res.status(200).json(valves.getStatus().flat());
   } catch (error) {
-    console.log('Error getting status:', error);
+    progressPublish.error(`Error getting status: ${error.message}`);
     res.send(500, 'Internal Server Error');
   }
 }
@@ -388,7 +393,7 @@ async function fanStatus(req, res, next) {
   try {
     res.status(200).json(fan.getStatus());
   } catch (error) {
-    console.log('Error getting status:', error);
+    progressPublish.error(`Error getting status: ${error.message}`);
     res.send(500, 'Internal Server Error');
   }
 }
@@ -535,6 +540,7 @@ function doMashStep(step){
         response: `Mash Step Complete: ${tempC}C for ${mins} mins`
       }
     } catch (err) { 
+      progressPublish.error(`Error in mash step: ${err.message}`);
       return {
         status: 500,
         response: err.message
@@ -562,6 +568,7 @@ async function mash (req, res, next, steps) {
   const errs = stepResponses.filter((val) => val.status === 500);
 
   if (errs.length > 0) {
+    progressPublish.error(`Error in mash step: ${errs[0].response.message}`);
     res.send(500, errs[0].response.message);
     return;
   }else{
@@ -587,7 +594,6 @@ async function fill (req, res, next, litres) {
 
 async function setBrewname (req, res, next, name) {
   const result = await mysqlService.setBrewname(name);
-  //progressPublish(name);
   result.err ? res.status(500).send(res.err) : res.send(200, result);
 } 
 
@@ -601,7 +607,7 @@ async function streamLog (req, res, next) {
     res.setHeader('Content-Type', 'text/plain');
     fileStream.pipe(res);
   }catch (err) {
-    console.error('Error:', err);
+    progressPublish.error(`Error streaming log: ${err.message}`);
     res.status(500).send('Internal Server Error');
     return;
   }
@@ -612,6 +618,7 @@ async function deleteLogs (req, res, next, onOff) {
   if (result) {
     res.send(200, "All logs deleted");
   } else {
+    progressPublish.error("No logs to delete");
     res.send(404, "No logs to delete");
   }
 };
