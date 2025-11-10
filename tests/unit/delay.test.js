@@ -1,6 +1,9 @@
 // Mock brewlog before requiring delay
 jest.mock('../../src/brewstack/common/brewlog.js', () => ({
-  info: jest.fn()
+  info: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn()
 }));
 
 const delay = require('../../src/brewstack/common/delay.js');

@@ -8,6 +8,8 @@ jest.mock('../../controllers/brewfather-stream.js', () => ({
 jest.mock('../../src/brewstack/common/brewlog.js', () => ({
   info: jest.fn(),
   error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn()
 }));
 
 jest.mock('../../src/services/temp-service.js', () => ({
@@ -160,7 +162,7 @@ describe('Brewfather Service', () => {
     test('should log stop message', () => {
       brewfatherService.stop();
       
-      expect(brewlog.info).toHaveBeenCalledWith(
+      expect(brewlog.warn).toHaveBeenCalledWith(
         "brewfather-service",
         "Stop"
       );

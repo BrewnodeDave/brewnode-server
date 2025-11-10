@@ -14,6 +14,8 @@ jest.mock('../../src/services/pump-service.js', () => ({
 jest.mock('../../src/brewstack/common/brewlog.js', () => ({
   info: jest.fn(),
   error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn()
 }));
 
 const valves = require('../../src/services/valve-service.js');

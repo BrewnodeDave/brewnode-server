@@ -14,7 +14,6 @@
 
 const path = require('path');
 const fs = require('fs');
-const {logPublish} = require('../../publish.js');
 
 const brewdefs = require('./brewdefs.js');
 let rollbar;
@@ -67,7 +66,7 @@ function log(type, message, data='') {
 	const string = `${timeStamp} ${icon} ${message} : ${data}`;
 	fs.appendFileSync(logFile, `${string}\n`);
 
-	logPublish(string);
+	// logPublish(string); // Commented out to avoid circular dependency
 
 }
 

@@ -217,5 +217,26 @@ function create(sensorName) {
 	},
 
 	// Export the create function for services
-	create: create
-  }
+	create: create,
+
+	// Publish functions expected by tests
+	progressPublish: create("Progress"),
+	temperaturePublish: create("temperature"),
+	pumpPublish: create("pump"),
+	valvePublish: create("valve"),
+	sensorPublish: async function(sensorName, oldValue, newValue) {
+		if (oldValue !== newValue) {
+			await mysqlService.doublePublish(
+				(value, timestamp) => this.create(sensorName)(value, timestamp),
+				oldValue, 
+				newValue
+			);
+		}
+	},
+
+	remainingFillLitres: create("remainingFillLitres"),
+	remainingBoilMinutes: create("remainingBoilMinutes"),
+	remainingKettleMinutes: create("remainingKettleMinutes"),
+	remainingMashMinutes: create("remainingMashMinutes"),
+	remainingFermentDays: create("remainingFermentDays")
+};

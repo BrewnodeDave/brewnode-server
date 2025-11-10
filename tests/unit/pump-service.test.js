@@ -10,7 +10,8 @@ jest.mock('../../src/brewstack/common/brewdefs.js', () => ({
 jest.mock('../../src/brewstack/common/brewlog.js', () => ({
   info: jest.fn(),
   error: jest.fn(),
-  warn: jest.fn()
+  warn: jest.fn(),
+  debug: jest.fn()
 }));
 
 jest.mock('../../src/broker.js', () => ({
