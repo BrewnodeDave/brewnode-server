@@ -1,4 +1,4 @@
-tests/unit/temp-service.test.jsconst request = require('supertest');
+const request = require('supertest');
 
 // Mock all the hardware dependencies before importing the app
 jest.mock('../../src/start-stop.js', () => ({
