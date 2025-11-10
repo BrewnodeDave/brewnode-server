@@ -70,7 +70,7 @@ function log(type, message, data='') {
 
 }
 
-const gLogger = {
+let gLogger = {
 	info: (message, data) => log('info', message, data),
 	warn: (message, data) => log('warn', message, data),
 	error: (message, data) => log('error', message, data),
