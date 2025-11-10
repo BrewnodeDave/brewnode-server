@@ -77,7 +77,6 @@ function Pump(name, requestPin){
   this.on = async () => {	
     if (thisPump.state === OFF){
 		i2c.writeBit(thisPump.requestPin, ON);
-		brewlog.info(this.name,"ON");
 		await doublePublish(thisPump.publishState, 0, POWER);
 		thisPump.state = ON;
 	} 
@@ -87,7 +86,6 @@ function Pump(name, requestPin){
   this.onSync = (dutyCycle) => {
 	if (thisPump.state === OFF){
 		i2c.writeBit(thisPump.requestPin, ON);
-		brewlog.info(this.name,"ON");
 		doublePublish(thisPump.publishState, 0, POWER);
 		thisPump.state = ON;
 	}
@@ -96,7 +94,6 @@ function Pump(name, requestPin){
 
 	this.off = async () => {	
 		if (thisPump.state === ON){
-			brewlog.info(this.name,"OFF");
 			await doublePublish(thisPump.publishState, POWER, 0);
 			thisPump.state = OFF;
 		}
@@ -107,7 +104,6 @@ function Pump(name, requestPin){
 		if (thisPump.state === ON){
 			thisPump.state = OFF;
 			i2c.writeBit(thisPump.requestPin, OFF);
-			brewlog.info(this.name,"OFF Sync");
 			doublePublish(thisPump.publishState, POWER, 0);
 		}
 		return 0;
@@ -199,7 +195,6 @@ module.exports = {
 				chillPump = null;
 			}
 			started = false;
-			brewlog.info("pump.js", "stopped");
 			resolve(opt);		
 		});
 	},

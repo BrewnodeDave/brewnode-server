@@ -9,7 +9,7 @@
 'use strict';
 
 const http = require('http');
-
+const brewlog = require("../src/brewstack/common/brewlog.js");
 async function stream (req, res, next, 
   name, 
   temp, 
@@ -91,12 +91,14 @@ function post(data, id = process.env.BREWFATHER_CUSTOM_STREAM) {
 
     const req = http.request(options, res => {
       res.on("data", x => {
+        brewlog.info("brewfather-stream", `Response: ${x}`);
         resolve(res);
       });
     });
 
     req.on("error",err => {
-      reject(err)
+      brewlog.error("brewfather-stream", `Error: ${err}`);
+      reject(err);
     });
 
     req.write(data);

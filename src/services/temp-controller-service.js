@@ -130,8 +130,6 @@ function init(P, I, D) {
 			calculationInterval = CALCULATION_INTERVAL_MS / _simulationSpeed;
 		}
 		//Force a temperature reading
-		brewlog.info("getTemp", currentThermName);
-		
 		therm.getTemp(currentThermName)
 		.then(t => {
 			brewlog.info("init PID: Current Temp=",t);
@@ -247,7 +245,7 @@ module.exports = {
 
 	stop: () => {
 		_simulationSpeed = 1;
-		brewlog.info("temp-controller-service", "Stop");
+		brewlog.warn("temp-controller-service", "Stop");
 		pause();
 		broker.unSubscribe(tempListener);
 		broker.unSubscribe(tempListener);

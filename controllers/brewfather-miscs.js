@@ -8,6 +8,8 @@
 
 'use strict';
 
+const { get, patch } = require('./common.js');
+
 async function getMiscs (req, res, next, include, complete, inventory_exists, limit, start_after, order_by, order_by_direction) {
   const params = {include,complete,inventory_exists,limit,start_after,order_by,order_by_direction};
   const response=  await get(req, `inventory/miscs`, params);res.status(response.status);

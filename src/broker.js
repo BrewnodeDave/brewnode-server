@@ -13,9 +13,7 @@
  */
 
 
-  const brewlog = require("./brewstack/common/brewlog.js");
   const mysqlService = require("./services/mysql-service.js");
-  
   const EventEmitter = require("events").EventEmitter;
   const sensor = new EventEmitter();
 
@@ -30,10 +28,7 @@
 
   let debug = false;
 
-  const progressPublish = create("Progress");
-
   sensor.setMaxListeners(100);
-
   
   /**
  * @param {{ conn: { remoteAddress: any; }; }} socket
@@ -96,9 +91,7 @@ function create(sensorName) {
 	 setEmitFn(emit){
 		_emit = emit;
 	 },
-
-	create,  
-	
+	 
 	/**
 	   * @param {boolean} onOff
 	   */
@@ -110,9 +103,7 @@ function create(sensorName) {
 	 * @desc Remove publish function.
 	 * @param {String} sensorName
 	 */
-	destroy(sensorName) {	
-		brewlog.sensorStop(sensorName);
-		
+	destroy(sensorName) {			
 		//Remove entry from array
 		let index = sensorNames.indexOf(sensorName);
 		if (index !== -1) {
@@ -127,11 +118,9 @@ function create(sensorName) {
 	 */
     subscribe(sensorName, cb) {
 		if (sensorNames.includes(sensorName)){
-			brewlog.info("subscribe", sensorName);
 			sensor.on(sensorName, cb);
 			return cb;
 		}else{
-			brewlog.error(`Broker cannot subscribe, sensor=${sensorName} does not exist.`);
 		}
 
 		/**
@@ -201,14 +190,6 @@ function create(sensorName) {
 		return found;
 	},
 
-	progressPublish,
-	
-	remainingFillLitres:create("remainingFillLitres"),
-	remainingBoilMinutes: create("remainingBoilMinutes"),
-	remainingKettleMinutes: create("remainingKettleMinutes"),
-	remainingMashMinutes: create("remainingMashMinutes"),
-	remainingFermentDays:create("remainingFermentDays"),
-
 	// Additional exports needed for testing
 	setEmitFn: function(emitFn) {
 		_emit = emitFn;
@@ -216,19 +197,6 @@ function create(sensorName) {
 
 	getEmitFn: function() {
 		return _emit;
-	},
-
-	temperaturePublish: create("temperature"),
-	pumpPublish: create("pump"),
-	valvePublish: create("valve"),
-	sensorPublish: async function(sensorName, oldValue, newValue) {
-		if (oldValue !== newValue) {
-			await mysqlService.doublePublish(
-				(value, timestamp) => this.publish(sensorName, value, timestamp),
-				oldValue, 
-				newValue
-			);
-		}
 	},
 
 	setDebug: function(enabled) {
@@ -249,5 +217,26 @@ function create(sensorName) {
 	},
 
 	// Export the create function for services
-	create: create
-  }
+	create: create,
+
+	// Publish functions expected by tests
+	progressPublish: create("Progress"),
+	temperaturePublish: create("temperature"),
+	pumpPublish: create("pump"),
+	valvePublish: create("valve"),
+	sensorPublish: async function(sensorName, oldValue, newValue) {
+		if (oldValue !== newValue) {
+			await mysqlService.doublePublish(
+				(value, timestamp) => this.create(sensorName)(value, timestamp),
+				oldValue, 
+				newValue
+			);
+		}
+	},
+
+	remainingFillLitres: create("remainingFillLitres"),
+	remainingBoilMinutes: create("remainingBoilMinutes"),
+	remainingKettleMinutes: create("remainingKettleMinutes"),
+	remainingMashMinutes: create("remainingMashMinutes"),
+	remainingFermentDays: create("remainingFermentDays")
+};

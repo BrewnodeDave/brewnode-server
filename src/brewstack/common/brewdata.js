@@ -92,7 +92,7 @@ function readBrewfatherJSONSync(filename, speedupFactor){
  * @param {number} speedupFactor
  */
 async function getBrewfatherOptions(speedupFactor){
-	console.log("readBrewfatherJSON");z
+	console.log("readBrewfatherJSON");
 	const recipe = await brewfather.currentRecipe();
 	const filename = recipe.name;
 	const options = recipe2Options(recipe, filename, speedupFactor);

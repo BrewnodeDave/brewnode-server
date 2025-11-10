@@ -9,7 +9,13 @@ jest.mock('../../src/broker.js', () => ({
   setEmitFn: jest.fn(),
   attach: jest.fn(),
   detach: jest.fn(),
-  exists: jest.fn(() => false)
+  exists: jest.fn(() => false),
+  create: jest.fn(() => jest.fn(() => Promise.resolve())),
+  progressPublish: jest.fn(() => Promise.resolve()),
+  temperaturePublish: jest.fn(() => Promise.resolve()),
+  pumpPublish: jest.fn(() => Promise.resolve()),
+  valvePublish: jest.fn(() => Promise.resolve()),
+  sensorPublish: jest.fn(() => Promise.resolve())
 }));
 
 // Mock socket.io

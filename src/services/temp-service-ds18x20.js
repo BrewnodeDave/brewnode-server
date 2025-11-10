@@ -58,8 +58,7 @@ async function getAllTemps() {
 						if (key == probe.id) {
 							const value = tempObj[key];
 		
-//							updateProbeValue(probe, value);
-probe.value = value;		
+							probe.value = value;		
 							result.push({ 
 								name: probe.name, 
 								value: probe.value, 
@@ -206,7 +205,7 @@ module.exports = {
 					broker.destroy(name);
 				});
 			}
-			brewlog.info("temp.js", "stopped");
+			brewlog.warn("temp.js", "stopped");
 
 			resolve();
 		});

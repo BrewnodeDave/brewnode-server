@@ -159,7 +159,7 @@ module.exports = {
 		broker.destroy(POWER);
 		broker.destroy("Kettle Heater");
 
-		brewlog.info("kettle-heater-service", "stopped");	
+		brewlog.warn("kettle-heater-service", "stopped");	
 	},
 	
 	forceOn() {

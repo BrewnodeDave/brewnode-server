@@ -214,7 +214,7 @@ module.exports = {
 					v = null;
 				});
 				_started = false;
-				brewlog.info("valve.js", "stopped");
+				brewlog.warn("valve.js", "stopped");
 
 				_valves = [];
 				resolve();

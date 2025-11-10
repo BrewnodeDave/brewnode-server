@@ -159,7 +159,7 @@ function insertMiddleware(app, middleware) {
 const corsOptions = {
   origin: true, // Allow any origin
   credentials: true,
-  methods: ["GET", "POST", "PUT"], // Allowed methods
+  methods: ["GET", "POST", "PUT", "DELETE"], // Allowed methods
   allowedHeaders: ["Content-Type", "api_key", "Authorization"], // Allowed headers
   exposedHeaders: ["Content-Length", "X-Kuma-Revision"], // Exposed headers
   optionsSuccessStatus: 204, // Some legacy browsers (IE11, various SmartTVs) choke on 204

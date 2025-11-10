@@ -110,11 +110,11 @@ async function pollTemperatures(deltaSecs){
 	const sensors = await getAllTemps();
 
 	if (sensors.length === 0){
-		brewlog.error("No sensors found");
+		brewlog.critical("No sensors found");
 		return;
 	}
 	if (sensors.length !== sensorList.length){
-		brewlog.error("Not all sensors found");
+		brewlog.critical("Not all sensors found");
 	}
 
 	// Find sensors with different values
@@ -208,7 +208,7 @@ module.exports = {
 				probe.publishTemp = null;
 				probes.forEach(({name}) => broker.destroy(name));
 			}
-			brewlog.info("temp.js", "stopped");
+			brewlog.warn("temp.js", "stopped");
 
 			sensorList = [];
 			resolve();
@@ -242,7 +242,7 @@ module.exports = {
 	setSampleInterval: setPollInterval,
 
 	stop: () => {
-		brewlog.info("temp.js", "stop");
+		brewlog.warn("temp.js", "stop");
 		if (pollInterval !== null) {
 			clearInterval(pollInterval);
 			pollInterval = null;

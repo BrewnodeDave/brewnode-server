@@ -9,10 +9,10 @@
 const pumps = require('./pump-service.js');
 const brewlog = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
+const publish = require('../publish.js');
 const therm = require('./temp-service.js');
 const glycolHeater = require('./glycol-heater-service.js');
 const glycolChiller = require('./glycol-chiller-service.js');
-const brewfather = require('./brewfather-service.js');
 
 let _simulationSpeed = null;
 
@@ -67,21 +67,21 @@ function timeToText(prefix, secs){
         const min = Math.trunc(mins  - (hours * MINS_PER_HOUR));
         const sec = Math.trunc(secs  - (mins  * SECS_PER_MIN));
 	if (days > 0){
-		timeString += ` ${days} d`;
-		timeString += ` ${hour} h`;
-		timeString += ` ${min} m`;
+		timeString += ` ${days}d`;
+		timeString += ` ${hour}h`;
+		timeString += ` ${min}m`;
 	}else{
 		if (hours > 0){
-			timeString += ` ${hours} h`;
-			timeString += ` ${min} m`;
+			timeString += ` ${hours}h`;
+			timeString += ` ${min}m`;
 		}else if (mins > 0){
-			timeString += ` ${mins} m`;
+			timeString += ` ${mins}m`;
 		} else {
-			timeString += ` ${sec} s`;
+			timeString += ` ${sec}s`;
 		}			
 	}
 	console.log(timeString);
-	broker.progressPublish(timeString);
+	publish.progressPublish(timeString);
 }
 
 //Circulate until ferment temp is reached
@@ -175,7 +175,7 @@ module.exports = {
 			pumps.off(pumps.chillPumpName);
 
 			// brewfather.stop();
-			brewlog.info("glycol-ferment.js", "stopped");
+			brewlog.warn("glycol-ferment.js", "stopped");
 			resolve();
 		});
 	},

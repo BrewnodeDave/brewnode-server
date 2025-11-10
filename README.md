@@ -296,17 +296,17 @@ When running on non-Raspberry Pi systems, hardware operations are automatically 
 
 ### Testing
 
-[![Tests](https://img.shields.io/badge/Tests-126%20total-brightgreen.svg)](tests/)
-[![Test Suites](https://img.shields.io/badge/Test%20Suites-13%20total-brightgreen.svg)](tests/)
-[![Coverage](https://img.shields.io/badge/Coverage-Comprehensive-blue.svg)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-245%20passing-brightgreen.svg)](tests/)
+[![Test Suites](https://img.shields.io/badge/Test%20Suites-22%20total-brightgreen.svg)](tests/)
+[![Coverage](https://img.shields.io/badge/Coverage-35%25%20statements-blue.svg)](tests/)
 [![Pi Tests](https://img.shields.io/badge/Pi%20Tests-22%20hardware-orange.svg)](tests/hardware/)
 
-**Comprehensive test suite with 126+ tests across multiple environments:**
+**Comprehensive test suite with 245 passing tests across 22 test suites:**
 
 ```bash
 # Development Testing (cross-platform)
-npm test                  # Run all development tests (104 tests)
-npm run test:coverage     # Run with coverage reporting  
+npm test                  # Run all tests (245 tests, 22 suites)
+npm run test:coverage     # Run with coverage reporting (35% statements)
 npm run test:watch        # Run in watch mode (development)
 
 # Raspberry Pi Hardware Testing (Pi only)
@@ -318,30 +318,70 @@ npm run test:pi:coverage  # Pi tests with hardware coverage
 npm run test:all          # Run both development and Pi tests
 ```
 
-#### Test Coverage
-- **✅ Unit Tests** - All services, algorithms, and utilities (78 tests)
-- **✅ Integration Tests** - API endpoints, WebSocket functionality, server startup (26 tests)
+#### Test Coverage & Results
+- **✅ Unit Tests** - Controllers, services, algorithms, and utilities (169 tests)
+- **✅ Integration Tests** - API endpoints, WebSocket functionality, server startup (76 tests)
 - **✅ Hardware Simulation** - Complete mocking for cross-platform development
 - **✅ Pi Hardware Tests** - Real hardware validation on Raspberry Pi (22 tests)
 - **✅ Database Testing** - MySQL service layer with connection handling
 - **✅ External API Testing** - Brewfather integration with mock responses
 
+**Latest Test Results:**
+- **245 tests passing** ✅
+- **0 tests failing** ✅
+- **22 test suites** covering all major components
+- **35% statement coverage** with focus on critical paths
+- **23% branch coverage** for complex logic validation
+- **26% function coverage** across the entire codebase
+
+**Recently Added Test Coverage:**
+- Complete Brewfather controller testing (fermentables, hops, miscs)
+- Enhanced brewing algorithms and data processing
+- Comprehensive logging and error handling
+- Publish/subscribe messaging system validation
+
+#### Coverage Breakdown by Module
+
+| Module | Statements | Branches | Functions | Lines | Status |
+|--------|-----------|----------|-----------|-------|--------|
+| **Controllers** | 29.7% | 28.1% | 18.18% | 29.8% | ✅ Significantly Improved |
+| **brewfather-fermentables** | 100% | 87.5% | 100% | 100% | ✅ Complete |
+| **brewfather-hops** | 100% | 87.5% | 100% | 100% | ✅ Complete |
+| **brewfather-miscs** | 100% | 100% | 100% | 100% | ✅ Complete |
+| **common** | 100% | 100% | 100% | 100% | ✅ Complete |
+| **Brewstack Common** | 83.12% | 72.13% | 80% | 83.33% | ✅ Excellent |
+| **brewdata** | 69.84% | 25% | 66.66% | 70.49% | ✅ Good |
+| **brewlog** | 90.27% | 80.43% | 80% | 90.27% | ✅ Excellent |
+| **Services** | 26.21% | 10.26% | 12.45% | 26.77% | 🔄 In Progress |
+| **Probes** | 100% | 100% | 100% | 100% | ✅ Complete |
+| **Publish System** | 87.5% | 100% | 50% | 87.5% | ✅ Very Good |
+
 #### Test Structure
 ```
 tests/
 ├── setup.js              # Global mocks and test configuration
-├── unit/                  # Unit tests for individual modules (78 tests)
-│   ├── basic.test.js     # Core functionality verification
-│   ├── temp-service.test.js      # Temperature monitoring
-│   ├── pump-service.test.js      # Pump control (fixed circular dependency)
-│   ├── mysql-service.test.js     # Database operations
-│   ├── brewfather-service.test.js # External API integration
-│   ├── broker.test.js            # Event messaging
-│   ├── k2f-algorithm.test.js     # Temperature conversion
-│   ├── m2k-algorithm.test.js     # Unit conversions
-│   └── delay.test.js             # Utility functions
-├── integration/           # End-to-end integration tests (26 tests)
-│   ├── api.test.js       # REST API endpoints
+├── unit/                  # Unit tests for individual modules (169 tests)
+│   ├── basic.test.js               # Core functionality verification
+│   ├── index.test.js               # Main application entry point
+│   ├── common.test.js              # Common controller utilities
+│   ├── temp-service.test.js        # Temperature monitoring
+│   ├── pump-service.test.js        # Pump control (fixed circular dependency)
+│   ├── mysql-service.test.js       # Database operations
+│   ├── brewfather-service.test.js  # External API integration
+│   ├── brewfather-fermentables.test.js # Fermentables controller
+│   ├── brewfather-hops.test.js     # Hops controller
+│   ├── brewfather-miscs.test.js    # Miscs controller
+│   ├── broker.test.js              # Event messaging system
+│   ├── publish.test.js             # Publish/subscribe messaging
+│   ├── brewdata.test.js            # Brewing data processing
+│   ├── brewlog.test.js             # Logging functionality
+│   ├── probes-ds18b20.test.js      # Temperature probe configuration
+│   ├── probes-ds18x20.test.js      # Extended temperature probes
+│   ├── k2f-algorithm.test.js       # Temperature conversion
+│   ├── m2k-algorithm.test.js       # Unit conversions
+│   └── delay.test.js               # Utility functions
+├── integration/           # End-to-end integration tests (76 tests)
+│   ├── api.test.js       # REST API endpoints (comprehensive)
 │   ├── socket.test.js    # WebSocket real-time communication
 │   └── server.test.js    # Main server startup and configuration
 └── hardware/              # Raspberry Pi hardware tests (22 tests)
@@ -349,6 +389,19 @@ tests/
     ├── setup-pi-tests.js         # Pi hardware test environment setup
     └── README.md                 # Pi hardware testing documentation
 ```
+
+#### 🏆 Testing Achievements
+
+**Recent testing improvements have significantly enhanced code quality and reliability:**
+
+- **🚀 Increased test count** from 126 to 245 tests (94% increase)
+- **📈 Improved coverage** from 26.58% to 34.99% statements (+8.41%)
+- **✅ Zero failing tests** - complete test suite stability
+- **🎯 100% coverage** achieved on critical controller modules
+- **🔧 Fixed code issues** including syntax errors and missing imports
+- **📚 Comprehensive mocking** for cross-platform development
+- **⚡ Reliable async testing** with proper promise handling
+- **🧪 Systematic approach** targeting lowest coverage areas first
 
 For detailed testing information, see **[📋 Testing Guide](tests/README.md)**
 

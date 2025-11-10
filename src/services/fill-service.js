@@ -9,8 +9,7 @@
 const delay = require('../brewstack/common/delay.js');
 const valves = require('./valve-service.js');
 const kettleHeater = require('./kettle-heater-service.js');
-const brewlog = require('../brewstack/common/brewlog.js')
-const {remainingFillLitres} = require('../broker.js');	
+const {remainingFillLitres} = require('../publish.js');	
 
 const INTERVAL_SECS = 10;
 
