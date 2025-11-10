@@ -9,6 +9,7 @@
 const pumps = require('./pump-service.js');
 const brewlog = require('../brewstack/common/brewlog.js');
 const broker = require('../broker.js');
+const publish = require('../publish.js');
 const therm = require('./temp-service.js');
 const glycolHeater = require('./glycol-heater-service.js');
 const glycolChiller = require('./glycol-chiller-service.js');
@@ -80,7 +81,7 @@ function timeToText(prefix, secs){
 		}			
 	}
 	console.log(timeString);
-	broker.progressPublish(timeString);
+	publish.progressPublish(timeString);
 }
 
 //Circulate until ferment temp is reached
