@@ -91,7 +91,6 @@ function post(data, id = process.env.BREWFATHER_CUSTOM_STREAM) {
 
     const req = http.request(options, res => {
       res.on("data", x => {
-        brewlog.info("brewfather-stream", `Response: ${x}`);
         resolve(res);
       });
     });
