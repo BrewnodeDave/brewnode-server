@@ -1,0 +1,152 @@
+name: Release and Publish
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x, 22.x]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests
+      run: npm test -- --coverage
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      if: matrix.node-version == '20.x'
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: false
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        registry-url: 'https://registry.npmjs.org'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Configure Git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+    
+    - name: Check for conventional commits
+      id: conventional-commits
+      run: |
+        # Check if there are any conventional commits since last tag
+        LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        if [ -z "$LAST_TAG" ]; then
+          echo "No previous tags found, will create initial release"
+          echo "should_release=true" >> $GITHUB_OUTPUT
+          echo "release_type=minor" >> $GITHUB_OUTPUT
+        else
+          # Check commits since last tag for conventional commit types
+          FEAT_COUNT=$(git log $LAST_TAG..HEAD --oneline --grep="^feat" | wc -l)
+          FIX_COUNT=$(git log $LAST_TAG..HEAD --oneline --grep="^fix" | wc -l)
+          BREAKING_COUNT=$(git log $LAST_TAG..HEAD --oneline --grep="BREAKING CHANGE" | wc -l)
+          
+          if [ $BREAKING_COUNT -gt 0 ]; then
+            echo "Breaking changes detected"
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "release_type=major" >> $GITHUB_OUTPUT
+          elif [ $FEAT_COUNT -gt 0 ]; then
+            echo "New features detected"
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "release_type=minor" >> $GITHUB_OUTPUT
+          elif [ $FIX_COUNT -gt 0 ]; then
+            echo "Bug fixes detected"  
+            echo "should_release=true" >> $GITHUB_OUTPUT
+            echo "release_type=patch" >> $GITHUB_OUTPUT
+          else
+            echo "No conventional commits found, skipping release"
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+        fi
+    
+    - name: Create Release
+      if: steps.conventional-commits.outputs.should_release == 'true'
+      run: |
+        if [ "${{ steps.conventional-commits.outputs.release_type }}" = "major" ]; then
+          npm run release:major
+        elif [ "${{ steps.conventional-commits.outputs.release_type }}" = "minor" ]; then
+          npm run release:minor  
+        else
+          npm run release:patch
+        fi
+    
+    - name: Push changes
+      if: steps.conventional-commits.outputs.should_release == 'true'
+      run: |
+        git push --follow-tags origin main
+    
+    - name: Publish to NPM
+      if: steps.conventional-commits.outputs.should_release == 'true'
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-minor:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'feat:')
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        registry-url: 'https://registry.npmjs.org'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Configure Git
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+    
+    - name: Create Minor Release
+      run: npm run release:minor
+    
+    - name: Push changes and publish
+      run: |
+        git push --follow-tags origin main
+        npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
