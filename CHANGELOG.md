@@ -5,6 +5,119 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [2.3.0](https://github.com/BrewnodeDave/brewnode-server/compare/v2.0.1...v2.3.0) (2025-11-18)
+
+
+### ⚠ BREAKING CHANGES
+
+* Added brewery service startup script to handle I2C initialization
+
+Problem Solved:
+- Fixed 'modprobe: not found' errors in systemd service environment
+- I2C libraries (raspi, raspi-i2c) require kernel modules but modprobe unavailable
+- Service startup failures due to missing I2C module loading
+
+Solution Components:
+📄 scripts/start-brewery-service.sh - Smart startup script with module loading
+📄 scripts/brewnode-server.service - Production systemd service configuration
+📄 scripts/DEPLOYMENT.md - Complete deployment guide with troubleshooting
+📄 package.json - Added 'start:service' npm script
+
+Features:
+✅ Pre-loads I2C modules (i2c-dev, i2c-bcm2835) before Node.js startup
+✅ Pre-loads OneWire modules (w1-gpio, w1-therm) for temperature sensors
+✅ Hardware availability validation with clear status messages
+✅ Graceful fallback when modprobe unavailable (assumes pre-loaded modules)
+✅ Proper PATH and capabilities configuration for systemd services
+✅ Multiple deployment options (automatic, manual, boot-time loading)
+
+Deployment:
+sudo cp scripts/brewnode-server.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl restart brewnode-server
+
+This resolves all I2C initialization issues for production Pi deployments!
+* Added brewery service startup script to handle I2C initialization
+
+Problem Solved:
+- Fixed 'modprobe: not found' errors in systemd service environment
+- I2C libraries (raspi, raspi-i2c) require kernel modules but modprobe unavailable
+- Service startup failures due to missing I2C module loading
+
+Solution Components:
+📄 scripts/start-brewery-service.sh - Smart startup script with module loading
+📄 scripts/brewnode-server.service - Production systemd service configuration
+📄 scripts/DEPLOYMENT.md - Complete deployment guide with troubleshooting
+📄 package.json - Added 'start:service' npm script
+
+Features:
+✅ Pre-loads I2C modules (i2c-dev, i2c-bcm2835) before Node.js startup
+✅ Pre-loads OneWire modules (w1-gpio, w1-therm) for temperature sensors
+✅ Hardware availability validation with clear status messages
+✅ Graceful fallback when modprobe unavailable (assumes pre-loaded modules)
+✅ Proper PATH and capabilities configuration for systemd services
+✅ Multiple deployment options (automatic, manual, boot-time loading)
+
+Deployment:
+sudo cp scripts/brewnode-server.service /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl restart brewnode-server
+
+This resolves all I2C initialization issues for production Pi deployments!
+* Server startup now validates Pi hardware before starting services
+
+Features:
+- Runs Pi hardware tests automatically when starting on Raspberry Pi
+- Blocks server startup if hardware validation fails
+- Skips validation on non-Pi systems (development machines)
+- Provides SKIP_HARDWARE_TESTS environment variable for debugging
+- Enhanced startup logging with clear success/failure indicators
+- Comprehensive error reporting for failed hardware tests
+
+New npm scripts:
+- npm run start:safe - Start with explicit hardware validation
+- npm run start:skip-tests - Start bypassing hardware tests (dev only)
+
+Safety benefits:
+- Prevents brewery server from starting with faulty hardware
+- Early detection of I2C, GPIO, and temperature sensor issues
+- Reduces risk of brewery process failures due to hardware problems
+- Clear diagnostic information for troubleshooting hardware issues
+
+Production deployment: Server will automatically validate all connected
+brewery hardware (pumps, valves, sensors) before accepting connections
+
+### 🧪 Tests
+
+* Add comprehensive temperature sensor validation test ([0d19abc](https://github.com/BrewnodeDave/brewnode-server/commit/0d19abcf0e1608b1190d5d870bcc0be06d7dc57e))
+
+
+### 🐛 Bug Fixes
+
+* Complete removal of Jest-based validation code ([4e7248a](https://github.com/BrewnodeDave/brewnode-server/commit/4e7248a2dfd71bf06cdfef80af1cc1a2c50af490))
+* Correct pump service method names in Pi hardware tests ([78432a8](https://github.com/BrewnodeDave/brewnode-server/commit/78432a8d2a18fbce452c59e478f2215f7ff68efc))
+* Correct valve name in brewery simulation test ([b89d45b](https://github.com/BrewnodeDave/brewnode-server/commit/b89d45b9b47bffe72f23d24aefbb61592ceb757c))
+* export missing pump names to resolve circular dependency warnings ([3caed21](https://github.com/BrewnodeDave/brewnode-server/commit/3caed210b1ba79fe54ff8ed08e0ff1510baf77d2))
+* Improve Pi hardware tests to handle missing hardware gracefully ([cd76c57](https://github.com/BrewnodeDave/brewnode-server/commit/cd76c5704661d08143551a0f86fe05c87e433598))
+* resolve circular dependency warnings in sim.js ([fd00d42](https://github.com/BrewnodeDave/brewnode-server/commit/fd00d42007339586dd2cbc834f16443dee19c339))
+* Update temperature sensor test to match actual service data structure ([7a2dc7e](https://github.com/BrewnodeDave/brewnode-server/commit/7a2dc7e62ad3bf6d13ab7dc21bf3e70d9d0a41ed))
+* Use correct valve names in Pi hardware tests ([0516620](https://github.com/BrewnodeDave/brewnode-server/commit/0516620050dc61bdef4d11c896d196c6c96bcc43))
+* wrong include ([6b3d31c](https://github.com/BrewnodeDave/brewnode-server/commit/6b3d31cc80419a48158183076b01c5e12993a5bc))
+
+
+### ✨ Features
+
+* Add Beerware LICENSE file ([b9c2fd2](https://github.com/BrewnodeDave/brewnode-server/commit/b9c2fd2679800ed6b6687fdb6410989ac1a2db35))
+* Add comprehensive Pi hardware tests and update all documentation ([a810970](https://github.com/BrewnodeDave/brewnode-server/commit/a810970a707568fcb145be9034d3a40ae37222c8))
+* Add Pi hardware validation during server startup ([3ad99e5](https://github.com/BrewnodeDave/brewnode-server/commit/3ad99e5cd97ca9be559d15aba26145e64a085f14))
+* add release process ([f9ef177](https://github.com/BrewnodeDave/brewnode-server/commit/f9ef177a3cc32a407e49bba4cc4163c044e94f08))
+* Add systemd service deployment solution for I2C module issues ([f42e56a](https://github.com/BrewnodeDave/brewnode-server/commit/f42e56aa5b4ab744ab5cf0c3aa9a73fa04319a25))
+* Add systemd service deployment solution for I2C module issues ([fbec381](https://github.com/BrewnodeDave/brewnode-server/commit/fbec381c438964cbdca908c42209b32c8ae2bea4))
+
+
+### 🔧 Maintenance
+
+* missed files ([e475adc](https://github.com/BrewnodeDave/brewnode-server/commit/e475adc589e900babac36d897c5cb67c11af4a9c))
+
 ## [2.2.0] - 2025-11-18
 
 ### ✨ Features
