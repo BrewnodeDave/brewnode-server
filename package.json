@@ -19,8 +19,15 @@
     "test:pi:watch": "jest --config jest.pi.config.js --watch",
     "test:pi:coverage": "jest --config jest.pi.config.js --coverage --forceExit",
     "test:all": "npm test && npm run test:pi",
-    "prepare": "npm test",
-    "docs": "echo 'Documentation available at https://github.com/BrewnodeDave/brewnode-server#readme'"
+    "prepare": "husky",
+    "docs": "echo 'Documentation available at https://github.com/BrewnodeDave/brewnode-server#readme'",
+    "release": "standard-version",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:patch": "standard-version --release-as patch",
+    "release:prerelease": "standard-version --prerelease",
+    "release:dry": "standard-version --dry-run",
+    "postrelease": "git push --follow-tags origin main && npm publish"
   },
   "keywords": [
     "brewery",
@@ -79,6 +86,7 @@
     "docs/",
     "LICENCE",
     "README.md",
+    "CHANGELOG.md",
     "API_DOCUMENTATION.md",
     "FILE_DOCUMENTATION.md",
     "HARDWARE_DOCUMENTATION.md",
@@ -107,9 +115,11 @@
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
     "cross-env": "^7.0.3",
+    "husky": "^9.1.6",
     "jest": "^29.7.0",
     "js-yaml": "^4.1.0",
     "socket.io-client": "^4.8.0",
+    "standard-version": "^9.5.0",
     "supertest": "^6.3.3"
   }
 }

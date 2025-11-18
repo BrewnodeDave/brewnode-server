@@ -406,11 +406,33 @@ tests/
 For detailed testing information, see **[📋 Testing Guide](tests/README.md)**
 
 ### Contributing
+
+We use **Conventional Commits** for automatic version bumping and changelog generation:
+
+```bash
+# Features (minor version bump)
+git commit -m "feat: add new temperature monitoring dashboard"
+
+# Bug fixes (patch version bump)
+git commit -m "fix: resolve mysql connection timeout"
+
+# Breaking changes (major version bump)
+git commit -m "feat!: redesign API endpoints"
+```
+
+**Quick Start:**
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature-name`
-3. Follow conventional commits: `feat: add new sensor support`
-4. Ensure tests pass and add new tests for features
+3. Follow conventional commits (see [📝 Conventional Commits Guide](docs/CONVENTIONAL_COMMITS.md))
+4. Ensure tests pass: `npm test`
 5. Submit a pull request
+
+**Releases are automated** - when your PR is merged:
+- Version is bumped automatically based on commit types
+- CHANGELOG.md is updated with your changes
+- Package is published to npm automatically
+
+For detailed commit guidelines and release process, see **[📝 Conventional Commits Guide](docs/CONVENTIONAL_COMMITS.md)**
 
 ## 📊 Monitoring & Logging
 
