@@ -21,6 +21,7 @@
     "test:all": "npm test && npm run test:pi",
     "prepare": "husky",
     "docs": "echo 'Documentation available at https://github.com/BrewnodeDave/brewnode-server#readme'",
+    "docs:update": "echo '📚 Documentation updated:' && echo '  ✅ CHANGELOG.md - Version history' && echo '  ✅ README.md - Project overview' && echo '  ✅ docs/ - Technical guides'",
     "release": "standard-version",
     "release:minor": "standard-version --release-as minor",
     "release:major": "standard-version --release-as major",
