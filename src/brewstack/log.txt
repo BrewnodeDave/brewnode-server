@@ -1,0 +1,16 @@
+2025-11-22T16:13:13.656Z ℹ️ Starting BrewNode services... : 
+2025-11-22T16:13:13.704Z ℹ️ setSampleInterval :  6 secs
+2025-11-22T16:13:13.725Z ℹ️ Start the Watchdog service : 
+2025-11-22T16:13:13.730Z ℹ️ kettle-heater-service :  Start
+2025-11-22T16:13:13.734Z ℹ️ brewfather-service :  Start
+2025-11-22T16:13:13.737Z ℹ️ temp-controller-service :  Start
+2025-11-22T16:13:13.737Z ℹ️ init PID :  1000,5,100
+2025-11-22T16:13:13.738Z ℹ️ init PID: Current Temp= :  8.6
+2025-11-22T16:13:45.887Z ℹ️ Starting BrewNode services... : 
+2025-11-22T16:13:45.942Z ℹ️ setSampleInterval :  6 secs
+2025-11-22T16:13:45.968Z ℹ️ Start the Watchdog service : 
+2025-11-22T16:13:45.968Z ℹ️ kettle-heater-service :  Start
+2025-11-22T16:13:45.972Z ℹ️ brewfather-service :  Start
+2025-11-22T16:13:45.972Z ℹ️ temp-controller-service :  Start
+2025-11-22T16:13:45.973Z ℹ️ init PID :  1000,5,100
+2025-11-22T16:13:45.973Z ℹ️ init PID: Current Temp= :  8.6

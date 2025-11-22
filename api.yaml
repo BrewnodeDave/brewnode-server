@@ -2143,6 +2143,46 @@ paths:
           description: Success
       x-swagger-router-controller: brewnode
 
+
+  /systemStatus:
+    get:
+      tags:
+      - Brewnode
+      summary: Get system hardware/simulation status
+      description: Returns information about whether the system is running on Raspberry Pi hardware or in simulation mode.
+      operationId: getSystemStatus
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  platform:
+                    type: string
+                    description: Platform information
+                    example: "Raspberry Pi"
+                  isHardware:
+                    type: boolean
+                    description: True if running on Raspberry Pi hardware
+                    example: true
+                  isSimulation:
+                    type: boolean
+                    description: True if running in simulation mode
+                    example: false
+                  simulationSpeed:
+                    type: number
+                    description: Current simulation speed factor
+                    example: 1
+                  mode:
+                    type: string
+                    description: Current operating mode
+                    example: "Hardware"
+        "500":
+          description: Internal Server Error
+      x-swagger-router-controller: brewnode
+
 components:
   securitySchemes:
     basicAuth:

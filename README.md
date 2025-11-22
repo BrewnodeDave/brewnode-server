@@ -47,6 +47,30 @@ Add your Brewfather credentials using the "Authorize" button for full API access
 
 ![API Documentation](https://github.com/user-attachments/assets/d7a7b5a4-5cde-4bf0-ab53-5584fdd3114e)
 
+## 🖥️ Web Frontend
+
+A modern React-based web interface is included for complete brewery control:
+
+### Features
+- **Real-time Dashboard**: Monitor all sensors and equipment status
+- **Brewfather Integration**: Manage batches, recipes, and inventory
+- **Process Control**: Automated mashing, boiling, fermentation workflows  
+- **Equipment Control**: Individual pump, valve, heater controls
+- **Simulator**: Hardware simulation for testing and development
+
+### Quick Start
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Visit http://localhost:3000 and login with your Brewfather credentials.
+
+![Brewnode Frontend](docs/frontend-dashboard.png)
+
+For complete frontend documentation, see [frontend/README.md](frontend/README.md).
+
 ## 📋 Complete Documentation
 
 This project includes comprehensive documentation for all components:

@@ -239,6 +239,27 @@ async function setSimulationSpeed (req, res, next, factor) {
   res.send(200, `Simulated speed factor = ${factor}.`);
 };
 
+async function getSystemStatus (req, res, next) {
+  try {
+    const brewdefs = require('../src/brewstack/common/brewdefs.js');
+    const isRaspberryPi = brewdefs.isRaspPi();
+    const simulationSpeed = sim.getSimulationSpeed();
+    
+    const systemStatus = {
+      platform: isRaspberryPi ? 'Raspberry Pi' : process.platform,
+      isHardware: isRaspberryPi,
+      isSimulation: !isRaspberryPi,
+      simulationSpeed: simulationSpeed,
+      mode: isRaspberryPi ? 'Hardware' : 'Simulation'
+    };
+    
+    res.status(200).json(systemStatus);
+  } catch (error) {
+    progressPublish.error("Error getting system status:", error);
+    res.send(500, 'Internal Server Error');
+  }
+};
+
 async function restart (req, res, next) {
   try {
     brewlog.warn("Restarting server...");
@@ -638,6 +659,7 @@ module.exports = {
   getKettleTemp,
   getKettleVolume,
   getSimSpeed,
+  getSystemStatus,
   glycolPump,
   heat,
   glycolChill,
