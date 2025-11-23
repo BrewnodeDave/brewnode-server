@@ -125,6 +125,8 @@ function setPower(watts){
 		doublePublish(publishPower, prevPower, currentPower);
 		prevPower = currentPower;
 	}
+
+	return currentPower;
 }
 
 module.exports = {
@@ -163,11 +165,11 @@ module.exports = {
 	},
 	
 	forceOn() {
-		setPower(MAX_POWER_W);
+		return setPower(MAX_POWER_W);
 	},
 
 	forceOff() {
-		setPower(0);
+		return setPower(0);
 	},
 
 	getStatus: () => {
