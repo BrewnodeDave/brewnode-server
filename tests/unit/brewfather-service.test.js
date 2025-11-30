@@ -271,6 +271,30 @@ describe('Brewfather Service', () => {
       await expect(brewfatherService.currentRecipe()).rejects.toThrow('Multiple brews in progress!');
     });
 
+    test('should throw error if multiple fermenting batches in progress', async () => {
+      const mockFermentingBatch = {
+        batchNo: 43,
+        recipe: { name: 'Fermenting Stout' }
+      };
+      
+      axios.get
+        .mockResolvedValueOnce({ data: [] }) // No brewing batches
+        .mockResolvedValueOnce({ data: [mockFermentingBatch, mockFermentingBatch] }); // Multiple fermenting batches
+
+      await expect(brewfatherService.currentRecipe()).rejects.toThrow('Multiple brews in progress!');
+    });
+
+    test('should not mutate the original recipe object', async () => {
+      const originalRecipe = { name: 'Original Name' };
+      const batch = { batchNo: 42, recipe: originalRecipe };
+      axios.get.mockResolvedValueOnce({ data: [batch] });
+
+      const returnedRecipe = await brewfatherService.currentRecipe();
+
+      expect(returnedRecipe.name).toBe('Original Name-42');
+      expect(originalRecipe.name).toBe('Original Name'); // Original should not be mutated
+    });
+
     test('should use environment credentials for authentication', async () => {
       axios.get.mockResolvedValueOnce({ data: [mockBrewingBatch] });
 

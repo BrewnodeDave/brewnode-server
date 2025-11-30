@@ -85,18 +85,19 @@ async function currentRecipe() {
         };
         const fermentingConfig = { params: fermentingParams, auth };
         const fermentingResponse = await axios.get(`${brewfatherV2}/batches`, fermentingConfig);
+        const numFermenting = fermentingResponse.data.length;
         
-        if (fermentingResponse.data.length === 0) {
+        if (numFermenting === 0) {
             throw new Error("No brews in progress!");
+        } else if (numFermenting > 1) {
+            throw new Error("Multiple brews in progress!");
         }
         
-        const recipe = fermentingResponse.data[0].recipe;
-        recipe.name = `${recipe.name}-${fermentingResponse.data[0].batchNo}`;
-        return recipe;
+        const batch = fermentingResponse.data[0];
+        return { ...batch.recipe, name: `${batch.recipe.name}-${batch.batchNo}` };
     } else if (numBrewing === 1) {
-        const recipe = response.data[0].recipe;
-        recipe.name = `${recipe.name}-${response.data[0].batchNo}`;
-        return recipe;
+        const batch = response.data[0];
+        return { ...batch.recipe, name: `${batch.recipe.name}-${batch.batchNo}` };
     } else {
         throw new Error("Multiple brews in progress!");
     }
