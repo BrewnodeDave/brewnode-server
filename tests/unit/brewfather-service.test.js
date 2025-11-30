@@ -1,6 +1,7 @@
 const brewfatherService = require('../../src/services/brewfather-service.js');
 
 // Mock dependencies
+jest.mock('axios');
 jest.mock('../../controllers/brewfather-stream.js', () => ({
   post: jest.fn(() => Promise.resolve({ success: true }))
 }));
@@ -29,6 +30,7 @@ jest.mock('../../src/services/mysql-service.js', () => ({
 }));
 
 const { post } = require('../../controllers/brewfather-stream.js');
+const axios = require('axios');
 const therm = require('../../src/services/temp-service.js');
 const mysqlService = require('../../src/services/mysql-service.js');
 const brewlog = require('../../src/brewstack/common/brewlog.js');
@@ -37,6 +39,8 @@ describe('Brewfather Service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     process.env.BREWFATHER_STREAM_NAME = 'TestBrewnode';
+    process.env.BREWFATHER_USERNAME = 'testuser';
+    process.env.BREWFATHER_PASSWORD = 'testpass';
   });
 
   describe('getFermenterTemp', () => {
@@ -186,6 +190,101 @@ describe('Brewfather Service', () => {
       const parsedData = JSON.parse(postedData);
       
       expect(parsedData.name).toBeUndefined();
+    });
+  });
+
+  describe('currentRecipe', () => {
+    const mockBrewingBatch = {
+      batchNo: 42,
+      recipe: {
+        name: 'Test IPA',
+        data: {
+          mashWaterAmount: 30,
+          strikeTemp: 68,
+          spargeWaterAmount: 20,
+          hltWaterAmount: 25
+        },
+        mash: {
+          steps: [{ tempC: 65, mins: 60 }]
+        },
+        boilTime: 90,
+        fermentation: {
+          steps: [{ tempC: 18, mins: 7200 }]
+        },
+        equipment: {
+          whirlpoolTime: 10
+        }
+      }
+    };
+
+    test('should return recipe from batch with Brewing status', async () => {
+      axios.get.mockResolvedValueOnce({ data: [mockBrewingBatch] });
+
+      const recipe = await brewfatherService.currentRecipe();
+
+      expect(recipe.name).toBe('Test IPA-42');
+      expect(recipe.data.mashWaterAmount).toBe(30);
+      expect(axios.get).toHaveBeenCalledWith(
+        'https://api.brewfather.app/v2/batches',
+        expect.objectContaining({
+          params: { complete: true, status: 'Brewing' }
+        })
+      );
+    });
+
+    test('should fall back to Fermenting status if no Brewing batches', async () => {
+      const mockFermentingBatch = {
+        batchNo: 43,
+        recipe: {
+          name: 'Fermenting Stout',
+          data: { mashWaterAmount: 25 }
+        }
+      };
+
+      axios.get
+        .mockResolvedValueOnce({ data: [] }) // No brewing batches
+        .mockResolvedValueOnce({ data: [mockFermentingBatch] }); // Fermenting batch
+
+      const recipe = await brewfatherService.currentRecipe();
+
+      expect(recipe.name).toBe('Fermenting Stout-43');
+      expect(axios.get).toHaveBeenCalledTimes(2);
+      expect(axios.get).toHaveBeenLastCalledWith(
+        'https://api.brewfather.app/v2/batches',
+        expect.objectContaining({
+          params: { complete: true, status: 'Fermenting' }
+        })
+      );
+    });
+
+    test('should throw error if no brews in progress', async () => {
+      axios.get
+        .mockResolvedValueOnce({ data: [] }) // No brewing batches
+        .mockResolvedValueOnce({ data: [] }); // No fermenting batches
+
+      await expect(brewfatherService.currentRecipe()).rejects.toThrow('No brews in progress!');
+    });
+
+    test('should throw error if multiple brews in progress', async () => {
+      axios.get.mockResolvedValueOnce({ data: [mockBrewingBatch, mockBrewingBatch] });
+
+      await expect(brewfatherService.currentRecipe()).rejects.toThrow('Multiple brews in progress!');
+    });
+
+    test('should use environment credentials for authentication', async () => {
+      axios.get.mockResolvedValueOnce({ data: [mockBrewingBatch] });
+
+      await brewfatherService.currentRecipe();
+
+      expect(axios.get).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          auth: {
+            username: 'testuser',
+            password: 'testpass'
+          }
+        })
+      );
     });
   });
 });
