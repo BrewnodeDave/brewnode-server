@@ -231,12 +231,12 @@ async function setKettleVolume (req, res, next, litres) {
 
 async function getSimSpeed (req, res, next) {
   const factor = sim.getSimulationSpeed();
-  res.send(200, `${factor}`);
+  res.status(200).json({ factor });
 };
 
 async function setSimulationSpeed (req, res, next, factor) {
   sim.setSimulationSpeed(factor);
-  res.send(200, `Simulated speed factor = ${factor}.`);
+  res.status(200).json({ message: `Simulated speed factor = ${factor}`, factor });
 };
 
 async function getSystemStatus (req, res, next) {
