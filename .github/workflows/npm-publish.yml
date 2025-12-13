@@ -6,32 +6,27 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Use Node.js
+        id: setup-node
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          registry-url: 'https://registry.npmjs.org'
+          always-auth: true
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Configure npm auth
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
-          # optional: ensure always-auth true
-          echo "always-auth=true" >> ~/.npmrc
-
-      - name: Build
-        run: npm run build   # if you have a build step
 
       - name: Publish to npm
         run: |
           # make sure version is updated or use `npm publish --access public` as needed
           npm publish --access public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ steps.setup-node.outputs.registry-token }}
