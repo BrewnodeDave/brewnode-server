@@ -1,5 +1,7 @@
 # .github/workflows/npm-publish.yml
 # Publish package to npm only when a GitHub Release is published
+name: Publish to NPM
+
 on:
   release:
     types: [published]
@@ -26,7 +28,8 @@ jobs:
           always-auth: true
 
       - name: Configure npm auth
-        # Requires creating a repository secret named NPM_TOKEN containing an npm Automation token
+        # Requires creating a repository secret named NPM_TOKEN containing an npm Automation token.
+        # The token must belong to an account/org that controls the @brewnode scope.
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
