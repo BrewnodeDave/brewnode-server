@@ -1,4 +1,5 @@
 on:
+  workflow_dispatch:  # <-- This enables the manual "Run workflow" button
   push:
     tags:
       - 'v*'    # or your own trigger
