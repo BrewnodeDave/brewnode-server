@@ -1,51 +1,85 @@
+# =============================================================================
+# Automated Release Creation Workflow
+# =============================================================================
+# Purpose: Automatically creates GitHub Releases based on conventional commits
+#          when changes are pushed to main/master branch.
+#
+# Triggers:
+#   - Push to 'main' or 'master' branch
+#   - Pull requests to 'main' or 'master' (tests only)
+#
+# Two-stage process:
+#   1. TEST: Runs tests on Node 18, 20, 22 and uploads coverage
+#   2. RELEASE: Analyzes commits, bumps version, creates GitHub Release
+#
+# Version bumping based on conventional commits:
+#   - "BREAKING CHANGE" in commit → Major version (1.0.0 → 2.0.0)
+#   - "feat:" prefix → Minor version (1.0.0 → 1.1.0)
+#   - "fix:" prefix → Patch version (1.0.0 → 1.0.1)
+#   - No conventional commits → Skip release
+#
+# What happens after:
+#   - Creates a GitHub Release (automatically)
+#   - To publish to npm: manually click "Publish release" in GitHub
+#   - This triggers publish-on-release.yml workflow
+#
+# Note: Does NOT publish to npm directly - gives you control
+# =============================================================================
+
 name: Release and Publish
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master ]  # Only run on main branch pushes
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master ]  # Test PRs but don't create releases
 
 jobs:
+  # ===== JOB 1: Multi-version testing =====
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [18.x, 20.x, 22.x]  # Test across multiple Node versions
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
+        cache: 'npm'  # Cache dependencies for faster builds
     
     - name: Install dependencies
-      run: npm ci
+      run: npm ci  # Clean install from lockfile
     
-    - name: Run tests
-      run: npm test -- --coverage
+    - name: Run tests with coverage
+      run: npm test -- --coverage  # Generate coverage reports
     
-    - name: Upload coverage reports
+    - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
-      if: matrix.node-version == '20.x'
+      if: matrix.node-version == '20.x'  # Only upload once from Node 20
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
-        fail_ci_if_error: false
+        fail_ci_if_error: false  # Don't fail build if Codecov upload fails
 
+  # ===== JOB 2: Automated release creation =====
   release:
-    needs: test
+    needs: test  # Only run after tests pass
     runs-on: ubuntu-latest
+    # Safety: Only create releases on direct pushes to main (not PRs)
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout full git history
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        fetch-depth: 0  # Fetch all history to analyze commits since last tag
         token: ${{ secrets.GITHUB_TOKEN }}
     
-    - name: Use Node.js 20.x
+    - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: 20.x
@@ -55,36 +89,45 @@ jobs:
     - name: Install dependencies
       run: npm ci
     
-    - name: Configure Git
+    - name: Configure Git for commits
+      # Required for standard-version to commit version bumps
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
     
-    - name: Check for conventional commits
+    - name: Analyze commits and determine release type
       id: conventional-commits
+      # This step examines commit messages since the last tag to determine:
+      # 1. Should we create a release? (only if conventional commits exist)
+      # 2. What type of version bump? (major/minor/patch)
       run: |
-        # Check if there are any conventional commits since last tag
+        # Find the most recent git tag
         LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+        
         if [ -z "$LAST_TAG" ]; then
+          # No previous tags exist - this is the first release
           echo "No previous tags found, will create initial release"
           echo "should_release=true" >> $GITHUB_OUTPUT
           echo "release_type=minor" >> $GITHUB_OUTPUT
         else
-          # Check commits since last tag for conventional commit types
+          # Count conventional commits since last tag
+          # Conventional commit format: type: description
+          # Examples: "feat: add new feature", "fix: resolve bug"
           FEAT_COUNT=$(git log $LAST_TAG..HEAD --oneline --grep="^feat" | wc -l)
           FIX_COUNT=$(git log $LAST_TAG..HEAD --oneline --grep="^fix" | wc -l)
           BREAKING_COUNT=$(git log $LAST_TAG..HEAD --oneline --grep="BREAKING CHANGE" | wc -l)
           
+          # Determine version bump based on commit types (highest priority wins)
           if [ $BREAKING_COUNT -gt 0 ]; then
-            echo "Breaking changes detected"
+            echo "Breaking changes detected - MAJOR version bump"
             echo "should_release=true" >> $GITHUB_OUTPUT
             echo "release_type=major" >> $GITHUB_OUTPUT
           elif [ $FEAT_COUNT -gt 0 ]; then
-            echo "New features detected"
+            echo "New features detected - MINOR version bump"
             echo "should_release=true" >> $GITHUB_OUTPUT
             echo "release_type=minor" >> $GITHUB_OUTPUT
           elif [ $FIX_COUNT -gt 0 ]; then
-            echo "Bug fixes detected"  
+            echo "Bug fixes detected - PATCH version bump"  
             echo "should_release=true" >> $GITHUB_OUTPUT
             echo "release_type=patch" >> $GITHUB_OUTPUT
           else
@@ -93,60 +136,36 @@ jobs:
           fi
         fi
     
-    - name: Create Release
+    - name: Bump version and update CHANGELOG
       if: steps.conventional-commits.outputs.should_release == 'true'
+      # Uses standard-version to:
+      # 1. Bump version in package.json based on release type
+      # 2. Generate/update CHANGELOG.md from conventional commits
+      # 3. Create a git commit and tag
       run: |
         if [ "${{ steps.conventional-commits.outputs.release_type }}" = "major" ]; then
-          npm run release:major
+          npm run release:major  # 1.0.0 → 2.0.0
         elif [ "${{ steps.conventional-commits.outputs.release_type }}" = "minor" ]; then
-          npm run release:minor  
+          npm run release:minor  # 1.0.0 → 1.1.0
         else
-          npm run release:patch
+          npm run release:patch  # 1.0.0 → 1.0.1
         fi
     
-    - name: Push changes
+    - name: Push version tag and commits
       if: steps.conventional-commits.outputs.should_release == 'true'
+      # Push the version commit and tag created by standard-version
       run: |
         git push --follow-tags origin main
     
-    - name: Publish to NPM
+    - name: Create GitHub Release
       if: steps.conventional-commits.outputs.should_release == 'true'
-      run: npm publish
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  publish-minor:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, 'feat:')
-    
-    steps:
-    - uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Use Node.js 20.x
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-        cache: 'npm'
-        registry-url: 'https://registry.npmjs.org'
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Configure Git
+      # Creates a GitHub Release that can be manually published
+      # When published, it triggers publish-on-release.yml to publish to npm
       run: |
-        git config --local user.email "action@github.com"
-        git config --local user.name "GitHub Action"
-    
-    - name: Create Minor Release
-      run: npm run release:minor
-    
-    - name: Push changes and publish
-      run: |
-        git push --follow-tags origin main
-        npm publish
+        VERSION=$(node -p "require('./package.json').version")
+        TAG_NAME="v${VERSION}"
+        gh release create "${TAG_NAME}" \
+          --title "Release ${TAG_NAME}" \
+          --generate-notes  # Auto-generate release notes from commits
       env:
-        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,5 +1,22 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
+# =============================================================================
+# Node.js CI Workflow
+# =============================================================================
+# Purpose: Continuous Integration - runs tests on every push and pull request
+#          to ensure code quality and catch bugs early.
+#
+# Triggers:
+#   - Push to ANY branch
+#   - Pull requests to 'develop' or 'devices-tab' branches
+#   - Manual trigger via GitHub UI (workflow_dispatch)
+#
+# What it does:
+#   1. Sets up Node.js environment
+#   2. Installs dependencies with npm ci (clean install)
+#   3. Runs build if build script exists
+#   4. Executes test suite
+#
+# Use case: Quality gate for all code changes before merging
+# =============================================================================
 
 name: Node.js CI
 permissions:
@@ -8,14 +25,13 @@ permissions:
 on:
   push:
     branches: 
-      - "*"
+      - "*"  # Run on all branches
   pull_request:
     branches: [ "develop", "devices-tab"  ]
-  workflow_dispatch:  # <-- This enables the manual "Run workflow" button
+  workflow_dispatch:  # Enable manual "Run workflow" button in GitHub UI
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -24,12 +40,20 @@ jobs:
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
-    - run: npm test
+        cache: 'npm'  # Cache npm packages for faster builds
+        
+    - name: Install dependencies
+      run: npm ci  # Clean install from package-lock.json (faster & more reliable than npm install)
+      
+    - name: Build project
+      run: npm run build --if-present  # Only runs if build script exists in package.json
+      
+    - name: Run tests
+      run: npm test  # Execute test suite to validate code changes
