@@ -25,8 +25,4 @@ jobs:
         run: npm ci
 
       - name: Publish to npm
-        run: |
-          # make sure version is updated or use `npm publish --access public` as needed
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ steps.setup-node.outputs.registry-token }}
+        run: npm publish --access public
