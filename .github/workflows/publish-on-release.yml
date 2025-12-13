@@ -1,42 +1,45 @@
-name: Create Github release
-permissions:
-  contents: write
-
+# Publish package to npm only when a GitHub Release is published
 on:
-  push:
-    tags:
-    - 'v*.*.*'
-  workflow_dispatch:  # <-- This enables the manual "Run workflow" button
+  release:
+    types: [published]
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    # Only run for release tags that look like version tags (optional guard)
+    if: startsWith(github.event.release.tag_name, 'v')
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      # Build step (customize)
-      - name: Build artifacts
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
+          always-auth: true
+
+      - name: Configure npm auth
+        # Requires creating a repository secret named NPM_TOKEN containing an npm Automation token
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          # example: npm run build or go build, etc.
-          mkdir -p artifacts
-          echo "fake binary" > artifacts/brewnode-server-${GITHUB_REF#refs/tags/}.txt
+          echo "Writing temporary ~/.npmrc for registry authentication"
+          printf "//registry.npmjs.org/:_authToken=%s\n" "${NODE_AUTH_TOKEN}" > ~/.npmrc
+          echo "Verify token (npm whoami) — fails fast if token is invalid"
+          npm whoami || (echo "npm whoami failed — check NPM_TOKEN and package ownership" && exit 1)
 
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: ${{ github.ref_name }}
-          body: |
-            Release created from tag ${{ github.ref_name }}.
-            Add release notes here.
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Upload release assets
-        uses: softprops/action-gh-release@v1
-        with:
-          files: artifacts/*
+      - name: Publish to npm
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # package.json already contains publishConfig.access = "public"
+          npm publish --access public
