@@ -1,0 +1,32 @@
+#!/usr/bin/env node
+
+/**
+ * BrewNode Server CLI Entry Point
+ * 
+ * This script allows the server to be started from any directory.
+ * It resolves all paths relative to the installation location.
+ * 
+ * Usage:
+ *   brewnode-server              # Normal start
+ *   brewnode-server --skip-tests # Skip hardware validation
+ * 
+ * Can be installed globally with: npm install -g @brewnode/server
+ * Then run from anywhere: brewnode-server
+ */
+
+const path = require('path');
+
+// Set environment variables from CLI flags
+if (process.argv.includes('--skip-tests')) {
+  process.env.SKIP_HARDWARE_TESTS = 'true';
+}
+
+// Resolve to the package root (one level up from bin/)
+const packageRoot = path.resolve(__dirname, '..');
+
+// Change working directory to package root
+// This ensures any remaining relative paths work correctly
+process.chdir(packageRoot);
+
+// Load and execute the main server
+require(path.join(packageRoot, 'index.js'));

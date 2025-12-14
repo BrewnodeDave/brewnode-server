@@ -37,6 +37,20 @@ brewnode.start();
 npm start
 ```
 
+**Note:** The server can be started from any directory. All paths are resolved relative to the installation location.
+
+### Global Installation (Optional)
+```bash
+# Install globally
+npm install -g @brewnode/server
+
+# Run from anywhere
+brewnode-server
+
+# Skip hardware tests
+brewnode-server --skip-tests
+```
+
 ### API Documentation
 Open your browser to explore the interactive API:
 ```

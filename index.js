@@ -5,12 +5,16 @@ const http = require("http");
 const fs = require("fs");
 
 const cors = require("cors");
-const broker = require("./src/broker.js");
+
+// Resolve paths relative to this file's location, not process.cwd()
+// This allows the server to be started from any directory
+const PROJECT_ROOT = __dirname;
+const broker = require(path.join(PROJECT_ROOT, "src/broker.js"));
 const socketio = require("socket.io");
 const oas3Tools = require("oas3-tools");
 
-const {start} = require("./src/start-stop.js");
-const brewdefs = require("./src/brewstack/common/brewdefs.js");
+const {start} = require(path.join(PROJECT_ROOT, "src/start-stop.js"));
+const brewdefs = require(path.join(PROJECT_ROOT, "src/brewstack/common/brewdefs.js"));
 
 const serverPort = 8080;
 const wsPort = 4000;
@@ -91,8 +95,8 @@ async function validatePiHardware() {
     console.log("  ⚙️  Testing basic service initialization...");
     try {
       // Try to load critical services to ensure they don't throw immediate errors
-      const tempService = require('./src/services/temp-service.js');
-      const i2cService = require('./src/services/i2c_raspi-service.js');
+      const tempService = require(path.join(PROJECT_ROOT, 'src/services/temp-service.js'));
+      const i2cService = require(path.join(PROJECT_ROOT, 'src/services/i2c_raspi-service.js'));
       
       // Basic module loading test
       if (typeof tempService.start !== 'function') {
@@ -141,7 +145,7 @@ const options = {
 };
 
 const expressAppConfig = oas3Tools.expressAppConfig(
-  path.join(__dirname, "api.yaml"),
+  path.join(PROJECT_ROOT, "api.yaml"),
   options
 );
 

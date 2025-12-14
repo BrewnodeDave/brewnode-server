@@ -6,6 +6,9 @@
     "access": "public"
   },
   "main": "index.js",
+  "bin": {
+    "brewnode-server": "./bin/brewnode-server"
+  },
   "scripts": {
     "prestart": "npm install",
     "start": "node index.js",
