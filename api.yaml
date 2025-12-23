@@ -1951,6 +1951,39 @@ paths:
           description: Success
       x-swagger-router-controller: brewnode
 
+  /pump/kettle/on:
+    put:
+      tags:
+      - Kettle
+      summary: Modulate kettle pump on/off cycling
+      description: Continuously cycles the kettle pump on and off for specified durations. Useful for RIMS (Recirculating Infusion Mash System) or controlled flow applications. Call without parameters to stop modulation.
+      operationId: kettlePumpModulate
+      parameters:
+      - name: onSecs
+        in: query
+        description: Duration in seconds to keep pump on during each cycle. Omit both parameters to stop modulation.
+        required: false
+        schema:
+          type: number
+          minimum: 0.1
+          maximum: 3600
+          example: 30
+      - name: offSecs
+        in: query
+        description: Duration in seconds to keep pump off during each cycle. Omit both parameters to stop modulation.
+        required: false
+        schema:
+          type: number
+          minimum: 0.1
+          maximum: 3600
+          example: 10
+      responses:
+        "200":
+          description: Success - pump modulation started or stopped
+        "400":
+          description: Invalid parameters
+      x-swagger-router-controller: brewnode
+
 
   /valve/kettlein:
     put:
@@ -2059,6 +2092,39 @@ paths:
       responses:
         "200":
           description: Success
+      x-swagger-router-controller: brewnode
+
+  /pump/mash/on:
+    put:
+      tags:
+      - Mash Tun
+      summary: Modulate mash pump on/off cycling
+      description: Continuously cycles the mash pump on and off for specified durations. Useful for RIMS (Recirculating Infusion Mash System) or controlled flow applications. Call without parameters to stop modulation.
+      operationId: mashPumpModulate
+      parameters:
+      - name: onSecs
+        in: query
+        description: Duration in seconds to keep pump on during each cycle. Omit both parameters to stop modulation.
+        required: false
+        schema:
+          type: number
+          minimum: 0.1
+          maximum: 3600
+          example: 30
+      - name: offSecs
+        in: query
+        description: Duration in seconds to keep pump off during each cycle. Omit both parameters to stop modulation.
+        required: false
+        schema:
+          type: number
+          minimum: 0.1
+          maximum: 3600
+          example: 10
+      responses:
+        "200":
+          description: Success - pump modulation started or stopped
+        "400":
+          description: Invalid parameters
       x-swagger-router-controller: brewnode
 
 

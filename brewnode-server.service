@@ -1,0 +1,18 @@
+[Unit]
+Description=Backend Node.JS server
+After=network.target
+
+[Service]
+Type=simple
+User=dave
+WorkingDirectory=/home/dave/git/brewnode-server
+Environment=NODE_ENV=production
+Environment=PATH=/home/dave/.nvm/versions/node/v20.19.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ExecStart=/home/dave/git/brewnode-server/bin/brewnode-server
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

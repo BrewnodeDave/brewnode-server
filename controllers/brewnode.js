@@ -477,6 +477,178 @@ async function pump(req, res, next, pumpName, onOff) {
   res.send(200, watts);
 } 
 
+// Global variables to store pump modulation intervals
+let kettlePumpModulationInterval = null;
+let mashPumpModulationInterval = null;
+
+/**
+ * Modulate the kettle pump on/off cycling for RIMS applications.
+ * Continuously cycles the pump on and off for specified durations.
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Object} next - Express next middleware function
+ * @param {number} onSecs - Duration in seconds to keep pump on during each cycle
+ * @param {number} offSecs - Duration in seconds to keep pump off during each cycle
+ */
+async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
+  try {
+    // If no parameters provided, stop modulation
+    if (!onSecs && !offSecs) {
+      if (kettlePumpModulationInterval) {
+        clearTimeout(kettlePumpModulationInterval);
+        kettlePumpModulationInterval = null;
+        pumps.off("Pump Kettle");
+        res.send(200, { message: "Kettle pump modulation stopped" });
+      } else {
+        res.send(200, { message: "Kettle pump modulation was not active" });
+      }
+      return;
+    }
+    
+    // Validate parameters
+    const onSecsNum = parseFloat(onSecs);
+    const offSecsNum = parseFloat(offSecs);
+    
+    if (isNaN(onSecsNum) || isNaN(offSecsNum) || onSecsNum < 0.1 || onSecsNum > 3600 || offSecsNum < 0.1 || offSecsNum > 3600) {
+      progressPublish.error(`Invalid pump modulation parameters: onSecs=${onSecs}, offSecs=${offSecs}`);
+      res.send(400, "Invalid parameters: onSecs and offSecs must be numbers between 0.1 and 3600");
+      return;
+    }
+
+    // Stop any existing modulation
+    if (kettlePumpModulationInterval) {
+      clearTimeout(kettlePumpModulationInterval);
+      kettlePumpModulationInterval = null;
+      pumps.off("Pump Kettle");
+    }
+    
+    // Adjust timing for simulation speed
+    const simSpeed = getSimulationSpeed();
+    const adjustedOnSecs = onSecsNum / simSpeed;
+    const adjustedOffSecs = offSecsNum / simSpeed;
+    
+    // Define the cycling function
+    const cycle = () => {
+      // Get current pump status (0 = off, non-zero = on)
+      const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value || 0;
+      
+      if (pumpStatus !== 0) {
+        // Pump is on, turn it off
+        pumps.off("Pump Kettle");
+        // Schedule next on cycle
+        kettlePumpModulationInterval = setTimeout(() => {
+          cycle();
+        }, adjustedOffSecs * 1000);
+      } else {
+        // Pump is off, turn it on
+        pumps.on("Pump Kettle");
+        // Schedule next off cycle
+        kettlePumpModulationInterval = setTimeout(() => {
+          cycle();
+        }, adjustedOnSecs * 1000);
+      }
+    };
+    
+    // Start the first cycle (turn pump on)
+    cycle();
+    
+    res.send(200, {
+      message: "Kettle pump modulation started",
+      onSecs: onSecsNum,
+      offSecs: offSecsNum
+    });
+    
+  } catch (error) {
+    console.error(error);
+    res.send(500, error.message);
+  }
+}
+
+/**
+ * Modulate the mash pump on/off cycling for RIMS applications.
+ * Continuously cycles the pump on and off for specified durations.
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Object} next - Express next middleware function
+ * @param {number} onSecs - Duration in seconds to keep pump on during each cycle
+ * @param {number} offSecs - Duration in seconds to keep pump off during each cycle
+ */
+async function mashPumpModulate(req, res, next, onSecs, offSecs) {
+  try {
+    // If no parameters provided, stop modulation
+    if (!onSecs && !offSecs) {
+      if (mashPumpModulationInterval) {
+        clearTimeout(mashPumpModulationInterval);
+        mashPumpModulationInterval = null;
+        pumps.off("Pump Mash");
+        res.send(200, { message: "Mash pump modulation stopped" });
+      } else {
+        res.send(200, { message: "Mash pump modulation was not active" });
+      }
+      return;
+    }
+    
+    // Validate parameters
+    const onSecsNum = parseFloat(onSecs);
+    const offSecsNum = parseFloat(offSecs);
+    
+    if (isNaN(onSecsNum) || isNaN(offSecsNum) || onSecsNum < 0.1 || onSecsNum > 3600 || offSecsNum < 0.1 || offSecsNum > 3600) {
+      progressPublish.error(`Invalid pump modulation parameters: onSecs=${onSecs}, offSecs=${offSecs}`);
+      res.send(400, "Invalid parameters: onSecs and offSecs must be numbers between 0.1 and 3600");
+      return;
+    }
+
+    // Stop any existing modulation
+    if (mashPumpModulationInterval) {
+      clearTimeout(mashPumpModulationInterval);
+      mashPumpModulationInterval = null;
+      pumps.off("Pump Mash");
+    }
+    
+    // Adjust timing for simulation speed
+    const simSpeed = getSimulationSpeed();
+    const adjustedOnSecs = onSecsNum / simSpeed;
+    const adjustedOffSecs = offSecsNum / simSpeed;
+    
+    // Define the cycling function
+    const cycle = () => {
+      // Get current pump status (0 = off, non-zero = on)
+      const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Mash")?.value || 0;
+      
+      if (pumpStatus !== 0) {
+        // Pump is on, turn it off
+        pumps.off("Pump Mash");
+        // Schedule next on cycle
+        mashPumpModulationInterval = setTimeout(() => {
+          cycle();
+        }, adjustedOffSecs * 1000);
+      } else {
+        // Pump is off, turn it on
+        pumps.on("Pump Mash");
+        // Schedule next off cycle
+        mashPumpModulationInterval = setTimeout(() => {
+          cycle();
+        }, adjustedOnSecs * 1000);
+      }
+    };
+    
+    // Start the first cycle (turn pump on)
+    cycle();
+    
+    res.send(200, {
+      message: "Mash pump modulation started",
+      onSecs: onSecsNum,
+      offSecs: offSecsNum
+    });
+    
+  } catch (error) {
+    console.error(error);
+    res.send(500, error.message);
+  }
+}
+
 /**
  * Returns an asynchronous middleware function to handle valve operations.
  *
@@ -669,10 +841,12 @@ module.exports = {
   k2m: kettle2mashtun,
   kettleInValve: getValve("Valve Kettle-in"),
   kettlePump,
+  kettlePumpModulate,
   m2k: mash2kettle,
   mash,
   mashInValve: getValve("Valve Mash-in"),
   mashPump,
+  mashPumpModulate,
   pumpsStatus,
   restart,
   sensorStatus,
