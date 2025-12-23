@@ -499,6 +499,7 @@ async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
         clearTimeout(kettlePumpModulationInterval);
         kettlePumpModulationInterval = null;
         pumps.off("Pump Kettle");
+        valves.close("Valve Mash-in");
         res.send(200, { message: "Kettle pump modulation stopped" });
       } else {
         res.send(200, { message: "Kettle pump modulation was not active" });
@@ -521,6 +522,7 @@ async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
       clearTimeout(kettlePumpModulationInterval);
       kettlePumpModulationInterval = null;
       pumps.off("Pump Kettle");
+      valves.close("Valve Mash-in");
     }
     
     // Adjust timing for simulation speed
@@ -534,15 +536,17 @@ async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
       const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value || 0;
       
       if (pumpStatus !== 0) {
-        // Pump is on, turn it off
+        // Pump is on, turn it off and close mash in valve
         pumps.off("Pump Kettle");
+        valves.close("Valve Mash-in");
         // Schedule next on cycle
         kettlePumpModulationInterval = setTimeout(() => {
           cycle();
         }, adjustedOffSecs * 1000);
       } else {
-        // Pump is off, turn it on
+        // Pump is off, turn it on and open mash in valve
         pumps.on("Pump Kettle");
+        valves.open("Valve Mash-in");
         // Schedule next off cycle
         kettlePumpModulationInterval = setTimeout(() => {
           cycle();
