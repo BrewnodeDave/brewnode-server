@@ -480,6 +480,7 @@ async function pump(req, res, next, pumpName, onOff) {
 // Global variables to store pump modulation intervals
 let kettlePumpModulationInterval = null;
 let mashPumpModulationInterval = null;
+let recirculationInterval = null;
 
 /**
  * Modulate the kettle pump on/off cycling for RIMS applications.
@@ -561,6 +562,71 @@ async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
       message: "Kettle pump modulation started",
       onSecs: onSecsNum,
       offSecs: offSecsNum
+    });
+    
+  } catch (error) {
+    console.error(error);
+    res.send(500, error.message);
+  }
+}
+
+/**
+ * Recirculate between kettle and mash tun.
+ * Turns on mash pump continuously and modulates kettle pump with 3s on / 10s off cycle.
+ * Controls mash temperature by turning kettle heater on/off.
+ * Call with onOff="Off" to stop recirculation.
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Object} next - Express next middleware function
+ * @param {string} onOff - "On" to start recirculation, "Off" to stop
+ * @param {number} tempC - Target mash temperature in Celsius (required when onOff="On")
+ */
+async function recirculate(req, res, next, onOff, tempC) {
+  try {
+    if (onOff === "Off") {
+      // Stop recirculation
+      if (recirculationInterval) {
+        clearInterval(recirculationInterval);
+        recirculationInterval = null;
+      }
+      
+      // Stop temperature control
+      tempController.pause();
+      
+      // Stop kettle pump modulation and turn off mash pump
+      await kettlePumpModulate(req, res, next, null, null);
+      pumps.off("Pump Mash");
+      
+      res.send(200, { message: "Recirculation stopped" });
+      return;
+    }
+    
+    // Validate temperature parameter
+    const targetTemp = parseFloat(tempC);
+    if (isNaN(targetTemp) || targetTemp < 0 || targetTemp > 100) {
+      res.send(400, "Invalid temperature: must be between 0 and 100°C");
+      return;
+    }
+    
+    // Start recirculation
+    // Initialize temperature controller
+    await tempController.init(800, 0.3, 100);
+    
+    // Turn on mash pump permanently
+    pumps.on("Pump Mash");
+    
+    // Start kettle pump modulation with 3s on, 10s off
+    await kettlePumpModulate(req, res, next, 3, 10);
+    
+    // Start temperature control loop
+    tempController.setMashTemp(targetTemp, (status) => {
+      // Temperature control active
+    });
+    
+    res.send(200, {
+      message: "Recirculation started",
+      targetTemp: targetTemp
     });
     
   } catch (error) {
@@ -852,6 +918,7 @@ module.exports = {
   mashPump,
   mashPumpModulate,
   pumpsStatus,
+  recirculate,
   restart,
   sensorStatus,
   setBrewname,

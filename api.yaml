@@ -1907,6 +1907,41 @@ paths:
           description: Success
       x-swagger-router-controller: brewnode
 
+  /recirculate:
+    put:
+      tags:
+      - Process
+      summary: Start or stop recirculation between kettle and mash tun
+      description: Turns on mash pump continuously, modulates kettle pump (3s on / 10s off), and controls mash temperature via kettle heater for RIMS operation.
+      operationId: recirculate
+      parameters:
+      - name: onOff
+        in: query
+        description: Recirculation state
+        schema:
+          type: string
+          enum:
+          - On
+          - Off
+        required: true
+      - name: tempC
+        in: query
+        description: Target mash temperature in Celsius (required when starting recirculation)
+        required: false
+        schema:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 65
+      responses:
+        "200":
+          description: Success - recirculation started or stopped
+        "400":
+          description: Invalid temperature parameter
+        "500":
+          description: Internal Server Error
+      x-swagger-router-controller: brewnode
+
 
   /heat:
     put:
