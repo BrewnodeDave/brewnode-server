@@ -1912,7 +1912,7 @@ paths:
       tags:
       - Process
       summary: Start or stop recirculation between kettle and mash tun
-      description: Turns on mash pump continuously, modulates kettle pump (3s on / 10s off), and controls mash temperature via kettle heater for RIMS operation.
+      description: Turns on mash pump continuously, modulates kettle pump with configurable on time and 10s off, and controls mash temperature via kettle heater for RIMS operation.
       operationId: recirculate
       parameters:
       - name: onOff
@@ -1933,11 +1933,21 @@ paths:
           minimum: 0
           maximum: 100
           example: 65
+      - name: onSecs
+        in: query
+        description: Duration in seconds to keep kettle pump on during each cycle (default 3 seconds)
+        required: false
+        schema:
+          type: number
+          minimum: 0.1
+          maximum: 3600
+          default: 3
+          example: 3
       responses:
         "200":
           description: Success - recirculation started or stopped
         "400":
-          description: Invalid temperature parameter
+          description: Invalid temperature or onSecs parameter
         "500":
           description: Internal Server Error
       x-swagger-router-controller: brewnode

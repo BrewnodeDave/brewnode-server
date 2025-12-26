@@ -588,7 +588,7 @@ async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
 
 /**
  * Recirculate between kettle and mash tun.
- * Turns on mash pump continuously and modulates kettle pump with 3s on / 10s off cycle.
+ * Turns on mash pump continuously and modulates kettle pump with configurable on/off cycle.
  * Controls mash temperature by turning kettle heater on/off.
  * Call with onOff="Off" to stop recirculation.
  *
@@ -597,8 +597,9 @@ async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
  * @param {Object} next - Express next middleware function
  * @param {string} onOff - "On" to start recirculation, "Off" to stop
  * @param {number} tempC - Target mash temperature in Celsius (required when onOff="On")
+ * @param {number} onSecs - Duration in seconds to keep kettle pump on during each cycle (default: 3)
  */
-async function recirculate(req, res, next, onOff, tempC) {
+async function recirculate(req, res, next, onOff, tempC, onSecs) {
   try {
     if (onOff === "Off") {
       // Stop recirculation
@@ -625,6 +626,13 @@ async function recirculate(req, res, next, onOff, tempC) {
       return;
     }
     
+    // Validate and set onSecs parameter (default to 3 seconds)
+    const kettleOnSecs = onSecs ? parseFloat(onSecs) : 3;
+    if (isNaN(kettleOnSecs) || kettleOnSecs < 0.1 || kettleOnSecs > 3600) {
+      res.send(400, "Invalid onSecs: must be between 0.1 and 3600 seconds");
+      return;
+    }
+    
     // Start recirculation
     // Initialize temperature controller
     await tempController.init(800, 0.3, 100);
@@ -632,8 +640,8 @@ async function recirculate(req, res, next, onOff, tempC) {
     // Turn on mash pump permanently
     pumps.on("Pump Mash");
     
-    // Start kettle pump modulation with 3s on, 10s off
-    const modulationResult = startStopKettlePumpModulation(3, 10);
+    // Start kettle pump modulation with configurable on time, 10s off
+    const modulationResult = startStopKettlePumpModulation(kettleOnSecs, 10);
     if (!modulationResult.success) {
       res.send(modulationResult.status || 500, modulationResult.message);
       return;
@@ -646,7 +654,9 @@ async function recirculate(req, res, next, onOff, tempC) {
     
     res.send(200, {
       message: "Recirculation started",
-      targetTemp: targetTemp
+      targetTemp: targetTemp,
+      kettlePumpOnSecs: kettleOnSecs,
+      kettlePumpOffSecs: 10
     });
     
   } catch (error) {
