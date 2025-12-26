@@ -109,6 +109,46 @@ function tempHandler(value){
 	console.log(`🌡️  Temperature reading from ${currentThermName}: ${currentTemp}C`)	;
 }
 
+/**
+ * Get temperature with retry logic to handle electrical interference from pumps
+ * @param {string} thermName - Name of the temperature sensor
+ * @param {number} retries - Number of retry attempts (default 3)
+ * @param {number} delayMs - Delay between retries in milliseconds (default 200)
+ * @returns {Promise<number>} Temperature reading
+ */
+async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
+	for (let attempt = 1; attempt <= retries; attempt++) {
+		try {
+			const temp = await therm.getTemp(thermName);
+			
+			// Check if reading is valid (not 85°C error value and within reasonable range)
+			if (temp !== null && temp !== undefined && temp !== 85 && temp >= -10 && temp <= 110) {
+				if (attempt > 1) {
+					brewlog.info(`Temperature read succeeded on attempt ${attempt}`, temp);
+				}
+				return temp;
+			}
+			
+			brewlog.warn(`Invalid temperature reading: ${temp}°C (attempt ${attempt}/${retries})`);
+			
+		} catch (err) {
+			brewlog.warn(`Temperature read failed (attempt ${attempt}/${retries})`, err.message);
+		}
+		
+		// Wait before retry (except on last attempt)
+		if (attempt < retries) {
+			await new Promise(resolve => setTimeout(resolve, delayMs));
+		}
+	}
+	
+	// All retries failed, return last known good value or throw
+	if (currentTemp !== null && currentTemp !== undefined) {
+		brewlog.error(`All temperature read attempts failed, using last known value: ${currentTemp}°C`);
+		return currentTemp;
+	}
+	
+	throw new Error(`Failed to read temperature from ${thermName} after ${retries} attempts`);
+}
 
 function pause(){
 	heatTimer.clearInterval();
@@ -130,8 +170,8 @@ function init(P, I, D) {
 		if (_simulationSpeed !== 1){
 			calculationInterval = CALCULATION_INTERVAL_MS / _simulationSpeed;
 		}
-		//Force a temperature reading
-		therm.getTemp(currentThermName)
+		//Force a temperature reading with retry logic
+		getTempWithRetry(currentThermName)
 		.then(t => {
 			brewlog.info("init PID: Current Temp=",t);
 			currentTemp = t;
@@ -179,7 +219,15 @@ module.exports = {
 				heatTimer.clearInterval();
 				timeAtTemp = 0;
 
-				heatTimer.setInterval(() => {	
+				heatTimer.setInterval(async () => {	
+					try {
+						// Read temperature with retry logic to handle pump interference
+						const temp = await getTempWithRetry(currentThermName);
+						currentTemp = temp;
+					} catch (err) {
+						brewlog.error("Failed to read kettle temperature, using last known value", err.message);
+					}
+					
 					brewlog.debug("Check kettle temp", `Current:${currentTemp}, Target:${targetTemp}`);
 					if (currentTemp >= targetTemp){ 
 						//temp reached
@@ -221,17 +269,29 @@ module.exports = {
 		const phaseName = `Heating Mash to ${targetTemp}C.`;		
 		brewlog.info(phaseName);			
 
-		//add heatTimer
-		mashTimer.setInterval(() => {	
-			brewlog.info("Check Mash temp", `${currentTemp}, ${targetTemp}`);
-			if (currentTemp >= targetTemp){ 
-				//temp reached
-				timeAtTemp += calculationInterval;
-			}
-			currentPower = calculatePower(currentTemp);
-			kettleHeater.setPower(currentPower);
+		//add mashTimer with temperature retry logic
+		mashTimer.setInterval(async () => {	
+			try {
+				// Read temperature with retry logic to handle pump interference
+				const temp = await getTempWithRetry(currentThermName);
+				currentTemp = temp;
+				
+				brewlog.info("Check Mash temp", `${currentTemp}, ${targetTemp}`);
+				if (currentTemp >= targetTemp){ 
+					//temp reached
+					timeAtTemp += calculationInterval;
+				}
+				currentPower = calculatePower(currentTemp);
+				kettleHeater.setPower(currentPower);
 
-			cb({kW:currentPower, secsAtTemp: timeAtTemp/1000});
+				cb({kW:currentPower, secsAtTemp: timeAtTemp/1000});
+			} catch (err) {
+				brewlog.error("Failed to read mash temperature", err.message);
+				// Continue with last known temperature
+				currentPower = calculatePower(currentTemp);
+				kettleHeater.setPower(currentPower);
+				cb({kW:currentPower, secsAtTemp: timeAtTemp/1000});
+			}
 		}, '', `${calculationInterval}m`);
 	},
 
