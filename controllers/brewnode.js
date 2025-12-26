@@ -483,6 +483,83 @@ let mashPumpModulationInterval = null;
 let recirculationInterval = null;
 
 /**
+ * Internal helper to start/stop kettle pump modulation without sending HTTP response.
+ * @param {number|null} onSecs - Duration in seconds to keep pump on, or null to stop
+ * @param {number|null} offSecs - Duration in seconds to keep pump off, or null to stop
+ * @returns {Object} Result object with success status and message
+ */
+function startStopKettlePumpModulation(onSecs, offSecs) {
+  // If no parameters provided, stop modulation
+  if (!onSecs && !offSecs) {
+    if (kettlePumpModulationInterval) {
+      clearTimeout(kettlePumpModulationInterval);
+      kettlePumpModulationInterval = null;
+      pumps.off("Pump Kettle");
+      valves.close("Valve Mash-in");
+      return { success: true, message: "Kettle pump modulation stopped" };
+    } else {
+      return { success: true, message: "Kettle pump modulation was not active" };
+    }
+  }
+  
+  // Validate parameters
+  const onSecsNum = parseFloat(onSecs);
+  const offSecsNum = parseFloat(offSecs);
+  
+  if (isNaN(onSecsNum) || isNaN(offSecsNum) || onSecsNum < 0.1 || onSecsNum > 3600 || offSecsNum < 0.1 || offSecsNum > 3600) {
+    progressPublish.error(`Invalid pump modulation parameters: onSecs=${onSecs}, offSecs=${offSecs}`);
+    return { success: false, message: "Invalid parameters: onSecs and offSecs must be numbers between 0.1 and 3600", status: 400 };
+  }
+
+  // Stop any existing modulation
+  if (kettlePumpModulationInterval) {
+    clearTimeout(kettlePumpModulationInterval);
+    kettlePumpModulationInterval = null;
+    pumps.off("Pump Kettle");
+    valves.close("Valve Mash-in");
+  }
+  
+  // Adjust timing for simulation speed
+  const simSpeed = getSimulationSpeed();
+  const adjustedOnSecs = onSecsNum / simSpeed;
+  const adjustedOffSecs = offSecsNum / simSpeed;
+  
+  // Define the cycling function
+  const cycle = () => {
+    // Get current pump status (0 = off, non-zero = on)
+    const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value || 0;
+    
+    if (pumpStatus !== 0) {
+      // Pump is on, turn it off and close mash in valve
+      pumps.off("Pump Kettle");
+      valves.close("Valve Mash-in");
+      // Schedule next on cycle
+      kettlePumpModulationInterval = setTimeout(() => {
+        cycle();
+      }, adjustedOffSecs * 1000);
+    } else {
+      // Pump is off, turn it on and open mash in valve
+      pumps.on("Pump Kettle");
+      valves.open("Valve Mash-in");
+      // Schedule next off cycle
+      kettlePumpModulationInterval = setTimeout(() => {
+        cycle();
+      }, adjustedOnSecs * 1000);
+    }
+  };
+  
+  // Start the first cycle (turn pump on)
+  cycle();
+  
+  return {
+    success: true,
+    message: "Kettle pump modulation started",
+    onSecs: onSecsNum,
+    offSecs: offSecsNum
+  };
+}
+
+/**
  * Modulate the kettle pump on/off cycling for RIMS applications.
  * Continuously cycles the pump on and off for specified durations.
  *
@@ -494,75 +571,14 @@ let recirculationInterval = null;
  */
 async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
   try {
-    // If no parameters provided, stop modulation
-    if (!onSecs && !offSecs) {
-      if (kettlePumpModulationInterval) {
-        clearTimeout(kettlePumpModulationInterval);
-        kettlePumpModulationInterval = null;
-        pumps.off("Pump Kettle");
-        valves.close("Valve Mash-in");
-        res.send(200, { message: "Kettle pump modulation stopped" });
-      } else {
-        res.send(200, { message: "Kettle pump modulation was not active" });
-      }
+    const result = startStopKettlePumpModulation(onSecs, offSecs);
+    
+    if (!result.success) {
+      res.send(result.status || 500, result.message);
       return;
     }
     
-    // Validate parameters
-    const onSecsNum = parseFloat(onSecs);
-    const offSecsNum = parseFloat(offSecs);
-    
-    if (isNaN(onSecsNum) || isNaN(offSecsNum) || onSecsNum < 0.1 || onSecsNum > 3600 || offSecsNum < 0.1 || offSecsNum > 3600) {
-      progressPublish.error(`Invalid pump modulation parameters: onSecs=${onSecs}, offSecs=${offSecs}`);
-      res.send(400, "Invalid parameters: onSecs and offSecs must be numbers between 0.1 and 3600");
-      return;
-    }
-
-    // Stop any existing modulation
-    if (kettlePumpModulationInterval) {
-      clearTimeout(kettlePumpModulationInterval);
-      kettlePumpModulationInterval = null;
-      pumps.off("Pump Kettle");
-      valves.close("Valve Mash-in");
-    }
-    
-    // Adjust timing for simulation speed
-    const simSpeed = getSimulationSpeed();
-    const adjustedOnSecs = onSecsNum / simSpeed;
-    const adjustedOffSecs = offSecsNum / simSpeed;
-    
-    // Define the cycling function
-    const cycle = () => {
-      // Get current pump status (0 = off, non-zero = on)
-      const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value || 0;
-      
-      if (pumpStatus !== 0) {
-        // Pump is on, turn it off and close mash in valve
-        pumps.off("Pump Kettle");
-        valves.close("Valve Mash-in");
-        // Schedule next on cycle
-        kettlePumpModulationInterval = setTimeout(() => {
-          cycle();
-        }, adjustedOffSecs * 1000);
-      } else {
-        // Pump is off, turn it on and open mash in valve
-        pumps.on("Pump Kettle");
-        valves.open("Valve Mash-in");
-        // Schedule next off cycle
-        kettlePumpModulationInterval = setTimeout(() => {
-          cycle();
-        }, adjustedOnSecs * 1000);
-      }
-    };
-    
-    // Start the first cycle (turn pump on)
-    cycle();
-    
-    res.send(200, {
-      message: "Kettle pump modulation started",
-      onSecs: onSecsNum,
-      offSecs: offSecsNum
-    });
+    res.send(200, result);
     
   } catch (error) {
     console.error(error);
@@ -595,7 +611,7 @@ async function recirculate(req, res, next, onOff, tempC) {
       tempController.pause();
       
       // Stop kettle pump modulation and turn off mash pump
-      await kettlePumpModulate(req, res, next, null, null);
+      startStopKettlePumpModulation(null, null);
       pumps.off("Pump Mash");
       
       res.send(200, { message: "Recirculation stopped" });
@@ -617,7 +633,11 @@ async function recirculate(req, res, next, onOff, tempC) {
     pumps.on("Pump Mash");
     
     // Start kettle pump modulation with 3s on, 10s off
-    await kettlePumpModulate(req, res, next, 3, 10);
+    const modulationResult = startStopKettlePumpModulation(3, 10);
+    if (!modulationResult.success) {
+      res.send(modulationResult.status || 500, modulationResult.message);
+      return;
+    }
     
     // Start temperature control loop
     tempController.setMashTemp(targetTemp, (status) => {

@@ -105,7 +105,8 @@ function calculatePower(actualTemperature) {
 };
 
 function tempHandler(value){
-	currentTemp = value.value;
+	currentTemp = value;
+	console.log(`🌡️  Temperature reading from ${currentThermName}: ${currentTemp}C`)	;
 }
 
 
