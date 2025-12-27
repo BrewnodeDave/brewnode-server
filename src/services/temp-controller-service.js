@@ -31,7 +31,8 @@ cause the system to be highly sensitive to noise.
 
 const broker = require('../broker.js');
 const therm = require('./temp-service.js');
-const kettleHeater = require('./kettle-heater-service.js'); 
+const kettleHeater = require('./kettle-heater-service.js');
+const pumps = require('./pump-service.js'); 
 
 const NanoTimer = require('nanotimer');
 const brewlog = require('../brewstack/common/brewlog.js');
@@ -110,21 +111,29 @@ function tempHandler(value){
 }
 
 /**
- * Get temperature with retry logic to handle electrical interference from pumps
+ * Get temperature with retry logic to handle electrical interference from pumps.
+ * If temperature reading fails, temporarily stops the mash pump to get a valid reading.
  * @param {string} thermName - Name of the temperature sensor
  * @param {number} retries - Number of retry attempts (default 3)
  * @param {number} delayMs - Delay between retries in milliseconds (default 200)
  * @returns {Promise<number>} Temperature reading
  */
 async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
+	let mashPumpWasOn = false;
+	
 	for (let attempt = 1; attempt <= retries; attempt++) {
 		try {
 			const temp = await therm.getTemp(thermName);
 			
 			// Check if reading is valid (not 85°C error value and within reasonable range)
-			if (temp !== null && temp !== undefined && temp !== 85 && temp >= -10 && temp <= 110) {
+			if (temp !== false && temp !== null && temp !== undefined && temp !== 85 && temp >= -10 && temp <= 110) {
 				if (attempt > 1) {
 					brewlog.info(`Temperature read succeeded on attempt ${attempt}`, temp);
+				}
+				// Restore mash pump if we turned it off
+				if (mashPumpWasOn) {
+					brewlog.info("Restoring mash pump after successful temperature read");
+					pumps.on("Pump Mash");
 				}
 				return temp;
 			}
@@ -135,13 +144,31 @@ async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
 			brewlog.warn(`Temperature read failed (attempt ${attempt}/${retries})`, err.message);
 		}
 		
+		// If we've failed once and mash pump is running, stop it temporarily to reduce interference
+		if (attempt === 1) {
+			const mashPumpStatus = pumps.getStatus().find(p => p.name === "Pump Mash")?.value || 0;
+			if (mashPumpStatus !== 0) {
+				brewlog.info("Temporarily stopping mash pump to get clean temperature reading");
+				mashPumpWasOn = true;
+				pumps.off("Pump Mash");
+				// Give pump time to stop and electrical noise to settle
+				await new Promise(resolve => setTimeout(resolve, 500));
+			}
+		}
+		
 		// Wait before retry (except on last attempt)
 		if (attempt < retries) {
 			await new Promise(resolve => setTimeout(resolve, delayMs));
 		}
 	}
 	
-	// All retries failed, return last known good value or throw
+	// All retries failed - restore mash pump if we turned it off
+	if (mashPumpWasOn) {
+		brewlog.warn("Temperature read failed, restoring mash pump");
+		pumps.on("Pump Mash");
+	}
+	
+	// Return last known good value or throw
 	if (currentTemp !== null && currentTemp !== undefined) {
 		brewlog.error(`All temperature read attempts failed, using last known value: ${currentTemp}°C`);
 		return currentTemp;
@@ -213,7 +240,7 @@ module.exports = {
 			
 			const phaseName = `Heating to ${targetTemp}C for ${minutes * speedupFactor} mins.`;
 
-			brewlog.info(phaseName);			
+			brewlog.info(phaseName);				
 			// if (currentTemp < targetTemp){
 				//add heatTimer
 				heatTimer.clearInterval();

@@ -68,7 +68,7 @@ function log(type, message, data='') {
 
 	// logPublish(string); // Commented out to avoid circular dependency
 
-}
+}	
 
 let gLogger = {
 	info: (message, data) => log('info', message, data),
