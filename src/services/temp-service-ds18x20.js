@@ -154,7 +154,7 @@ async function getAllTemps(retries = 3, delayMs = 200) {
 				
 				// Give pumps time to stop and electrical noise to settle
 				if (mashPumpWasOn || kettlePumpWasOn) {
-					await new Promise(resolve => setTimeout(resolve, 1000));
+					await new Promise(resolve => setTimeout(resolve, 500));
 				}
 			} catch (pumpErr) {
 				brewlog.warn("Error managing pumps for temperature retry", pumpErr.message);
@@ -221,7 +221,7 @@ function updateProbeValue(probe, value) {
 
 async function pollTemperatures(deltaSecs){
 	const sensors = await getAllTemps();
-	
+brewlog.info('pollTemperatures');	
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (prevSensorValues[sensor.name].value){
@@ -292,7 +292,7 @@ module.exports = {
 							setPollInterval(60 / simulationSpeed);
 							ambientTemp = 9.9;
 						}else{
-							setPollInterval(10);
+							setPollInterval(60);
 							ambientTemp = sensors.find(sensor => sensor.name === "Temp Ambient")?.value;
 						}
 						started = true;

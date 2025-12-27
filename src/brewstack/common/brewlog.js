@@ -65,7 +65,7 @@ function log(type, message, data='') {
 	const icon = icons[type] || '';
 	const string = `${timeStamp} ${icon} ${message} : ${data}`;
 	fs.appendFileSync(logFile, `${string}\n`);
-
+console.log(string);
 	// logPublish(string); // Commented out to avoid circular dependency
 
 }	

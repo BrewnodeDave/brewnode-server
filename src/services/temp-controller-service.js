@@ -121,7 +121,7 @@ function tempHandler(value){
 async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
 	let mashPumpWasOn = false;
 	let kettlePumpWasOn = false;
-	
+console.log('getTempWithRetry');	
 	for (let attempt = 1; attempt <= retries; attempt++) {
 		try {
 			const temp = await therm.getTemp(thermName);
@@ -140,6 +140,7 @@ async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
 					brewlog.info("Restoring kettle pump after successful temperature read");
 					pumps.on("Pump Kettle");
 				}
+				brewlog.info(thermName,temp);
 				return temp;
 			}
 			

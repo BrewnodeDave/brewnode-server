@@ -285,7 +285,7 @@ async function sensorStatus(req, res, next) {
   try {
     let result = [];
     let f;
-
+console.log(req.query.name);
     switch(req.query.name){
       case "Valve Kettle-in":
         result = valves.getStatus().find(v => v.name === "Valve Kettle-in").value;
