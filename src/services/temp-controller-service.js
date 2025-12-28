@@ -50,7 +50,8 @@ let currentPower = null;
 const heatTimer = new NanoTimer();
 
 let timeAtTemp = 0;
-let currentThermName = "Temp Kettle"; 
+const kettleThermName = "Temp Kettle"; 
+const mashThermName = "Temp Mash";
 
 let speedupFactor = 1;
 let tempListener;
@@ -107,7 +108,7 @@ function calculatePower(actualTemperature) {
 
 function tempHandler(value){
 	currentTemp = value;
-	console.log(`🌡️  Temperature reading from ${currentThermName}: ${currentTemp}C`)	;
+	console.log(`🌡️  Temperature reading from ${kettleThermName}: ${currentTemp}C`)	;
 }
 
 /**
@@ -212,14 +213,14 @@ function init(P, I, D) {
 		Kp = P;
 		Ki = I;
 		Kd = D
-		brewlog.debug(currentThermName);	
+		brewlog.debug(kettleThermName);	
 		kettleHeater.setPower(0);
 	
 		if (_simulationSpeed !== 1){
 			calculationInterval = CALCULATION_INTERVAL_MS / _simulationSpeed;
 		}
 		//Force a temperature reading with retry logic
-		getTempWithRetry(currentThermName)
+		getTempWithRetry(kettleThermName)
 		.then(t => {
 			brewlog.info("init PID: Current Temp=",t);
 			currentTemp = t;
@@ -270,7 +271,7 @@ module.exports = {
 				heatTimer.setInterval(async () => {	
 					try {
 						// Read temperature with retry logic to handle pump interference
-						const temp = await getTempWithRetry(currentThermName);
+						const temp = await getTempWithRetry(kettleThermName);
 						currentTemp = temp;
 					} catch (err) {
 						brewlog.error("Failed to read kettle temperature, using last known value", err.message);
@@ -321,7 +322,7 @@ module.exports = {
 		mashTimer.setInterval(async () => {	
 			try {
 				// Read temperature with retry logic to handle pump interference
-				const temp = await getTempWithRetry(currentThermName);
+				const temp = await getTempWithRetry(mashThermName);
 				currentTemp = temp;
 				
 				brewlog.info("Check Mash temp", `${currentTemp}, ${targetTemp}`);
@@ -348,7 +349,7 @@ module.exports = {
 	start: (simulationSpeed) => {
 		_simulationSpeed = simulationSpeed;
 		brewlog.info("temp-controller-service", "Start");
-		tempListener = broker.subscribe(currentThermName, tempHandler);
+		tempListener = broker.subscribe(kettleThermName, tempHandler);
 		return init(1000, 5, 100);
 	},
 
