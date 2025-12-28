@@ -331,6 +331,7 @@ module.exports = {
 					timeAtTemp += calculationInterval;
 				}
 				currentPower = calculatePower(currentTemp);
+				brewlog.info("Current Power=", `${currentPower}`);
 				kettleHeater.setPower(currentPower);
 
 				cb({kW:currentPower, secsAtTemp: timeAtTemp/1000});
