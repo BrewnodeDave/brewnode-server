@@ -1933,21 +1933,81 @@ paths:
           minimum: 0
           maximum: 100
           example: 65
-      - name: onSecs
+      - name: dutyCycle
         in: query
-        description: Duration in seconds to keep kettle pump on during each cycle (default 3 seconds)
+        description: Kettle pump duty cycle as percentage of total cycle time (0-100, default 50% = 6.5s on / 6.5s off)
         required: false
         schema:
           type: number
-          minimum: 0.1
-          maximum: 3600
-          default: 3
-          example: 3
+          minimum: 1
+          maximum: 100
+          default: 50
+          example: 50
       responses:
         "200":
           description: Success - recirculation started or stopped
         "400":
           description: Invalid temperature or onSecs parameter
+        "500":
+          description: Internal Server Error
+      x-swagger-router-controller: brewnode
+
+  /recirculate/dutycycle:
+    put:
+      tags:
+      - Process
+      summary: Update kettle pump duty cycle during active recirculation
+      description: Dynamically adjusts the kettle pump on/off times while recirculation is running
+      operationId: updateDutyCycle
+      parameters:
+      - name: dutyCycle
+        in: query
+        description: Kettle pump duty cycle as percentage of total cycle time (1-99)
+        required: true
+        schema:
+          type: number
+          minimum: 1
+          maximum: 99
+          example: 50
+      responses:
+        "200":
+          description: Success - duty cycle updated
+        "400":
+          description: Invalid duty cycle parameter or recirculation not active
+        "500":
+          description: Internal Server Error
+      x-swagger-router-controller: brewnode
+
+  /recirculate/status:
+    get:
+      tags:
+      - Process
+      summary: Get current recirculation status
+      description: Returns whether recirculation is active and its parameters
+      operationId: getRecirculationStatus
+      responses:
+        "200":
+          description: Success - recirculation status returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active:
+                    type: boolean
+                    description: Whether recirculation is currently active
+                  targetTemp:
+                    type: number
+                    description: Target mash temperature in Celsius
+                  dutyCycle:
+                    type: number
+                    description: Kettle pump duty cycle percentage
+                  onSecs:
+                    type: number
+                    description: Calculated on time in seconds
+                  offSecs:
+                    type: number
+                    description: Calculated off time in seconds
         "500":
           description: Internal Server Error
       x-swagger-router-controller: brewnode

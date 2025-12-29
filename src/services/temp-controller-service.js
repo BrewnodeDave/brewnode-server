@@ -122,7 +122,6 @@ function tempHandler(value){
 async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
 	let mashPumpWasOn = false;
 	let kettlePumpWasOn = false;
-console.log('getTempWithRetry');	
 	for (let attempt = 1; attempt <= retries; attempt++) {
 		try {
 			const temp = await therm.getTemp(thermName);

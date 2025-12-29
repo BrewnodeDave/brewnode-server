@@ -482,6 +482,15 @@ let kettlePumpModulationInterval = null;
 let mashPumpModulationInterval = null;
 let recirculationInterval = null;
 
+// Track recirculation state
+let recirculationState = {
+  active: false,
+  targetTemp: null,
+  dutyCycle: null,
+  onSecs: null,
+  offSecs: null
+};
+
 /**
  * Internal helper to start/stop kettle pump modulation without sending HTTP response.
  * @param {number|null} onSecs - Duration in seconds to keep pump on, or null to stop
@@ -587,8 +596,77 @@ async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
 }
 
 /**
+ * Get current recirculation status.
+ *
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Object} next - Express next middleware function
+ */
+async function getRecirculationStatus(req, res, next) {
+  try {
+    res.send(200, recirculationState);
+  } catch (error) {
+    console.error(error);
+    res.send(500, error.message);
+  }
+}
+
+/**
+ * Update kettle pump duty cycle during active recirculation.
+ * 
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Object} next - Express next middleware function
+ * @param {number} dutyCycle - Kettle pump duty cycle as percentage (1-99)
+ */
+async function updateDutyCycle(req, res, next, dutyCycle) {
+  try {
+    // Check if recirculation is active
+    if (!kettlePumpModulationInterval) {
+      res.send(400, "Cannot update duty cycle: recirculation is not active");
+      return;
+    }
+    
+    // Validate dutyCycle parameter
+    const pumpDutyCycle = parseFloat(dutyCycle);
+    if (isNaN(pumpDutyCycle) || pumpDutyCycle < 1 || pumpDutyCycle > 99) {
+      res.send(400, "Invalid dutyCycle: must be between 1 and 99 percent");
+      return;
+    }
+    
+    // Calculate on/off times based on duty cycle
+    const totalCycleTime = 13;
+    const kettleOnSecs = (pumpDutyCycle / 100) * totalCycleTime;
+    const kettleOffSecs = totalCycleTime - kettleOnSecs;
+    
+    // Update kettle pump modulation with new duty cycle
+    const modulationResult = startStopKettlePumpModulation(kettleOnSecs, kettleOffSecs);
+    if (!modulationResult.success) {
+      res.send(modulationResult.status || 500, modulationResult.message);
+      return;
+    }
+    
+    // Update recirculation state
+    recirculationState.dutyCycle = pumpDutyCycle;
+    recirculationState.onSecs = parseFloat(kettleOnSecs.toFixed(2));
+    recirculationState.offSecs = parseFloat(kettleOffSecs.toFixed(2));
+    
+    res.send(200, {
+      message: "Duty cycle updated",
+      kettlePumpDutyCycle: pumpDutyCycle,
+      kettlePumpOnSecs: kettleOnSecs.toFixed(2),
+      kettlePumpOffSecs: kettleOffSecs.toFixed(2)
+    });
+    
+  } catch (error) {
+    console.error(error);
+    res.send(500, error.message);
+  }
+}
+
+/**
  * Recirculate between kettle and mash tun.
- * Turns on mash pump continuously and modulates kettle pump with configurable on/off cycle.
+ * Turns on mash pump continuously and modulates kettle pump with configurable duty cycle.
  * Controls mash temperature by turning kettle heater on/off.
  * Call with onOff="Off" to stop recirculation.
  *
@@ -597,9 +675,9 @@ async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
  * @param {Object} next - Express next middleware function
  * @param {string} onOff - "On" to start recirculation, "Off" to stop
  * @param {number} tempC - Target mash temperature in Celsius (required when onOff="On")
- * @param {number} onSecs - Duration in seconds to keep kettle pump on during each cycle (default: 3)
+ * @param {number} dutyCycle - Kettle pump duty cycle as percentage (1-99, default: 23% = 3s on / 10s off)
  */
-async function recirculate(req, res, next, onOff, tempC, onSecs) {
+async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
   try {
     if (onOff === "Off") {
       // Stop recirculation
@@ -615,6 +693,15 @@ async function recirculate(req, res, next, onOff, tempC, onSecs) {
       startStopKettlePumpModulation(null, null);
       pumps.off("Pump Mash");
       
+      // Clear recirculation state
+      recirculationState = {
+        active: false,
+        targetTemp: null,
+        dutyCycle: null,
+        onSecs: null,
+        offSecs: null
+      };
+      
       res.send(200, { message: "Recirculation stopped" });
       return;
     }
@@ -626,12 +713,18 @@ async function recirculate(req, res, next, onOff, tempC, onSecs) {
       return;
     }
     
-    // Validate and set onSecs parameter (default to 3 seconds)
-    const kettleOnSecs = onSecs ? parseFloat(onSecs) : 3;
-    if (isNaN(kettleOnSecs) || kettleOnSecs < 0.1 || kettleOnSecs > 3600) {
-      res.send(400, "Invalid onSecs: must be between 0.1 and 3600 seconds");
+    // Validate and set dutyCycle parameter (default to 50% = 6.5s on / 6.5s off)
+    const pumpDutyCycle = dutyCycle ? parseFloat(dutyCycle) : 50;
+    if (isNaN(pumpDutyCycle) || pumpDutyCycle < 1 || pumpDutyCycle > 99) {
+      res.send(400, "Invalid dutyCycle: must be between 1 and 99 percent");
       return;
     }
+    
+    // Calculate on/off times based on duty cycle
+    // Use a total cycle time of 13 seconds (matching default 3s on / 10s off)
+    const totalCycleTime = 13;
+    const kettleOnSecs = (pumpDutyCycle / 100) * totalCycleTime;
+    const kettleOffSecs = totalCycleTime - kettleOnSecs;
     
     // Start recirculation
     // Initialize temperature controller
@@ -640,8 +733,8 @@ async function recirculate(req, res, next, onOff, tempC, onSecs) {
     // Turn on mash pump permanently
     pumps.on("Pump Mash");
     
-    // Start kettle pump modulation with configurable on time, 10s off
-    const modulationResult = startStopKettlePumpModulation(kettleOnSecs, 10);
+    // Start kettle pump modulation with calculated on/off times
+    const modulationResult = startStopKettlePumpModulation(kettleOnSecs, kettleOffSecs);
     if (!modulationResult.success) {
       res.send(modulationResult.status || 500, modulationResult.message);
       return;
@@ -652,11 +745,21 @@ async function recirculate(req, res, next, onOff, tempC, onSecs) {
       // Temperature control active
     });
     
+    // Update recirculation state
+    recirculationState = {
+      active: true,
+      targetTemp: targetTemp,
+      dutyCycle: pumpDutyCycle,
+      onSecs: parseFloat(kettleOnSecs.toFixed(2)),
+      offSecs: parseFloat(kettleOffSecs.toFixed(2))
+    };
+    
     res.send(200, {
       message: "Recirculation started",
       targetTemp: targetTemp,
-      kettlePumpOnSecs: kettleOnSecs,
-      kettlePumpOffSecs: 10
+      kettlePumpDutyCycle: pumpDutyCycle,
+      kettlePumpOnSecs: kettleOnSecs.toFixed(2),
+      kettlePumpOffSecs: kettleOffSecs.toFixed(2)
     });
     
   } catch (error) {
@@ -930,6 +1033,7 @@ module.exports = {
   getInventory,
   getKettleTemp,
   getKettleVolume,
+  getRecirculationStatus,
   getSimSpeed,
   getSystemStatus,
   glycolPump,
@@ -956,6 +1060,7 @@ module.exports = {
   setKettleVolume,
   setSimulationSpeed,
   streamLog,
+  updateDutyCycle,
   valvesStatus,
   whatsBrewing
 }

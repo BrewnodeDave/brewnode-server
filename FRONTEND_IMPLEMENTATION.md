@@ -40,6 +40,11 @@ I have successfully created a comprehensive React-based frontend GUI that covers
 - `/m2k` - Mash tun to kettle transfer
 - `/kettleTemp` - Precise temperature control
 - `/mash` - Multi-step mashing profiles
+- `/kettlePumpModulate` - Kettle pump on/off cycling for RIMS
+- `/mashPumpModulate` - Mash pump on/off cycling
+- `/recirculate` - Complete RIMS recirculation with PID temp control
+- `/recirculate/dutycycle` - Dynamic duty cycle updates during recirculation
+- `/recirculate/status` - Current recirculation state for UI persistence
 
 ### Equipment Control APIs (✅ Complete)
 - `/fan` & `/fan/status` - Extractor fan control
@@ -85,6 +90,13 @@ I have successfully created a comprehensive React-based frontend GUI that covers
 - **Fermentation**: Multi-stage temperature scheduling
 - **Transfers**: Automated vessel-to-vessel transfers
 - **Temperature Control**: Precision heating/cooling
+- **RIMS Recirculation**: Automated recirculating infusion mash system
+  - Start/stop recirculation with target temperature
+  - Duty cycle control (1-99%, default 50%)
+  - Dynamic duty cycle updates during operation
+  - State persistence across page navigation
+  - Real-time status monitoring with 3-second polling
+  - Inline (non-modal) control for multi-page access
 
 ### 4. Equipment Control
 - Individual control of all pumps, valves, heaters
