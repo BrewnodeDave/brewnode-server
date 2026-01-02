@@ -110,12 +110,20 @@ All controllers are located in the `controllers/` directory and handle HTTP requ
 
 ### `brewnode.js`
 **Purpose:** Core BrewNode API controller
-**Size:** 606+ lines
+**Size:** 1067 lines
 **Key Functions:**
 - Brew data retrieval and filtering
 - Brewing process management
 - Hardware status monitoring
 - Real-time data streaming coordination
+- **RIMS recirculation control:**
+  - `kettlePumpModulate()` - Kettle pump on/off cycling
+  - `mashPumpModulate()` - Mash pump on/off cycling
+  - `recirculate()` - Complete RIMS operation with PID temperature control
+  - `updateDutyCycle()` - Dynamic duty cycle updates during recirculation
+  - `getRecirculationStatus()` - Current recirculation state for UI persistence
+  - `startStopKettlePumpModulation()` - Helper function for pump control logic
+  - Global state tracking: `recirculationState` object
 
 ### `mysql.js`
 **Purpose:** Database operations controller
@@ -243,8 +251,15 @@ The services directory contains specialized hardware control modules:
 #### Temperature Services
 - `temp-service.js` - Main temperature service coordinator
 - `temp-service-ds18b20.js` - DS18B20 sensor service
-- `temp-service-ds18x20.js` - DS18X20 sensor service
-- `temp-controller-service.js` - PID temperature control
+- `temp-service-ds18x20.js` - DS18X20 sensor service with electrical interference mitigation
+  - **Features:** Retry logic with pump management (3 retries, 200ms delays)
+  - **Pump Shutdown:** Automatically stops mash and kettle pumps after first failed read
+  - **Validation:** Rejects 85°C error code, null, undefined, out-of-range values
+  - **Settle Time:** 500ms wait after pump shutdown for electrical noise to dissipate
+- `temp-controller-service.js` - PID temperature control (Kp=800, Ki=0.3, Kd=100)
+  - **Features:** Same retry logic and pump management as temp-service-ds18x20
+  - **RIMS Support:** Used by recirculation endpoint for mash temperature control
+  - **getTempWithRetry():** Stops both pumps, waits, retries, validates, restores pumps
 
 #### I2C Device Services
 - `i2c_raspi-service.js` - **Primary I2C Interface**

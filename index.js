@@ -159,7 +159,7 @@ function insertMiddleware(app, middleware) {
   app.use(middleware);
   app._router.stack.push(...app._router.stack.splice(stackLength - 10, 10));
 }
-
+ 
 const corsOptions = {
   origin: true, // Allow any origin
   credentials: true,

@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### ✨ Features
+
+* **rims:** Add complete RIMS (Recirculating Infusion Mash System) support
+  - `/kettlePumpModulate` and `/mashPumpModulate` endpoints for pump cycling
+  - `/recirculate` endpoint with PID temperature control and duty cycle management
+  - `/recirculate/dutycycle` for dynamic duty cycle updates during operation
+  - `/recirculate/status` for state persistence across frontend navigation
+  - Duty cycle control (1-99%, default 50%) replaces fixed on-time
+  - PID controller integration (Kp=800, Ki=0.3, Kd=100) for mash temperature
+  - Automatic mash-in valve synchronization with kettle pump
+  - Simulation speed factor support for all timing operations
+
+### 🐛 Bug Fixes
+
+* **temperature:** Add retry logic with pump management for DS18x20 sensors
+  - 3 retry attempts with 200ms delays
+  - Automatic pump shutdown after first failed read (500ms settle time)
+  - Stops both mash AND kettle pumps to eliminate electrical interference
+  - Validates readings: rejects 85°C error code, null, undefined, out-of-range
+  - Applied to both `getTempWithRetry()` and `getAllTemps()`
+  - Significantly improves sensor reliability during pump operation
+
+### 🔧 Configuration
+
+* **debug:** Add `--debug` / `-d` command line flag to enable console logging
+  - Controls brewlog console output (default: disabled for performance)
+  - Useful for development and troubleshooting
+
+### 🎨 Frontend
+
+* **rims:** Add RecirculationControl component to Process Control page
+  - Inline (non-modal) control for multi-page navigation during operation
+  - Real-time status polling (3-second intervals)
+  - Temperature and duty cycle controls
+  - State persistence via backend status endpoint
+  - Recycle icon for RIMS section
+* **proxy:** Add `/recirculate` routes to Vite proxy configuration
+
 
 ## [2.4.0](https://github.com/BrewnodeDave/brewnode-server/compare/v2.3.1...v2.4.0) (2025-12-11)
 

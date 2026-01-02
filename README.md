@@ -138,11 +138,23 @@ This project includes comprehensive documentation for all components:
 ### 🌡️ Temperature Monitoring
 - **DS18B20/DS18X20** OneWire temperature sensors
 - **Multi-sensor support** (up to 127 sensors per bus)
-- **PID temperature control** with safety limits
+- **PID temperature control** with safety limits (Kp=800, Ki=0.3, Kd=100)
+- **Electrical interference mitigation** with automatic pump shutdown during reads
+- **Retry logic** with validation (3 attempts, 500ms settle time)
 - **Real-time alerts** and logging
 
+### 🔄 RIMS (Recirculating Infusion Mash System)
+- **Automated recirculation** with mash pump and modulated kettle pump
+- **PID temperature control** for precise mash temperature management
+- **Duty cycle control** (1-99%, default 50%) for kettle pump modulation
+- **Dynamic duty cycle updates** during active recirculation
+- **Valve synchronization** (mash-in valve tracks kettle pump state)
+- **State persistence** across frontend navigation
+- **Simulation support** with adjustable speed factor (1-100x)
+- **Independent pump modulation** endpoints for advanced control
+
 ### 🚰 Process Control
-- **Pump management** with flow monitoring
+- **Pump management** with flow monitoring and modulation
 - **Valve positioning** with automated sequencing
 - **PWM control** for heating elements
 - **Glycol cooling system** integration

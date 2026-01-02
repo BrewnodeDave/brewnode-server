@@ -152,6 +152,147 @@ curl -X PUT "http://localhost:3000/i2c?bit=6&value=0"
 curl -X PUT "http://localhost:3000/i2c?bit=17&value=1"
 ```
 
+#### RIMS (Recirculating Infusion Mash System) Control
+```yaml
+/kettlePumpModulate:
+  put:
+    summary: Modulate kettle pump on/off cycling
+    operationId: kettlePumpModulate
+    parameters:
+      - name: onSecs (optional)
+        description: Seconds pump is on per cycle
+        schema:
+          type: number
+          minimum: 0.1
+          maximum: 3600
+      - name: offSecs (optional)
+        description: Seconds pump is off per cycle
+        schema:
+          type: number
+          minimum: 0.1
+          maximum: 3600
+    description: |
+      Controls kettle pump modulation for RIMS recirculation.
+      - Call with parameters to start modulation
+      - Call without parameters to stop modulation
+      - Times are adjusted based on simulation speed factor
+
+/mashPumpModulate:
+  put:
+    summary: Modulate mash pump on/off cycling
+    operationId: mashPumpModulate
+    parameters:
+      - name: onSecs (optional)
+      - name: offSecs (optional)
+    description: Similar to kettlePumpModulate for mash pump
+
+/recirculate:
+  put:
+    summary: Start/stop RIMS recirculation with temperature control
+    operationId: recirculate
+    parameters:
+      - name: onOff
+        required: true
+        schema:
+          type: string
+          enum: [On, Off]
+      - name: tempC
+        required: when starting
+        description: Target mash temperature (0-100°C)
+        schema:
+          type: number
+          minimum: 0
+          maximum: 100
+      - name: dutyCycle
+        required: false
+        description: Kettle pump duty cycle percentage (1-100, default 50%)
+        schema:
+          type: number
+          minimum: 1
+          maximum: 100
+          default: 50
+    description: |
+      Complete RIMS operation control:
+      - Turns on mash pump continuously
+      - Modulates kettle pump with configurable duty cycle
+      - Controls mash temperature via PID and kettle heater
+      - Synchronizes mash-in valve with kettle pump
+      - Duty cycle: 50% = 6.5s on / 6.5s off in 13s total cycle
+
+/recirculate/dutycycle:
+  put:
+    summary: Update kettle pump duty cycle during active recirculation
+    operationId: updateDutyCycle
+    parameters:
+      - name: dutyCycle
+        required: true
+        schema:
+          type: number
+          minimum: 1
+          maximum: 99
+    description: |
+      Dynamically adjusts kettle pump on/off times while recirculation runs.
+      Recalculates onSecs and offSecs to maintain 13-second total cycle.
+
+/recirculate/status:
+  get:
+    summary: Get current recirculation status
+    operationId: getRecirculationStatus
+    responses:
+      200:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+                  description: Whether recirculation is currently active
+                targetTemp:
+                  type: number
+                  description: Target mash temperature in Celsius
+                dutyCycle:
+                  type: number
+                  description: Kettle pump duty cycle percentage
+                onSecs:
+                  type: number
+                  description: Calculated on time in seconds
+                offSecs:
+                  type: number
+                  description: Calculated off time in seconds
+    description: |
+      Returns the current state of RIMS recirculation.
+      Used by frontend to restore state after navigation.
+```
+
+**RIMS Usage Examples:**
+```bash
+# Start RIMS recirculation at 67°C with 50% duty cycle
+curl -X PUT "http://localhost:8080/recirculate?onOff=On&tempC=67&dutyCycle=50"
+
+# Update duty cycle to 30% during recirculation
+curl -X PUT "http://localhost:8080/recirculate/dutycycle?dutyCycle=30"
+
+# Check current recirculation status
+curl -X GET "http://localhost:8080/recirculate/status"
+
+# Stop recirculation
+curl -X PUT "http://localhost:8080/recirculate?onOff=Off"
+
+# Modulate kettle pump independently (3s on, 10s off)
+curl -X PUT "http://localhost:8080/kettlePumpModulate?onSecs=3&offSecs=10"
+
+# Stop kettle pump modulation
+curl -X PUT "http://localhost:8080/kettlePumpModulate"
+```
+
+**RIMS Technical Details:**
+- **Temperature Control:** PID controller (Kp=800, Ki=0.3, Kd=100)
+- **Sensor Interference:** Pumps auto-stop during temp reads (3 retries, 500ms settle)
+- **Valve Synchronization:** Mash-in valve opens/closes with kettle pump
+- **Duty Cycle:** Percentage of 13-second cycle pump is on (e.g., 50% = 6.5s/6.5s)
+- **Simulation Support:** All timings adjusted by simulation speed factor
+
 ## Request/Response Schemas
 
 ### Standard Response Format

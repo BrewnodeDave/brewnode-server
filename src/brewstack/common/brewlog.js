@@ -65,10 +65,12 @@ function log(type, message, data='') {
 	const icon = icons[type] || '';
 	const string = `${timeStamp} ${icon} ${message} : ${data}`;
 	fs.appendFileSync(logFile, `${string}\n`);
-
+	if (_consoleEnabled) {
+		console.log(string);
+	}
 	// logPublish(string); // Commented out to avoid circular dependency
 
-}
+}	
 
 let gLogger = {
 	info: (message, data) => log('info', message, data),
@@ -78,8 +80,12 @@ let gLogger = {
 }
 
 let _debug = false;
+let _consoleEnabled = false;
 
 module.exports = {
+	setConsoleLogging(enabled) {
+		_consoleEnabled = enabled;
+	},
 	deleteAllLogs,
 	filePath,
 	sensorStop(sensorName) {
