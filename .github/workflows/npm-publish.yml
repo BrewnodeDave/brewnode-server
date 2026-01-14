@@ -1,0 +1,49 @@
+# .github/workflows/npm-publish.yml
+# Publish package to npm only when a GitHub Release is published
+name: Publish to NPM
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    # Only run for release tags that look like version tags (optional guard)
+    if: startsWith(github.event.release.tag_name, 'v')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
+          always-auth: true
+
+      - name: Configure npm auth
+        # Requires creating a repository secret named NPM_TOKEN containing an npm Automation token.
+        # The token must belong to an account/org that controls the @brewnode scope.
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          echo "Writing temporary ~/.npmrc for registry authentication"
+          printf "//registry.npmjs.org/:_authToken=%s\n" "${NODE_AUTH_TOKEN}" > ~/.npmrc
+          echo "Verify token (npm whoami) — fails fast if token is invalid"
+          npm whoami || (echo "npm whoami failed — check NPM_TOKEN and package ownership" && exit 1)
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          # package.json already contains publishConfig.access = "public"
+          npm publish --access public
