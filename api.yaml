@@ -84,6 +84,74 @@ paths:
       x-swagger-router-controller: brewnode
 
 
+  /activeFermenter:
+    get:
+      tags:
+      - Brewnode
+      summary: Get the currently active fermenter
+      operationId: getActiveFermenter
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activeFermenter:
+                    type: string
+                    enum:
+                    - UNI
+                    - SS
+                    example: UNI
+        "500":
+          description: Internal Server Error
+      x-swagger-router-controller: brewnode
+    put:
+      tags:
+      - Brewnode
+      summary: Set the active fermenter
+      operationId: setActiveFermenter
+      parameters:
+      - name: vessel
+        in: query
+        description: Fermenter vessel type
+        required: true
+        schema:
+          type: string
+          enum:
+          - UNI
+          - SS
+          example: UNI
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  activeFermenter:
+                    type: string
+                    enum:
+                    - UNI
+                    - SS
+                    example: UNI
+        "400":
+          description: Invalid fermenter type
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid fermenter type. Must be "UNI" or "SS"
+        "500":
+          description: Internal Server Error
+      x-swagger-router-controller: brewnode
+
+
   /mysql/brewnames:
     get:
       tags:
@@ -1621,10 +1689,12 @@ paths:
           - Pump Mash
           - Pump Glycol
           - Temp Kettle
-          - Temp Ambient
           - Temp Mash
           - Temp Glycol
+          - Temp Ambient
           - Temp Fermenter
+          - Temp UniTank
+          - Temp SS
           - Valve Kettle-in
           - Valve Mash-in
           - Valve Chiller wort-in

@@ -178,7 +178,8 @@ module.exports = {
 					ambientTemp = 9.9;
 				}else{
 					setPollInterval(10);
-					const ambientId = probeId("Temp Ambient"); 
+					const probeName = activeFermenter === "UNI" ? "Temp UniTank" : "Temp SS";
+					const ambientId = probeId(probeName); 
 					ambientTemp = readSensor(ambientId);
 				}
 				started = true;
@@ -239,6 +240,24 @@ module.exports = {
 		}
 	},
 
+	getAmbientTemp: async () => {
+		try {
+			const probeName = activeFermenter !== "UNI" ? "Temp UniTank" : "Temp SS";
+			return await readSensorAsync(probeId(probeName));
+		} catch (err) {
+			console.log(name);			
+		}
+	},
+	getFermenterTemp: async () => {
+		try {
+			const probeName = activeFermenter == "UNI" ? "Temp UniTank" : "Temp SS";
+			return await readSensorAsync(probeId(probeName));
+		} catch (err) {
+			console.log(name);			
+		}
+
+	},
+	
 	setSampleInterval: setPollInterval,
 
 	stop: () => {

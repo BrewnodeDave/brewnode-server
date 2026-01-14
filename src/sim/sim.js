@@ -35,7 +35,7 @@ const CHILLER_OUTPUT_TEMP = 20;
 const FLOW_RATE = 1000;
 const KETTLE_TEMP = "Temp Kettle";
 const MASHTUN_TEMP = "Temp Mash";
-const FERMENTER_TEMP = "Temp Fermenter";
+const FERMENTER_TEMP = "Temp UniTank";
 const SIM_UPDATE_INTERVAL = 1000;
 
 let _speedupFactor = null; // Will be initialized lazily to avoid circular dependency
@@ -70,7 +70,7 @@ let simState = {
     progress: ''
 }
 
-function simStateReset(){
+function simStateReset(fermenter){
     simState.PumpMash=           0;
     simState.PumpKettle=         0;
     simState.TempKettle=         0;
@@ -386,7 +386,7 @@ module.exports = {
             mashPumpListener = broker.subscribe(pump.mashPumpName,     mashPumpChange);
             kettlePumpListener = broker.subscribe(pump.kettlePumpName,   kettlePumpChange);
             kettleTempListener = broker.subscribe("Temp Kettle",          kettleTempChange);
-            fermenterTempListener = broker.subscribe("Temp Fermenter",       fermenterTempChange);
+            fermenterTempListener = broker.subscribe("Temp UniTank",       fermenterTempChange);
             progressListener = broker.subscribe("Progress",      progressChange);
             powerListener = broker.subscribe("Power",      powerChange);
             heaterListener = broker.subscribe("Kettle Heater",      heaterChange);
