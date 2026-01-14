@@ -285,7 +285,6 @@ async function sensorStatus(req, res, next) {
   try {
     let result = [];
     let f;
-console.log(req.query.name);
     switch(req.query.name){
       case "Valve Kettle-in":
         result = valves.getStatus().find(v => v.name === "Valve Kettle-in").value;
@@ -334,10 +333,14 @@ console.log(req.query.name);
         break;
       case "Temp Kettle":
       case "Temp Mash":
-      case "Temp Fermenter":
       case "Temp Glycol":
-      case "Temp Ambient":
         result = await temp.getTemp(req.query.name);
+        break
+      case "Temp Fermenter":
+        result = await temp.getFermenterTemp();
+        break
+      case "Temp Ambient":
+        result = await temp.getAmbientTemp();
         break
       case "All":
         const tempStatus = await temp.getStatus();
@@ -880,7 +883,7 @@ const getPump = (name) => {
  * @returns {Promise<number>} - The temperature difference due to heat loss.
  */
 async function pipeHeatLoss(tempFluid, tempSensorName) {
-  const tempAmbient = await therm.getTemp(tempSensorName)
+  const tempAmbient = await therm.getTempAmbient()
   const k = 16;// W/mC the heat transfer coefficient of stainless steel
   const L = 1.76;//0.35;//1.32;//1.76;//the length of pipe
   const innerDiameter = 12.5;//0.022;
@@ -1019,6 +1022,31 @@ async function deleteLogs (req, res, next, onOff) {
   }
 };
 
+async function setActiveFermenter(req, res, next) {
+  try {
+    const vessel = req.query.vessel || req.body.vessel;
+    if (!vessel) {
+      res.status(400).json({ error: 'Vessel parameter required (UNI or SS)' });
+      return;
+    }
+    const result = tempService.setActiveFermenter(vessel);
+    res.status(200).json({ activeFermenter: result });
+  } catch (error) {
+    progressPublish.error(`Error setting active fermenter: ${error.message}`);
+    res.status(400).json({ error: error.message });
+  }
+};
+
+async function getActiveFermenter(req, res, next) {
+  try {
+    const result = tempService.getActiveFermenter();
+    res.status(200).json({ activeFermenter: result });
+  } catch (error) {
+    progressPublish.error(`Error getting active fermenter: ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   boil,
   chill,
@@ -1029,6 +1057,7 @@ module.exports = {
   ferment,
   chillWortOutValve: getValve("Valve Chiller wort-out"),
   fill,
+  getActiveFermenter,
   getBrewData,
   getInventory,
   getKettleTemp,
@@ -1055,6 +1084,7 @@ module.exports = {
   recirculate,
   restart,
   sensorStatus,
+  setActiveFermenter,
   setBrewname,
   setKettleTemp,
   setKettleVolume,

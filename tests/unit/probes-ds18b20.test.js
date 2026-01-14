@@ -62,10 +62,10 @@ describe('Probes DS18B20 Configuration', () => {
   test('should include expected probe names', () => {
     const expectedProbes = [
       'Temp Kettle',
-      'Temp Fermenter', 
+      'Temp UniTank',
+      'Temp SS',
       'Temp Mash',
-      'Temp Glycol',
-      'Temp Ambient'
+      'Temp Glycol'
     ];
     
     const actualNames = probes.map(probe => probe.name);

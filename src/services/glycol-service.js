@@ -34,8 +34,7 @@ const promiseSerial = funcs =>
 const doSteps = steps => promiseSerial(steps.map(doStep));
 
 const GLYCOL_TEMPNAME = "Temp Glycol";
-const FERMENT_TEMPNAME = "Temp Fermenter";
-const AMBIENT_TEMPNAME = "Temp Ambient";
+const UNITANK_TEMPNAME = "Temp UniTank";
 
 const FERMENTER_OVERSHOOT = 0.1;//0;//0.1;//0;//0.4;//0.1;//0.3;
 
@@ -152,11 +151,12 @@ module.exports = {
 			therm.getTemp(GLYCOL_TEMPNAME)
 			.then(t => {
 				setGlycolTemp(t);
-				const getFermentTemp = () => therm.getTemp(FERMENT_TEMPNAME);
+				const getFermentTemp = () => therm.getFermenterTemp();
 
 		        glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
 				
-				getFermentTemp()
+				
+				therm.getFermenterTemp()
 				.then(resolve);
 			}, reject);
 		});
@@ -183,9 +183,8 @@ module.exports = {
 
 //This needs to be self contained to allow ferment steps
 function doStep(step) {	
-	return () => 
+	return (fermenter) => 
 	  new Promise(async (resolve, reject) => {
-console.log('New Step:',{step});
 		const {stepTemp:tempC, stepTime:days} = JSON.parse(step);
 
 		let pumpInterval = null;
@@ -195,13 +194,13 @@ console.log('New Step:',{step});
 		let timeAtTemp, prevTimeAtTemp;
 		const desiredFermentTemp = parseInt(tempC,10);
 
-		const tempAmbient = await therm.getTemp(AMBIENT_TEMPNAME);
+		const tempAmbient = await therm.getTempAmbient();
 		const glycolTemp = await therm.getTemp(GLYCOL_TEMPNAME);
-		const fermentTemp = await therm.getTemp(FERMENT_TEMPNAME);
+		const fermentTemp = await therm.getTempFermenter();
 		const chillStep = (desiredFermentTemp < tempAmbient); 
 
 		pumpInterval = setInterval(() => {
-			therm.getTemp(FERMENT_TEMPNAME)
+			therm.getTemp(fermenter)
 			.then(t => {
 				pumpOnOff(chillStep, desiredFermentTemp, t, (x) => {
 					//clearInterval(pumpInterval);
@@ -221,13 +220,11 @@ console.log('New Step:',{step});
 
 		//glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
 		if (chillStep) {
-console.log("CHILL", {tempC}, {tempAmbient}, {glycolTemp});
 				glycolChiller.switchOn();
 				clearInterval(glycolInterval);
 				glycolHeater.switchOff();
 		}else{
 			const reached  = fermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT);
-console.log("HEAT", {tempC}, {tempAmbient}, {glycolTemp});
 			glycolChiller.switchOff();
 			glycolInterval = maintainGlycolTemp(desiredFermentTemp);			
 		}
@@ -235,16 +232,6 @@ console.log("HEAT", {tempC}, {tempAmbient}, {glycolTemp});
 		// msTotal = totalms;
 		timeAtTemp = process.hrtime();
 		prevTimeAtTemp = process.hrtime();
-
-		//**********
-		// ????????????
-		// still needed ???? */
-		// therm.getTemp(FERMENT_TEMPNAME)
-		// .then(currentFermentTemp => {
-		// 	pumpOnOff(chillStep, desiredFermentTemp, currentFermentTemp, resolve, msToGo, timeAtTemp, prevTimeAtTemp);
-		// 	therm.getTemp(GLYCOL_TEMPNAME)
-		// 	.then(setGlycolTemp);
-		// });
 	  });
 }
 

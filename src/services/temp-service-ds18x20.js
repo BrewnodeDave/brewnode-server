@@ -31,6 +31,17 @@ let prevSensorValues = [];
 
 let started = false;
 
+// Active fermenter: "UNI" for UniTank or "SS" for SSBrewtech
+let activeFermenter = "UNI";
+
+/**
+* @desc Get the currently active fermenter vessel.
+* @returns {string} The active fermenter: "UNI" or "SS"
+*/
+function getActiveFermenter() {
+	return activeFermenter;
+}
+
 function setPollInterval(secs){
 	brewlog.info("setSampleInterval", `${secs} secs`);
 	if (pollInterval !== null){
@@ -51,6 +62,47 @@ function setPollInterval(secs){
 function isValidTemp(temp) {
 	return temp !== false && temp !== null && temp !== undefined && 
 	       temp !== 85 && temp >= -10 && temp <= 110;
+}
+
+function foo(probe){
+	let result = [];
+	if (!probe.sensorHistory) {
+		probe.sensorHistory = [];
+	}
+					
+	if (getActiveFermenter() === "UNI"){
+		if (probe.name === "Temp UniTank") {
+			result.push({ 
+				name: "Temp Fermenter", 
+				value: probe.value, 
+				publish: probe.publishTemp 
+			});
+		}
+		if (probe.name === "Temp SS") {
+			result.push({ 
+				name: "Temp Ambient", 
+				value: probe.value, 
+				publish: probe.publishTemp 
+			});
+		}
+	} else {
+		if (probe.name === "Temp SS") {
+			result.push({ 
+				name: "Temp Fermenter", 
+				value: probe.value, 
+				publish: probe.publishTemp 
+			});
+		}
+		if (probe.name === "Temp UniTank") {
+			result.push({ 
+				name: "Temp Ambient", 
+				value: probe.value, 
+				publish: probe.publishTemp 
+			});
+		}
+	}
+
+	return result;
 }
 
 /**
@@ -74,7 +126,7 @@ async function getAllTemps(retries = 3, delayMs = 200) {
 	let kettlePumpWasOn = false;
 	
 	for (let attempt = 1; attempt <= retries; attempt++) {
-		const result = [];
+		let result = [];
 		let allValid = true;
 		
 		try {
@@ -89,9 +141,8 @@ async function getAllTemps(retries = 3, delayMs = 200) {
 			});
 			
 			probes.forEach(probe => {
-				if (!probe.sensorHistory) {
-					probe.sensorHistory = [];
-				}
+				result.push(...foo(probe));
+
 				for (const key in tempObj) {
 					if (key == probe.id) {
 						const value = tempObj[key];
@@ -113,6 +164,7 @@ async function getAllTemps(retries = 3, delayMs = 200) {
 				}
 			});
 			
+
 			// If all readings are valid, restore pumps and return
 			if (allValid) {
 				if (attempt > 1) {
@@ -128,7 +180,6 @@ async function getAllTemps(retries = 3, delayMs = 200) {
 				}
 				return result;
 			}
-			
 		} catch (err) {
 			brewlog.warn(`Temperature read failed (attempt ${attempt}/${retries})`, err.message);
 			allValid = false;
@@ -180,13 +231,9 @@ async function getAllTemps(retries = 3, delayMs = 200) {
 	}
 	
 	// Return the last result with whatever values we have
-	const result = [];
+	let result = [];
 	probes.forEach(probe => {
-		result.push({ 
-			name: probe.name, 
-			value: probe.value, 
-			publish: probe.publishTemp 
-		});
+		result.push(...foo(probe));	
 	});
 	return result;
 }
@@ -221,12 +268,10 @@ function updateProbeValue(probe, value) {
 
 async function pollTemperatures(deltaSecs){
 	const sensors = await getAllTemps();
-brewlog.info('pollTemperatures');	
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (prevSensorValues[sensor.name].value){
 			const changed = Math.abs((prevSensorValues[sensor.name].value - sensor.value)) >= 0.5;
-//console.log({changed},sensor.name, prevSensorValues[sensor.name].value,sensor.value);
 			prevSensorValues[sensor.name].value = changed ? sensor.value : prevSensorValues[sensor.name].value; 
 			return changed;
 		}else{
@@ -293,7 +338,7 @@ module.exports = {
 							ambientTemp = 9.9;
 						}else{
 							setPollInterval(60);
-							ambientTemp = sensors.find(sensor => sensor.name === "Temp Ambient")?.value;
+							ambientTemp = await getAmbientTemp();
 						}
 						started = true;
 			
@@ -306,7 +351,40 @@ module.exports = {
 		}
 	}),	
 	
-	
+	getAmbientTemp: () => {
+		return new Promise((resolve, reject) => {
+			try {
+				const probeName = activeFermenter !== "UNI" ? "Temp UniTank" : "Temp SS";
+				const probe = probes.find(p => p.name === probeName);
+				ds18x20.get(probe.id, (err, temp) => {
+					if (err){
+						reject(err);
+					}else{
+						resolve(probe.value);
+					}
+				});
+			} catch (err) {
+				reject(err);
+			}
+		});
+	},
+	getFermenterTemp: () => {
+		return new Promise((resolve, reject) => {
+			try {
+				const probeName = activeFermenter === "UNI" ? "Temp UniTank" : "Temp SS";
+				const probe = probes.find(p => p.name === probeName);
+				ds18x20.get(probe.id, (err, temp) => {
+					if (err){
+						reject(err);
+					}else{
+						resolve(probe.value);
+					}
+				});
+			} catch (err) {
+				reject(err);
+			}
+		});
+	},
 	/**
 	* Stop the temperature service.
 	*/
@@ -360,5 +438,22 @@ module.exports = {
 				reject(err);
 			}
 		});
-	}
+	},
+
+	/**
+	* @desc Set the active fermenter vessel.
+	* @param {string} vessel - Vessel type: "UNI" for UniTank or "SS" for SSBrewtech
+	* @returns {string} The active fermenter that was set
+	*/
+	setActiveFermenter(vessel) {
+		const normalized = vessel.toUpperCase();
+		if (normalized !== "UNI" && normalized !== "SS") {
+			throw new Error('Invalid fermenter type. Must be "UNI" or "SS"');
+		}
+		activeFermenter = normalized;
+		brewlog.info("setActiveFermenter", `Active fermenter set to: ${activeFermenter}`);
+		return activeFermenter;
+	},
+
+	getActiveFermenter
 }

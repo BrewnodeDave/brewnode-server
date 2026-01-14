@@ -15,12 +15,13 @@ jest.mock('../../src/brewstack/common/brewlog.js', () => ({
 jest.mock('../../src/services/temp-service.js', () => ({
   getTemp: jest.fn((sensor) => {
     const temps = {
-      'Temp Fermenter': 18.5,
-      'Temp Glycol': 2.0,
-      'Temp Ambient': 22.0
+      'Temp UniTank': 18.5,
+      'Temp SS': 22.0,
+      'Temp Glycol': 2.0
     };
     return Promise.resolve(temps[sensor] || 20.0);
-  })
+  }),
+  getActiveFermenter: jest.fn(() => 'UNI')
 }));
 
 jest.mock('../../src/services/mysql-service.js', () => ({
@@ -43,9 +44,10 @@ describe('Brewfather Service', () => {
     test('should get fermenter temperature and log to Brewfather', async () => {
       await brewfatherService.getFermenterTemp();
 
-      expect(therm.getTemp).toHaveBeenCalledWith('Temp Fermenter');
+      expect(therm.getActiveFermenter).toHaveBeenCalled();
+      expect(therm.getTemp).toHaveBeenCalledWith('Temp UniTank');
       expect(therm.getTemp).toHaveBeenCalledWith('Temp Glycol');
-      expect(therm.getTemp).toHaveBeenCalledWith('Temp Ambient');
+      expect(therm.getTemp).toHaveBeenCalledWith('Temp SS');
       expect(post).toHaveBeenCalled();
     });
 
