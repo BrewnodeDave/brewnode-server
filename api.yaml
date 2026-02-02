@@ -2005,11 +2005,11 @@ paths:
           example: 65
       - name: dutyCycle
         in: query
-        description: Kettle pump duty cycle as percentage of total cycle time (0-100, default 50% = 6.5s on / 6.5s off)
+        description: Kettle pump duty cycle as percentage of total cycle time (50-100, default 50% = 6.5s on / 6.5s off)
         required: false
         schema:
           type: number
-          minimum: 1
+          minimum: 50
           maximum: 100
           default: 50
           example: 50
@@ -2032,11 +2032,11 @@ paths:
       parameters:
       - name: dutyCycle
         in: query
-        description: Kettle pump duty cycle as percentage of total cycle time (1-99)
+        description: Kettle pump duty cycle as percentage of total cycle time (50-99)
         required: true
         schema:
           type: number
-          minimum: 1
+          minimum: 50
           maximum: 99
           example: 50
       responses:
