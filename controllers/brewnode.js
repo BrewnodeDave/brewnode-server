@@ -344,17 +344,17 @@ async function sensorStatus(req, res, next) {
         break
       case "All":
         const tempStatus = await temp.getStatus();
-        result.push(tempStatus.flat());
-        result.push(pumps.getStatus().flat());
-        // result.push(flow.getStatus().flat());
+        const pumpStatus = pumps.getStatus();
+        const valveStatus = valves.getStatus();
+        
+        result.push(...tempStatus);
+        result.push(...pumpStatus);
         result.push(wdog.getStatus());
         result.push(fan.getStatus());
         result.push(glycolHeater.getStatus());
         result.push(glycolChiller.getStatus());
         result.push(kettleHeater.getStatus());
-        result.push(valves.getStatus().flat());
-
-        result = result.flat();
+        result.push(...valveStatus);
         break;
       default:
         progressPublish.error(`Unknown sensor name: ${req.query.name}`);
