@@ -171,16 +171,25 @@ async function getAllTemps(retries = 3, delayMs = 200) {
 	// First attempt: read all sensors at once
 	let tempObj = {};
 	try {
-		tempObj = await new Promise((resolve, reject) => {
-			ds18x20.getAll((err, temps) => {
-				if (err) {
-					reject(err);
-				} else {
-					resolve(temps);
-				}
-			});
-		});
+		console.log('getAllTemps: Reading all temperature sensors...');
+		tempObj = await Promise.race([
+			new Promise((resolve, reject) => {
+				ds18x20.getAll((err, temps) => {
+					if (err) {
+						console.log('getAllTemps: ds18x20.getAll() error:', err.message);
+						reject(err);
+					} else {
+						console.log('getAllTemps: ds18x20.getAll() success, sensors:', Object.keys(temps).length);
+						resolve(temps);
+					}
+				});
+			}),
+			new Promise((_, reject) => 
+				setTimeout(() => reject(new Error('Temperature read timeout after 5s')), 5000)
+			)
+		]);
 	} catch (err) {
+		console.log('getAllTemps: Temperature read failed:', err.message);
 		brewlog.warn("Initial temperature read failed", err.message);
 	}
 	
@@ -349,6 +358,7 @@ module.exports = {
 						}
 						
 						// Save initial sensor values
+						console.log('start: Saving initial sensor values...');
 						sensors = await getAllTemps();
 						sensors.forEach((sensor) => {
 							prevSensorValues[sensor.name] = {
@@ -356,16 +366,23 @@ module.exports = {
 								timestamp: new Date().getTime()
 							};
 						});
+						console.log('start: Initial sensor values saved');
+						
 						if (simulationSpeed !== 1){
 							setPollInterval(60 / simulationSpeed);
 							ambientTemp = 9.9;
+							console.log('start: Simulation mode - ambient temp set to 9.9°C');
 						}else{
 							setPollInterval(60);
-							ambientTemp = await getAmbientTemp();
+							// Get ambient temp from the already-read sensor values instead of calling ds18x20.get()
+							const ambientProbeName = activeFermenter !== "UNI" ? "Temp UniTank" : "Temp SS";
+							const ambientSensor = sensors.find(s => s.name === ambientProbeName);
+							ambientTemp = ambientSensor ? ambientSensor.value : 20; // Default to 20°C if not found
+							console.log('start: Ambient temp set to', ambientTemp, '°C from', ambientProbeName);
 						}
 						started = true;
 			
-			
+						console.log('start: Temperature service started successfully');
 						resolve(ambientTemp);
 			
 					});
@@ -480,3 +497,4 @@ module.exports = {
 
 	getActiveFermenter
 }
+

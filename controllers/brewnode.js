@@ -334,6 +334,8 @@ async function sensorStatus(req, res, next) {
       case "Temp Kettle":
       case "Temp Mash":
       case "Temp Glycol":
+      case "Temp UniTank":
+      case "Temp SS":
         result = await temp.getTemp(req.query.name);
         break
       case "Temp Fermenter":
@@ -346,6 +348,12 @@ async function sensorStatus(req, res, next) {
         const tempStatus = await temp.getStatus();
         const pumpStatus = pumps.getStatus();
         const valveStatus = valves.getStatus();
+        
+        console.log('DEBUG: pumps.isStarted():', pumps.isStarted());
+        console.log('DEBUG: valves.isStarted():', valves.isStarted());
+        console.log('DEBUG: tempStatus:', JSON.stringify(tempStatus));
+        console.log('DEBUG: pumpStatus:', JSON.stringify(pumpStatus));
+        console.log('DEBUG: valveStatus:', JSON.stringify(valveStatus));
         
         result.push(...tempStatus);
         result.push(...pumpStatus);
@@ -1173,3 +1181,4 @@ module.exports = {
   valvesStatus,
   whatsBrewing
 }
+

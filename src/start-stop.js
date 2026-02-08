@@ -1,4 +1,4 @@
-const i2c 		= require('./services/i2c_raspi-service.js');
+i2c 		= require('./services/i2c_raspi-service.js');
 const pumps 	= require('./services/pump-service.js');
 // const flow 		= require('./services/flow-service.js');
 const fan 		= require('./services/fan-service.js');
@@ -28,17 +28,51 @@ async function start() {
 	setSimulationSpeed(simulationSpeed);
 
 	try {
+		console.log('Starting i2c service...');
 		await i2c.start(simulationSpeed);
+		console.log('✓ i2c service started');
+		
+		console.log('Starting temp service...');
 		await temp.start(simulationSpeed);
+		console.log('✓ temp service started');
 	}catch(err){
-		console.log(err.message);
+		console.error('❌ Error starting i2c/temp:', err.message);
 		return false;
 	}
 
-	await pumps.start();
-	await fan.start();
-	await valves.start(simulationSpeed);
-	await wdog.start();
+	try {
+		console.log('Starting pumps service...');
+		await pumps.start();
+		console.log('✓ pumps service started, isStarted():', pumps.isStarted());
+	} catch(err) {
+		console.error('❌ Error starting pumps:', err.message);
+		console.error(err.stack);
+	}
+	
+	try {
+		console.log('Starting fan service...');
+		await fan.start();
+		console.log('✓ fan service started');
+	} catch(err) {
+		console.error('❌ Error starting fan:', err.message);
+	}
+	
+	try {
+		console.log('Starting valves service...');
+		await valves.start(simulationSpeed);
+		console.log('✓ valves service started, isStarted():', valves.isStarted());
+	} catch(err) {
+		console.error('❌ Error starting valves:', err.message);
+		console.error(err.stack);
+	}
+	
+	try {
+		console.log('Starting wdog service...');
+		await wdog.start();
+		console.log('✓ wdog service started');
+	} catch(err) {
+		console.error('❌ Error starting wdog:', err.message);
+	}
 	// try{
 	// 	await flow.start(simulationSpeed);
 	// }catch(err){
@@ -107,4 +141,5 @@ module.exports = {
 	 */
 	stop
 }
+
 
