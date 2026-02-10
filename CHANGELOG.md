@@ -5,46 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+
+## [2.6.0](https://github.com/BrewnodeDave/brewnode-server/compare/v2.4.0...v2.6.0) (2026-02-10)
+
+
+### ⚠ BREAKING CHANGES
+
+* **rims:** None - All changes are additive
+
+Closes #RIMS-implementation
+
+### 🔧 Maintenance
+
+* open/close mash in valve when modulting kettle pump ([429ea74](https://github.com/BrewnodeDave/brewnode-server/commit/429ea745cd49f97036000a5a1204513883813711))
+* remove tag push workflow to prevent duplicate publishes ([339b169](https://github.com/BrewnodeDave/brewnode-server/commit/339b1694b03d2632d2ee34c65d6eb55cc0a80f76))
+* update GitHub Actions workflow for npm publishing ([7d56f7f](https://github.com/BrewnodeDave/brewnode-server/commit/7d56f7f31e1215f44ed6bd75df97128ab70996ac))
+
+
+### 👷 CI/CD
+
+* bump version number ([8d8c8e4](https://github.com/BrewnodeDave/brewnode-server/commit/8d8c8e4cc5bb207769f52d477b397bdec5e20a30))
+
 
 ### ✨ Features
 
-* **rims:** Add complete RIMS (Recirculating Infusion Mash System) support
-  - `/kettlePumpModulate` and `/mashPumpModulate` endpoints for pump cycling
-  - `/recirculate` endpoint with PID temperature control and duty cycle management
-  - `/recirculate/dutycycle` for dynamic duty cycle updates during operation
-  - `/recirculate/status` for state persistence across frontend navigation
-  - Duty cycle control (1-99%, default 50%) replaces fixed on-time
-  - PID controller integration (Kp=800, Ki=0.3, Kd=100) for mash temperature
-  - Automatic mash-in valve synchronization with kettle pump
-  - Simulation speed factor support for all timing operations
+* add amient = SS or unitank ([2cec408](https://github.com/BrewnodeDave/brewnode-server/commit/2cec40883c4b93c750379d166cfe92113cfc39a2))
+* add debug cli option ([65fe3fc](https://github.com/BrewnodeDave/brewnode-server/commit/65fe3fcd7a9cfd5477ff7853bdce3d07f351f3a5))
+* added pump modulation ([29a7fb3](https://github.com/BrewnodeDave/brewnode-server/commit/29a7fb35b238edb623efa8f316780a683ab64b3e))
+* **api:** change minimum recirculation duty cycle to 50% ([7a139e5](https://github.com/BrewnodeDave/brewnode-server/commit/7a139e50595ff24deabe3b4276e7a106b1e4ada2))
+* **api:** limit recirculation duty cycle to maximum 50% ([e7714b8](https://github.com/BrewnodeDave/brewnode-server/commit/e7714b8337ba08e26a8fdca5a1d89de65033a721))
+* recirculate at specific temp ([845cc7b](https://github.com/BrewnodeDave/brewnode-server/commit/845cc7b32efd2e6d7a2fbf9d8d6af586ec73b2a5))
+* **rims:** add complete RIMS recirculation system with PID control ([e25bc9c](https://github.com/BrewnodeDave/brewnode-server/commit/e25bc9c117c2ec7616259eede5058e5547379dd4))
+* start from any dir ([e09f4f8](https://github.com/BrewnodeDave/brewnode-server/commit/e09f4f882f77001b111bbb20c113322ff212b06b))
+* support two fermenters ([c4c2e24](https://github.com/BrewnodeDave/brewnode-server/commit/c4c2e2427ad049a2a5232366403ebb46e8340806))
+
+
+### ⚡ Performance
+
+* **temp:** optimize temperature retry to only re-read failed sensors ([31f47ac](https://github.com/BrewnodeDave/brewnode-server/commit/31f47ac741ad7e37d2caf1f83e910030d2425100))
+
 
 ### 🐛 Bug Fixes
 
-* **temperature:** Add retry logic with pump management for DS18x20 sensors
-  - 3 retry attempts with 200ms delays
-  - Automatic pump shutdown after first failed read (500ms settle time)
-  - Stops both mash AND kettle pumps to eliminate electrical interference
-  - Validates readings: rejects 85°C error code, null, undefined, out-of-range
-  - Applied to both `getTempWithRetry()` and `getAllTemps()`
-  - Significantly improves sensor reliability during pump operation
-
-### 🔧 Configuration
-
-* **debug:** Add `--debug` / `-d` command line flag to enable console logging
-  - Controls brewlog console output (default: disabled for performance)
-  - Useful for development and troubleshooting
-
-### 🎨 Frontend
-
-* **rims:** Add RecirculationControl component to Process Control page
-  - Inline (non-modal) control for multi-page navigation during operation
-  - Real-time status polling (3-second intervals)
-  - Temperature and duty cycle controls
-  - State persistence via backend status endpoint
-  - Recycle icon for RIMS section
-* **proxy:** Add `/recirculate` routes to Vite proxy configuration
-
+* . ([8b6c7b7](https://github.com/BrewnodeDave/brewnode-server/commit/8b6c7b74768dd40bba1d4c67fdb15e6baa6e7e82))
+* add mod time to recirc ([386dd9e](https://github.com/BrewnodeDave/brewnode-server/commit/386dd9eb6633e09e245986686fd2d88f0c13c418))
+* **api:** correct sensorStatus All endpoint array spreading ([6afd576](https://github.com/BrewnodeDave/brewnode-server/commit/6afd5768e7783553aaf21a126f2e01272af76152))
+* debug ([a83b839](https://github.com/BrewnodeDave/brewnode-server/commit/a83b839c9b38e23b0ac36a99203bfb18dcf62587))
+* debug ([5af29a4](https://github.com/BrewnodeDave/brewnode-server/commit/5af29a4b4b5d5691a4aac67da6c0ebeed41b1851))
+* pumnp management during temp readings ([e7932c7](https://github.com/BrewnodeDave/brewnode-server/commit/e7932c712c2cc671738c590575dc63a40f7549f1))
+* retry temp readings ([21fa9a2](https://github.com/BrewnodeDave/brewnode-server/commit/21fa9a225e7b5f5b8fde4f8eecf3c073d881333f))
+* temp ([cd7f2d0](https://github.com/BrewnodeDave/brewnode-server/commit/cd7f2d0c6554c0814aeed6b55bdbcb19341c8314))
+* **temp-service:** service not starting ([dbfbfb4](https://github.com/BrewnodeDave/brewnode-server/commit/dbfbfb401f68a7ac97dc0052169a4036c33a3e72))
+* use mash temp for recirc ([34e1a21](https://github.com/BrewnodeDave/brewnode-server/commit/34e1a21d9026147fb6eb6bc1326d61f7cb0dc196))
 
 ## [2.4.0](https://github.com/BrewnodeDave/brewnode-server/compare/v2.3.1...v2.4.0) (2025-12-11)
 
