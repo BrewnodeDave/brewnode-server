@@ -14,8 +14,11 @@
 #   3. This workflow triggers and publishes to npm
 #
 # Requirements:
-#   - Repository secret NPM_TOKEN must be set with valid npm auth token
 #   - User must have publish rights to @brewnode/server on npm
+#   - Package must be configured for npm trusted publishing (provenance)
+#   - Workflow uses OIDC authentication to bypass 2FA/OTP requirements
+#   - Note: npm trusted publishing is configured automatically when using
+#     --provenance flag with proper OIDC permissions (id-token: write)
 #
 # Safety: Manual control - you must click "Publish" to trigger npm publish
 # =============================================================================
@@ -30,6 +33,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write  # Required for npm provenance/OIDC authentication
 
     # Safety guard: Only run for version tags (v1.0.0, v2.4.0, etc.)
     if: startsWith(github.event.release.tag_name, 'v')
@@ -41,28 +45,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           registry-url: 'https://registry.npmjs.org'
-          always-auth: true  # Always authenticate with npm registry
-
-      - name: Configure npm authentication
-        # Creates ~/.npmrc with authentication token for npm publish
-        # Requires repository secret: NPM_TOKEN (get from npmjs.com)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          echo "Writing temporary ~/.npmrc for registry authentication"
-          printf "//registry.npmjs.org/:_authToken=%s\n" "${NODE_AUTH_TOKEN}" > ~/.npmrc
-          echo "Verify token (npm whoami) — fails fast if token is invalid"
-          npm whoami || (echo "npm whoami failed — check NPM_TOKEN and package ownership" && exit 1)
 
       - name: Install dependencies
         run: npm ci  # Clean install from package-lock.json
 
       - name: Publish package to npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          # Uses npm trusted publishing (provenance) with OIDC authentication
           # Package.json contains publishConfig.access = "public" for @brewnode scope
-          # This makes the scoped package publicly accessible on npm
-          npm publish --access public
+          # The --provenance flag generates cryptographic proof of build origin
+          # This bypasses 2FA/OTP requirements by using OIDC token verification
+          npm publish --provenance --access public
