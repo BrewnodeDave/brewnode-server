@@ -17,6 +17,8 @@
 #   - User must have publish rights to @brewnode/server on npm
 #   - Package must be configured for npm trusted publishing (provenance)
 #   - Workflow uses OIDC authentication to bypass 2FA/OTP requirements
+#   - Note: npm trusted publishing is configured automatically when using
+#     --provenance flag with proper OIDC permissions (id-token: write)
 #
 # Safety: Manual control - you must click "Publish" to trigger npm publish
 # =============================================================================
