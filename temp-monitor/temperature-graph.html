@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrewNode Temperature Monitor - Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+        .header-info { color: #666; margin-bottom: 20px; font-size: 14px; }
+        .chart-wrapper { position: relative; height: 500px; margin-bottom: 30px; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 6px;
+            border-left: 4px solid #4ECDC4;
+        }
+        .stat-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .refresh-info {
+            background: #e8f4f8;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #0066cc;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌡️ BrewNode Temperature Monitor</h1>
+        <div class="header-info">
+            <p><strong>Log File:</strong> logs/temperatures.csv</p>
+            <p><strong>Generated:</strong> 2/16/2026, 8:51:59 PM</p>
+            <p><strong>Data Points:</strong> 9 readings</p>
+        </div>
+        <div class="refresh-info">
+            💡 To update this graph, run: <code>npm run graph:html</code>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="temperatureChart"></canvas>
+        </div>
+        <div class="stats">
+            
+                <div class="stat-card">
+                    <h3>Temp Glycol</h3>
+                    <p><strong>Min:</strong> 21.4°C</p>
+                    <p><strong>Max:</strong> 26.5°C</p>
+                    <p><strong>Avg:</strong> 22.1°C</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Temp Kettle</h3>
+                    <p><strong>Min:</strong> 25.5°C</p>
+                    <p><strong>Max:</strong> 27.3°C</p>
+                    <p><strong>Avg:</strong> 27.0°C</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Temp UniTank</h3>
+                    <p><strong>Min:</strong> 22.5°C</p>
+                    <p><strong>Max:</strong> 26.9°C</p>
+                    <p><strong>Avg:</strong> 26.2°C</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Temp SS</h3>
+                    <p><strong>Min:</strong> 19.5°C</p>
+                    <p><strong>Max:</strong> 27.8°C</p>
+                    <p><strong>Avg:</strong> 26.7°C</p>
+                </div>
+        </div>
+        <div class="footer">
+            <p>BrewNode Temperature Monitor | Generated on 2/16/2026, 8:51:59 PM</p>
+        </div>
+    </div>
+    <script>
+        const ctx = document.getElementById('temperatureChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['8:32:30 PM','8:36:54 PM','8:37:04 PM','8:37:14 PM','8:37:24 PM','8:37:34 PM','8:37:44 PM','8:37:54 PM','8:38:04 PM'],
+                datasets: [
+      {
+        label: 'Temp Glycol',
+        data: [26.5,21.5,21.5,21.5,21.4,21.4,21.8,21.8,21.6],
+        borderColor: '#FF6B6B',
+        backgroundColor: '#FF6B6B33',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 2,
+        pointHoverRadius: 4
+      },
+      {
+        label: 'Temp Kettle',
+        data: [25.5,27.1,27.2,27.2,27.1,27.2,27.3,27.1,27],
+        borderColor: '#4ECDC4',
+        backgroundColor: '#4ECDC433',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 2,
+        pointHoverRadius: 4
+      },
+      {
+        label: 'Temp UniTank',
+        data: [22.5,26.6,26.6,26.7,26.7,26.5,26.6,26.9,26.9],
+        borderColor: '#45B7D1',
+        backgroundColor: '#45B7D133',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 2,
+        pointHoverRadius: 4
+      },
+      {
+        label: 'Temp SS',
+        data: [19.5,27.5,27.6,27.6,27.8,27.7,27.4,27.7,27.6],
+        borderColor: '#FFA07A',
+        backgroundColor: '#FFA07A33',
+        tension: 0.3,
+        fill: true,
+        pointRadius: 2,
+        pointHoverRadius: 4
+      },]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: { display: true, text: 'Temperature Over Time', font: { size: 16 } },
+                    legend: { display: true, position: 'top' }
+                },
+                scales: {
+                    y: { title: { display: true, text: 'Temperature (°C)' }, beginAtZero: false },
+                    x: { title: { display: true, text: 'Time' } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

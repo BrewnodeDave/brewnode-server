@@ -1,0 +1,31 @@
+{
+  "name": "@brewnode/temp-monitor",
+  "version": "1.0.0",
+  "description": "Continuous temperature monitoring utility for BrewNode - monitors 4 temperature sensors and logs measurements",
+  "main": "index.js",
+  "bin": {
+    "temp-monitor": "./bin/temp-monitor.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "start:sim": "SIMULATE=1 node index.js",
+    "graph": "node graph-generator.js",
+    "graph:html": "node graph-generator.js --html temperature-graph.html"
+  },
+  "keywords": [
+    "temperature",
+    "monitoring",
+    "brewery",
+    "ds18x20",
+    "sensor"
+  ],
+  "author": "BrewNode",
+  "license": "Beerware",
+  "dependencies": {
+    "ds18x20": "^0.1.x"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
