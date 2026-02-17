@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const probes = require('./probes.js');
+const HeatExchanger = require('./heat-exchanger.js');
 
 /**
  * Logger class for writing temperature measurements to file
@@ -56,6 +57,11 @@ class TemperatureMonitor {
     this.logger = new TemperatureLogger(this.logFilePath);
     this.isRunning = false;
     this.intervalHandle = null;
+    this.heatExchangerConfig = options.heatExchanger || {
+      enabled: true,
+      uValue: 500, // W/m²·K
+      area: 1.0    // m²
+    };
   }
 
   /**
@@ -166,9 +172,52 @@ class TemperatureMonitor {
       readings.forEach(reading => {
         console.log(`  ${reading.name.padEnd(20)} → ${reading.compensatedTemp.toFixed(1)}°C (raw: ${reading.rawTemp.toFixed(2)}°C)`);
       });
+
+      // Calculate heat exchanger power if enabled
+      if (this.heatExchangerConfig.enabled) {
+        const temps = this._getTemperaturesForHeatExchanger(readings);
+        if (temps) {
+          const power = HeatExchanger.calculateFromReadings(
+            temps,
+            this.heatExchangerConfig.uValue,
+            this.heatExchangerConfig.area
+          );
+          console.log(`  ${'Heat Exchanger Power'.padEnd(20)} → ${power.powerKW.toFixed(3)} kW (${power.power.toFixed(0)} W)`);
+          console.log(`  ${'LMTD'.padEnd(20)} → ${power.lmtd.toFixed(2)}°C`);
+          console.log(`  ${'Effectiveness'.padEnd(20)} → ${power.effectiveness.toFixed(1)}%`);
+        }
+      }
     } catch (err) {
       console.error('Error during monitoring:', err.message);
     }
+  }
+
+  /**
+   * Extract temperatures for heat exchanger calculation
+   * @private
+   */
+  _getTemperaturesForHeatExchanger(readings) {
+    const temps = {};
+    
+    readings.forEach(reading => {
+      if (reading.name === 'Temp Kettle') {
+        temps.kettle = reading.compensatedTemp;
+      } else if (reading.name === 'Temp UniTank') {
+        temps.unitank = reading.compensatedTemp;
+      } else if (reading.name === 'Temp Glycol') {
+        temps.glycol = reading.compensatedTemp;
+      } else if (reading.name === 'Temp Mash') {
+        temps.mash = reading.compensatedTemp;
+      }
+    });
+    
+    // Check if all required temperatures are available
+    if (temps.kettle !== undefined && temps.unitank !== undefined &&
+        temps.glycol !== undefined && temps.mash !== undefined) {
+      return temps;
+    }
+    
+    return null;
   }
 
   /**
@@ -197,8 +246,35 @@ class TemperatureMonitor {
       logFilePath: this.logger.getLogPath(),
       interval: this.interval,
       simulate: this.simulate,
-      probeCount: probes.length
+      probeCount: probes.length,
+      heatExchanger: {
+        enabled: this.heatExchangerConfig.enabled,
+        uValue: this.heatExchangerConfig.uValue,
+        area: this.heatExchangerConfig.area
+      }
     };
+  }
+
+  /**
+   * Get current heat exchanger power calculation
+   */
+  async getHeatExchangerPower() {
+    if (!this.heatExchangerConfig.enabled) {
+      throw new Error('Heat exchanger calculations are disabled');
+    }
+
+    const readings = await this.readAllTemperatures();
+    const temps = this._getTemperaturesForHeatExchanger(readings);
+    
+    if (!temps) {
+      throw new Error('Required temperature sensors not available');
+    }
+
+    return HeatExchanger.calculateFromReadings(
+      temps,
+      this.heatExchangerConfig.uValue,
+      this.heatExchangerConfig.area
+    );
   }
 }
 

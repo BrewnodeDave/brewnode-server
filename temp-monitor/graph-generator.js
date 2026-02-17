@@ -10,6 +10,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const HeatExchanger = require('./heat-exchanger.js');
 
 /**
  * Simple CSV parser helper
@@ -150,7 +151,7 @@ class TemperatureGraphGenerator {
   /**
    * Generate HTML graph file
    */
-  static generateHTMLGraph(csvFilePath, outputPath) {
+  static generateHTMLGraph(csvFilePath, outputPath, options = {}) {
     if (!fs.existsSync(csvFilePath)) {
       throw new Error(`CSV file not found: ${csvFilePath}`);
     }
@@ -160,9 +161,21 @@ class TemperatureGraphGenerator {
       throw new Error('No data available in CSV file');
     }
 
-    // Group by sensor
+    // Default options
+    const config = {
+      includeHeatExchanger: options.includeHeatExchanger !== false,
+      uValue: options.uValue || 500,
+      area: options.area || 1.0
+    };
+
+    // Group by sensor and collect timestamps
     const sensorData = {};
     const timestamps = [];
+    const heatExchangerData = {
+      power: [],
+      lmtd: [],
+      effectiveness: []
+    };
     
     data.forEach(row => {
       const temp = parseFloat(row.compensated_temperature);
@@ -178,8 +191,48 @@ class TemperatureGraphGenerator {
       }
     });
 
+    // Calculate heat exchanger values for each timestamp
+    if (config.includeHeatExchanger) {
+      const timestampGroups = {};
+      
+      data.forEach(row => {
+        const time = new Date(row.timestamp).toLocaleTimeString();
+        if (!timestampGroups[time]) {
+          timestampGroups[time] = {};
+        }
+        timestampGroups[time][row.sensor_name] = parseFloat(row.compensated_temperature);
+      });
+
+      timestamps.forEach(time => {
+        const temps = timestampGroups[time];
+        if (temps['Temp Kettle'] && temps['Temp UniTank'] && 
+            temps['Temp Glycol'] && temps['Temp Mash']) {
+          try {
+            const result = HeatExchanger.calculateFromReadings({
+              kettle: temps['Temp Kettle'],
+              unitank: temps['Temp UniTank'],
+              glycol: temps['Temp Glycol'],
+              mash: temps['Temp Mash']
+            }, config.uValue, config.area);
+            
+            heatExchangerData.power.push(result.powerKW);
+            heatExchangerData.lmtd.push(result.lmtd);
+            heatExchangerData.effectiveness.push(result.effectiveness);
+          } catch (err) {
+            heatExchangerData.power.push(null);
+            heatExchangerData.lmtd.push(null);
+            heatExchangerData.effectiveness.push(null);
+          }
+        } else {
+          heatExchangerData.power.push(null);
+          heatExchangerData.lmtd.push(null);
+          heatExchangerData.effectiveness.push(null);
+        }
+      });
+    }
+
     // Create HTML
-    const html = this._createHTMLChart(sensorData, timestamps, csvFilePath);
+    const html = this._createHTMLChart(sensorData, timestamps, csvFilePath, heatExchangerData, config);
     fs.writeFileSync(outputPath, html);
     return outputPath;
   }
@@ -187,26 +240,121 @@ class TemperatureGraphGenerator {
   /**
    * Create HTML chart
    */
-  static _createHTMLChart(sensorData, timestamps, csvFile) {
+  static _createHTMLChart(sensorData, timestamps, csvFile, heatExchangerData, config) {
     const sensors = Object.keys(sensorData);
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A'];
+    // Distinct colors for each sensor and dataset
+    const colors = [
+      '#FF6B6B', // Wort In
+      '#1976D2', // Wort Out
+      '#43A047', // Water In
+      '#FFD600', // Water Out
+      '#FF1744', // Power (Heat Exchanger)
+      '#00E676', // LMTD
+      '#8E24AA'  // Effectiveness (if added)
+    ];
 
     let datasets = '';
     sensors.forEach((sensor, idx) => {
-      const color = colors[idx % colors.length];
+      // Assign distinct color for each sensor
+      let color = colors[idx % colors.length];
       const data = sensorData[sensor].map(v => v === null ? 'null' : v);
+      let label = sensor;
+      if (sensor === 'Temp Kettle') { label = 'Hot Inlet'; color = colors[0]; }
+      else if (sensor === 'Temp UniTank') { label = 'Hot Outlet'; color = colors[1]; }
+      else if (sensor === 'Temp Glycol') { label = 'Cold Inlet'; color = colors[2]; }
+      else if (sensor === 'Temp Mash') { label = 'Cold Outlet'; color = colors[3]; }
       datasets += `
       {
-        label: '${sensor}',
+        label: '${label}',
         data: [${data.join(',')}],
         borderColor: '${color}',
         backgroundColor: '${color}33',
         tension: 0.3,
-        fill: true,
+        fill: false,
         pointRadius: 2,
-        pointHoverRadius: 4
+        pointHoverRadius: 4,
+        yAxisID: 'y'
       },`;
     });
+
+    // Add heat exchanger datasets if enabled
+    let heatExchangerHTML = '';
+    let powerDataset = '';
+    let lmtdDataset = '';
+    let effectivenessDataset = '';
+    
+    if (config.includeHeatExchanger && heatExchangerData.power.length > 0) {
+      const powerData = heatExchangerData.power.map(v => v === null ? 'null' : v.toFixed(3));
+      const lmtdData = heatExchangerData.lmtd.map(v => v === null ? 'null' : v.toFixed(2));
+      const effectivenessData = heatExchangerData.effectiveness.map(v => v === null ? 'null' : v.toFixed(1));
+      
+      powerDataset = `
+      {
+        label: 'Heat Exchanger Power (kW)',
+        data: [${powerData.join(',')}],
+        borderColor: '${colors[4]}',
+        backgroundColor: '${colors[4]}33',
+        tension: 0.3,
+        fill: false,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        yAxisID: 'y1',
+        borderWidth: 2
+      },`;
+
+      lmtdDataset = `
+      {
+        label: 'LMTD (°C)',
+        data: [${lmtdData.join(',')}],
+        borderColor: '${colors[5]}',
+        backgroundColor: '${colors[5]}33',
+        tension: 0.3,
+        fill: false,
+        pointRadius: 2,
+        pointHoverRadius: 4,
+        yAxisID: 'y',
+        borderDash: [5, 5]
+      },`;
+
+      // Calculate stats for heat exchanger
+      const validPower = heatExchangerData.power.filter(v => v !== null);
+      const validLMTD = heatExchangerData.lmtd.filter(v => v !== null);
+      const validEff = heatExchangerData.effectiveness.filter(v => v !== null);
+      
+      if (validPower.length > 0) {
+        const avgPower = (validPower.reduce((a, b) => a + b, 0) / validPower.length).toFixed(3);
+        const minPower = Math.min(...validPower).toFixed(3);
+        const maxPower = Math.max(...validPower).toFixed(3);
+        const avgLMTD = (validLMTD.reduce((a, b) => a + b, 0) / validLMTD.length).toFixed(2);
+        const avgEff = (validEff.reduce((a, b) => a + b, 0) / validEff.length).toFixed(1);
+
+        heatExchangerHTML = `
+          <div class="heat-exchanger-section">
+            <h2>⚡ Heat Exchanger Performance</h2>
+            <div class="stats">
+              <div class="stat-card heat-card">
+                <h3>Power</h3>
+                <p><strong>Min:</strong> ${minPower} kW</p>
+                <p><strong>Max:</strong> ${maxPower} kW</p>
+                <p><strong>Avg:</strong> ${avgPower} kW</p>
+              </div>
+              <div class="stat-card heat-card">
+                <h3>LMTD</h3>
+                <p><strong>Average:</strong> ${avgLMTD}°C</p>
+              </div>
+              <div class="stat-card heat-card">
+                <h3>Effectiveness</h3>
+                <p><strong>Average:</strong> ${avgEff}%</p>
+              </div>
+              <div class="stat-card heat-card">
+                <h3>Configuration</h3>
+                <p><strong>U-Value:</strong> ${config.uValue} W/m²·K</p>
+                <p><strong>Area:</strong> ${config.area} m²</p>
+              </div>
+            </div>
+          </div>`;
+      }
+    }
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -232,19 +380,23 @@ class TemperatureGraphGenerator {
             padding: 30px;
         }
         h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+        h2 { color: #333; margin: 30px 0 20px 0; font-size: 22px; }
         .header-info { color: #666; margin-bottom: 20px; font-size: 14px; }
         .chart-wrapper { position: relative; height: 500px; margin-bottom: 30px; }
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
-            margin-top: 30px;
+            margin-top: 20px;
         }
         .stat-card {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 6px;
             border-left: 4px solid #4ECDC4;
+        }
+        .heat-card {
+            border-left-color: #FF1744;
         }
         .stat-card h3 {
             color: #333;
@@ -268,6 +420,11 @@ class TemperatureGraphGenerator {
             color: #999;
             font-size: 12px;
         }
+        .heat-exchanger-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
     </style>
 </head>
 <body>
@@ -277,6 +434,7 @@ class TemperatureGraphGenerator {
             <p><strong>Log File:</strong> ${csvFile}</p>
             <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
             <p><strong>Data Points:</strong> ${timestamps.length} readings</p>
+            ${config.includeHeatExchanger ? '<p><strong>Heat Exchanger:</strong> LMTD calculations enabled</p>' : ''}
         </div>
         <div class="refresh-info">
             💡 To update this graph, run: <code>npm run graph:html</code>
@@ -284,23 +442,34 @@ class TemperatureGraphGenerator {
         <div class="chart-wrapper">
             <canvas id="temperatureChart"></canvas>
         </div>
+        
+        <h2>🌡️ Temperature Statistics</h2>
         <div class="stats">
             ${sensors.map((sensor) => {
-                const temps = sensorData[sensor].filter(v => v !== null);
-                const min = Math.min(...temps).toFixed(1);
-                const max = Math.max(...temps).toFixed(1);
-                const avg = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
-                return `
+              const temps = sensorData[sensor].filter(v => v !== null);
+              const min = Math.min(...temps).toFixed(1);
+              const max = Math.max(...temps).toFixed(1);
+              const avg = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
+              let label = sensor;
+            if (sensor === 'Temp Kettle') label = 'Hot Inlet';
+            else if (sensor === 'Temp UniTank') label = 'Hot Outlet';
+            else if (sensor === 'Temp Glycol') label = 'Cold Inlet';
+            else if (sensor === 'Temp Mash') label = 'Cold Outlet';
+              return `
                 <div class="stat-card">
-                    <h3>${sensor}</h3>
-                    <p><strong>Min:</strong> ${min}°C</p>
-                    <p><strong>Max:</strong> ${max}°C</p>
-                    <p><strong>Avg:</strong> ${avg}°C</p>
+                  <h3>${label}</h3>
+                  <p><strong>Min:</strong> ${min}°C</p>
+                  <p><strong>Max:</strong> ${max}°C</p>
+                  <p><strong>Avg:</strong> ${avg}°C</p>
                 </div>`;
             }).join('')}
         </div>
+        
+        ${heatExchangerHTML}
+        
         <div class="footer">
             <p>BrewNode Temperature Monitor | Generated on ${new Date().toLocaleString()}</p>
+            ${config.includeHeatExchanger ? '<p>Heat Exchanger: Counterflow | Hot: Inlet→Outlet | Cold: Inlet→Outlet</p>' : ''}
         </div>
     </div>
     <script>
@@ -309,17 +478,59 @@ class TemperatureGraphGenerator {
             type: 'line',
             data: {
                 labels: [${timestamps.map(t => `'${t}'`).join(',')}],
-                datasets: [${datasets}]
+                datasets: [${datasets}${powerDataset}${lmtdDataset}]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 plugins: {
-                    title: { display: true, text: 'Temperature Over Time', font: { size: 16 } },
-                    legend: { display: true, position: 'top' }
+                    title: { 
+                        display: true, 
+                        text: 'Temperature${config.includeHeatExchanger ? ' & Heat Exchanger Power' : ''} Over Time', 
+                        font: { size: 16 } 
+                    },
+                    legend: { display: true, position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    if (label.includes('Power')) {
+                                        label += context.parsed.y.toFixed(3) + ' kW';
+                                    } else if (label.includes('Effectiveness')) {
+                                        label += context.parsed.y.toFixed(1) + '%';
+                                    } else {
+                                        label += context.parsed.y.toFixed(1) + '°C';
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
                 },
                 scales: {
-                    y: { title: { display: true, text: 'Temperature (°C)' }, beginAtZero: false },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Temperature (°C)' },
+                        beginAtZero: false
+                    },
+                    ${config.includeHeatExchanger ? `
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Power (kW)' },
+                        grid: { drawOnChartArea: false }
+                    },` : ''}
                     x: { title: { display: true, text: 'Time' } }
                 }
             }
@@ -336,6 +547,11 @@ if (require.main === module) {
   let inputFile = 'logs/temperatures.csv';
   let outputType = 'ascii';
   let outputFile = null;
+  const options = {
+    includeHeatExchanger: true,
+    uValue: 500,
+    area: 1.0
+  };
 
   for (let i = 0; i < args.length; i++) {
     if ((args[i] === '--input' || args[i] === '-i') && args[i + 1]) {
@@ -347,6 +563,14 @@ if (require.main === module) {
       i++;
     } else if (args[i] === '--ascii' || args[i] === '-a') {
       outputType = 'ascii';
+    } else if (args[i] === '--no-heat') {
+      options.includeHeatExchanger = false;
+    } else if (args[i] === '--uvalue' && args[i + 1]) {
+      options.uValue = parseFloat(args[i + 1]);
+      i++;
+    } else if (args[i] === '--area' && args[i + 1]) {
+      options.area = parseFloat(args[i + 1]);
+      i++;
     } else if (args[i] === '--help') {
       console.log(`
 Graph Generator - Generate temperature graphs from CSV logs
@@ -357,12 +581,25 @@ Options:
   --input, -i FILE    Input CSV file (default: logs/temperatures.csv)
   --html FILE         Output as HTML file
   --ascii, -a         Output as ASCII (default)
+  --no-heat           Disable heat exchanger calculations
+  --uvalue VALUE      Set U-value in W/m²·K (default: 500)
+  --area VALUE        Set heat transfer area in m² (default: 1.0)
   --help              Show this help message
 
 Examples:
-  node graph-generator.js                           # ASCII output
-  node graph-generator.js --input logs/temps.csv   # ASCII from custom file
-  node graph-generator.js --html graph.html        # HTML output
+  node graph-generator.js                              # ASCII output
+  node graph-generator.js --input logs/temps.csv      # ASCII from custom file
+  node graph-generator.js --html graph.html           # HTML with heat exchanger
+  node graph-generator.js --html graph.html --no-heat # HTML without heat exchanger
+  node graph-generator.js --html graph.html --uvalue 300 --area 0.5  # Custom config
+
+Heat Exchanger:
+  The heat exchanger uses LMTD (Log Mean Temperature Difference) method to calculate
+  power transfer. Default configuration assumes:
+    - U-Value: 500 W/m²·K (overall heat transfer coefficient)
+    - Area: 1.0 m² (heat transfer surface area)
+  
+  Adjust these values to match your actual heat exchanger specifications.
       `);
       process.exit(0);
     }
@@ -371,9 +608,12 @@ Examples:
   try {
     if (outputType === 'html') {
       const outPath = outputFile || 'temperature-graph.html';
-      const result = TemperatureGraphGenerator.generateHTMLGraph(inputFile, outPath);
+      const result = TemperatureGraphGenerator.generateHTMLGraph(inputFile, outPath, options);
       console.log(`✅ HTML graph generated: ${result}`);
       console.log(`📊 Open in browser: file://${path.resolve(result)}`);
+      if (options.includeHeatExchanger) {
+        console.log(`⚡ Heat Exchanger: U=${options.uValue} W/m²·K, A=${options.area} m²`);
+      }
     } else {
       const graph = TemperatureGraphGenerator.generateASCIIGraph(inputFile);
       console.log(graph);

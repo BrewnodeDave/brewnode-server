@@ -22,19 +22,23 @@
             padding: 30px;
         }
         h1 { color: #333; margin-bottom: 10px; font-size: 28px; }
+        h2 { color: #333; margin: 30px 0 20px 0; font-size: 22px; }
         .header-info { color: #666; margin-bottom: 20px; font-size: 14px; }
         .chart-wrapper { position: relative; height: 500px; margin-bottom: 30px; }
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
-            margin-top: 30px;
+            margin-top: 20px;
         }
         .stat-card {
             background: #f8f9fa;
             padding: 20px;
             border-radius: 6px;
             border-left: 4px solid #4ECDC4;
+        }
+        .heat-card {
+            border-left-color: #FF1744;
         }
         .stat-card h3 {
             color: #333;
@@ -58,6 +62,11 @@
             color: #999;
             font-size: 12px;
         }
+        .heat-exchanger-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #eee;
+        }
     </style>
 </head>
 <body>
@@ -65,8 +74,9 @@
         <h1>🌡️ BrewNode Temperature Monitor</h1>
         <div class="header-info">
             <p><strong>Log File:</strong> logs/temperatures.csv</p>
-            <p><strong>Generated:</strong> 2/16/2026, 8:51:59 PM</p>
-            <p><strong>Data Points:</strong> 9 readings</p>
+            <p><strong>Generated:</strong> 2/17/2026, 11:58:07 PM</p>
+            <p><strong>Data Points:</strong> 71 readings</p>
+            <p><strong>Heat Exchanger:</strong> LMTD calculations enabled</p>
         </div>
         <div class="refresh-info">
             💡 To update this graph, run: <code>npm run graph:html</code>
@@ -74,35 +84,65 @@
         <div class="chart-wrapper">
             <canvas id="temperatureChart"></canvas>
         </div>
+        
+        <h2>🌡️ Temperature Statistics</h2>
         <div class="stats">
             
                 <div class="stat-card">
-                    <h3>Temp Glycol</h3>
-                    <p><strong>Min:</strong> 21.4°C</p>
-                    <p><strong>Max:</strong> 26.5°C</p>
-                    <p><strong>Avg:</strong> 22.1°C</p>
+                  <h3>Water Out</h3>
+                  <p><strong>Min:</strong> 21.4°C</p>
+                  <p><strong>Max:</strong> 26.9°C</p>
+                  <p><strong>Avg:</strong> 24.4°C</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Temp Kettle</h3>
-                    <p><strong>Min:</strong> 25.5°C</p>
-                    <p><strong>Max:</strong> 27.3°C</p>
-                    <p><strong>Avg:</strong> 27.0°C</p>
+                  <h3>Wort In</h3>
+                  <p><strong>Min:</strong> 19.3°C</p>
+                  <p><strong>Max:</strong> 80.6°C</p>
+                  <p><strong>Avg:</strong> 60.0°C</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Temp UniTank</h3>
-                    <p><strong>Min:</strong> 22.5°C</p>
-                    <p><strong>Max:</strong> 26.9°C</p>
-                    <p><strong>Avg:</strong> 26.2°C</p>
+                  <h3>Wort Out</h3>
+                  <p><strong>Min:</strong> 20.9°C</p>
+                  <p><strong>Max:</strong> 29.5°C</p>
+                  <p><strong>Avg:</strong> 27.1°C</p>
                 </div>
                 <div class="stat-card">
-                    <h3>Temp SS</h3>
-                    <p><strong>Min:</strong> 19.5°C</p>
-                    <p><strong>Max:</strong> 27.8°C</p>
-                    <p><strong>Avg:</strong> 26.7°C</p>
+                  <h3>Water In</h3>
+                  <p><strong>Min:</strong> 3.6°C</p>
+                  <p><strong>Max:</strong> 27.8°C</p>
+                  <p><strong>Avg:</strong> 10.7°C</p>
                 </div>
         </div>
+        
+        
+          <div class="heat-exchanger-section">
+            <h2>⚡ Heat Exchanger Performance</h2>
+            <div class="stats">
+              <div class="stat-card heat-card">
+                <h3>Power</h3>
+                <p><strong>Min:</strong> 0.000 kW</p>
+                <p><strong>Max:</strong> 19.602 kW</p>
+                <p><strong>Avg:</strong> 12.588 kW</p>
+              </div>
+              <div class="stat-card heat-card">
+                <h3>LMTD</h3>
+                <p><strong>Average:</strong> 25.18°C</p>
+              </div>
+              <div class="stat-card heat-card">
+                <h3>Effectiveness</h3>
+                <p><strong>Average:</strong> -9897.6%</p>
+              </div>
+              <div class="stat-card heat-card">
+                <h3>Configuration</h3>
+                <p><strong>U-Value:</strong> 500 W/m²·K</p>
+                <p><strong>Area:</strong> 1 m²</p>
+              </div>
+            </div>
+          </div>
+        
         <div class="footer">
-            <p>BrewNode Temperature Monitor | Generated on 2/16/2026, 8:51:59 PM</p>
+            <p>BrewNode Temperature Monitor | Generated on 2/17/2026, 11:58:07 PM</p>
+            <p>Heat Exchanger: Counterflow | Hot: Kettle→UniTank | Cold: SS→Glycol</p>
         </div>
     </div>
     <script>
@@ -110,58 +150,128 @@
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['8:32:30 PM','8:36:54 PM','8:37:04 PM','8:37:14 PM','8:37:24 PM','8:37:34 PM','8:37:44 PM','8:37:54 PM','8:38:04 PM'],
+                labels: ['8:32:30 PM','8:36:54 PM','8:37:04 PM','8:37:14 PM','8:37:24 PM','8:37:34 PM','8:37:44 PM','8:37:54 PM','8:38:04 PM','9:18:12 PM','9:18:17 PM','9:18:22 PM','9:18:27 PM','9:18:32 PM','9:18:37 PM','9:18:42 PM','9:18:47 PM','9:18:52 PM','9:18:57 PM','9:19:02 PM','9:19:07 PM','9:19:12 PM','9:19:17 PM','9:28:45 PM','9:28:50 PM','9:29:13 PM','9:29:18 PM','9:31:44 PM','9:31:49 PM','9:31:54 PM','9:31:59 PM','9:32:04 PM','9:32:10 PM','9:32:15 PM','9:32:20 PM','9:32:25 PM','9:32:30 PM','9:32:35 PM','9:32:40 PM','9:32:45 PM','9:32:50 PM','9:32:55 PM','9:33:00 PM','9:33:05 PM','9:33:10 PM','9:33:15 PM','9:33:20 PM','9:33:25 PM','9:33:30 PM','9:33:35 PM','9:33:40 PM','9:33:45 PM','9:33:50 PM','9:33:55 PM','9:38:24 PM','9:38:29 PM','9:38:34 PM','9:38:39 PM','9:38:44 PM','9:38:49 PM','9:38:54 PM','9:38:59 PM','9:39:04 PM','9:39:09 PM','9:39:14 PM','9:39:19 PM','9:39:24 PM','9:39:29 PM','9:39:34 PM','9:39:39 PM','9:39:44 PM'],
                 datasets: [
       {
-        label: 'Temp Glycol',
-        data: [26.5,21.5,21.5,21.5,21.4,21.4,21.8,21.8,21.6],
+        label: 'Water Out',
+        data: [26.5,21.5,21.5,21.5,21.4,21.4,21.8,21.8,21.6,26.9,26.6,26.4,26.8,26.4,26.7,26.9,26.9,26.9,26.7,26.7,26.6,26.7,26.8,24.1,24.2,23.9,24.1,24.3,24.3,23.9,23.9,23.9,24.2,24.1,24,24.2,24,24.2,24.2,24.3,24.1,23.9,24,23.9,24.1,24.1,24,24.1,24.2,23.8,24.3,24.2,24.3,24.3,24,24.3,24.2,23.9,24.2,24.3,24,24,24,24.2,23.8,24.3,24.3,24,24.3,24.1,24.3],
+        borderColor: '#FFD600',
+        backgroundColor: '#FFD60033',
+        tension: 0.3,
+        fill: false,
+        pointRadius: 2,
+        pointHoverRadius: 4,
+        yAxisID: 'y'
+      },
+      {
+        label: 'Wort In',
+        data: [25.5,27.1,27.2,27.2,27.1,27.2,27.3,27.1,27,20.1,20,20,19.9,20.1,20.2,20,20.1,19.9,20,20.1,19.8,20,20.2,19.3,19.5,80.3,80.4,80.4,80.3,80.4,80.3,80.2,80.2,80.4,80.2,80.2,80.1,80.5,80.2,80.3,80.1,80.5,80.1,80.6,80.5,80.5,80.3,80.3,80.6,80.1,80.2,80.5,80.4,80.6,80.2,80.6,80.2,80.5,80.2,80.5,80.6,80.6,80.5,80.5,80.1,80.2,80.4,80.4,80.1,80.3,80.5],
         borderColor: '#FF6B6B',
         backgroundColor: '#FF6B6B33',
         tension: 0.3,
-        fill: true,
+        fill: false,
         pointRadius: 2,
-        pointHoverRadius: 4
+        pointHoverRadius: 4,
+        yAxisID: 'y'
       },
       {
-        label: 'Temp Kettle',
-        data: [25.5,27.1,27.2,27.2,27.1,27.2,27.3,27.1,27],
-        borderColor: '#4ECDC4',
-        backgroundColor: '#4ECDC433',
+        label: 'Wort Out',
+        data: [22.5,26.6,26.6,26.7,26.7,26.5,26.6,26.9,26.9,21,20.9,21.3,20.9,21.1,21.3,21,21.2,21.3,20.9,20.9,21.1,21.1,21,23.1,23.1,29.2,29.3,29.4,29.5,29.2,29.3,29.1,29.4,29.2,29.5,29.5,29.1,29.2,29.2,29.5,29.5,29.3,29.4,29.5,29.4,29.1,29.4,29.4,29.5,29.5,29.1,29.5,29.1,29.2,29.2,29.5,29.5,29.4,29.3,29.4,29.1,29.2,29.1,29,29.5,29.4,29.5,29.5,29.1,29.4,29.5],
+        borderColor: '#1976D2',
+        backgroundColor: '#1976D233',
         tension: 0.3,
-        fill: true,
+        fill: false,
         pointRadius: 2,
-        pointHoverRadius: 4
+        pointHoverRadius: 4,
+        yAxisID: 'y'
       },
       {
-        label: 'Temp UniTank',
-        data: [22.5,26.6,26.6,26.7,26.7,26.5,26.6,26.9,26.9],
-        borderColor: '#45B7D1',
-        backgroundColor: '#45B7D133',
+        label: 'Water In',
+        data: [19.5,27.5,27.6,27.6,27.8,27.7,27.4,27.7,27.6,21.5,21.3,21.5,21.6,21.5,21.7,21.4,21.7,21.5,21.8,21.3,21.8,21.7,21.3,20.3,19.8,3.9,3.8,3.9,3.9,3.9,3.8,3.9,3.7,3.8,4,3.8,3.7,3.6,4,3.9,3.6,3.9,3.9,3.8,3.9,3.7,3.7,4,4,3.8,3.8,3.9,4,4,3.7,4,3.8,3.6,3.8,4,3.9,4,4,4,4,3.6,4,3.7,3.6,3.7,3.6],
+        borderColor: '#43A047',
+        backgroundColor: '#43A04733',
         tension: 0.3,
-        fill: true,
+        fill: false,
         pointRadius: 2,
-        pointHoverRadius: 4
+        pointHoverRadius: 4,
+        yAxisID: 'y'
       },
       {
-        label: 'Temp SS',
-        data: [19.5,27.5,27.6,27.6,27.8,27.7,27.4,27.7,27.6],
-        borderColor: '#FFA07A',
-        backgroundColor: '#FFA07A33',
+        label: 'Heat Exchanger Power (kW)',
+        data: [0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,0.000,19.397,19.444,19.405,19.418,19.417,19.464,19.344,19.451,19.411,19.425,19.451,19.372,19.477,19.286,19.418,19.517,19.469,19.405,19.588,19.464,19.430,19.510,19.391,19.464,19.510,19.300,19.477,19.272,19.344,19.425,19.444,19.451,19.602,19.385,19.391,19.403,19.403,19.350,19.278,19.444,19.465,19.405,19.563,19.346,19.491,19.557],
+        borderColor: '#FF1744',
+        backgroundColor: '#FF174433',
         tension: 0.3,
-        fill: true,
+        fill: false,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        yAxisID: 'y1',
+        borderWidth: 2
+      },
+      {
+        label: 'LMTD (°C)',
+        data: [0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,38.79,38.89,38.81,38.84,38.83,38.93,38.69,38.90,38.82,38.85,38.90,38.74,38.95,38.57,38.84,39.03,38.94,38.81,39.18,38.93,38.86,39.02,38.78,38.93,39.02,38.60,38.95,38.54,38.69,38.85,38.89,38.90,39.20,38.77,38.78,38.81,38.81,38.70,38.56,38.89,38.93,38.81,39.13,38.69,38.98,39.11],
+        borderColor: '#00E676',
+        backgroundColor: '#00E67633',
+        tension: 0.3,
+        fill: false,
         pointRadius: 2,
-        pointHoverRadius: 4
+        pointHoverRadius: 4,
+        yAxisID: 'y',
+        borderDash: [5, 5]
       },]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
                 plugins: {
-                    title: { display: true, text: 'Temperature Over Time', font: { size: 16 } },
-                    legend: { display: true, position: 'top' }
+                    title: { 
+                        display: true, 
+                        text: 'Temperature & Heat Exchanger Power Over Time', 
+                        font: { size: 16 } 
+                    },
+                    legend: { display: true, position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    if (label.includes('Power')) {
+                                        label += context.parsed.y.toFixed(3) + ' kW';
+                                    } else if (label.includes('Effectiveness')) {
+                                        label += context.parsed.y.toFixed(1) + '%';
+                                    } else {
+                                        label += context.parsed.y.toFixed(1) + '°C';
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
                 },
                 scales: {
-                    y: { title: { display: true, text: 'Temperature (°C)' }, beginAtZero: false },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: { display: true, text: 'Temperature (°C)' },
+                        beginAtZero: false
+                    },
+                    
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: { display: true, text: 'Power (kW)' },
+                        grid: { drawOnChartArea: false }
+                    },
                     x: { title: { display: true, text: 'Time' } }
                 }
             }

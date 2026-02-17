@@ -19,6 +19,13 @@ const brewdefs = require(path.join(PROJECT_ROOT, "src/brewstack/common/brewdefs.
 const serverPort = 8080;
 const wsPort = 4000;
 
+var Bugsnag = require('@bugsnag/js')
+var BugsnagPluginExpress = require('@bugsnag/plugin-express')
+
+Bugsnag.start({
+  apiKey: '0d6756c1a3edd5e4650849de2527d4c1',
+  plugins: [BugsnagPluginExpress]
+})
 /**
  * Run Pi hardware validation tests before server startup
  * @returns {Promise<boolean>} True if tests pass or not on Pi, false if tests fail
@@ -151,7 +158,12 @@ const expressAppConfig = oas3Tools.expressAppConfig(
 
 // http://localhost:8080/ferment?profile={"steps":[{"actualTime":1735516800000,"displayPressure":null,"displayStepTemp":18,"pressure":null,"ramp":null,"stepTemp":18,"stepTime":1,"type":"Primary"},{"actualTime":1735603200000,"displayPressure":null,"displayStepTemp":19,"pressure":null,"ramp":null,"stepTemp":19,"stepTime":1,"type":"Primary"},{"actualTime":1735689600000,"displayPressure":null,"displayStepTemp":20,"pressure":null,"ramp":null,"stepTemp":20,"stepTime":7,"type":"Primary"},{"actualRampTime":1736294400000,"actualTime":1736899200000,"displayPressure":null,"displayStepTemp":0,"pressure":null,"ramp":7,"stepTemp":0,"stepTime":3,"type":"Cold Crash"},{"actualTime":1737158400000,"displayPressure":null,"displayStepTemp":4,"pressure":null,"ramp":null,"stepTemp":4,"stepTime":7,"type":"Carbonation"}]}
 
+
 const app = expressAppConfig.getApp();
+var bugsnagMiddleware = Bugsnag.getPlugin('express')
+// This must be the first piece of middleware in the stack.
+// It can only capture errors in downstream middleware
+app.use(bugsnagMiddleware.requestHandler)
 
 //move the "SwaggerRouter" and the "ErrorHandler" at the end of the stack (after the new middleware)
 function insertMiddleware(app, middleware) {
@@ -171,6 +183,9 @@ const corsOptions = {
 
 const corsMiddleware = cors(corsOptions);
 insertMiddleware(app, corsMiddleware);
+
+// This handles any errors that Express catches
+app.use(bugsnagMiddleware.errorHandler)
 
 // Initialize the Swagger middleware
 const httpServer = http.createServer(app).listen(serverPort, async function () {
@@ -204,6 +219,7 @@ const io = new socketio.Server(httpServer, {
 
 io.on("connection", (ws) => {
     console.log(`socket ${ws.id} connected`);
+    Bugsnag.notify(new Error('Test error'))
 
     broker.attach(ws)
 

@@ -10,7 +10,8 @@
     "start": "node index.js",
     "start:sim": "SIMULATE=1 node index.js",
     "graph": "node graph-generator.js",
-    "graph:html": "node graph-generator.js --html temperature-graph.html"
+    "graph:html": "node graph-generator.js --html temperature-graph.html",
+    "heat": "node heat-exchanger.js"
   },
   "keywords": [
     "temperature",

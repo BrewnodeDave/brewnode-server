@@ -7,6 +7,7 @@ Continuous temperature monitoring utility for BrewNode - monitors 4 temperature 
 - 🌡️ Continuous monitoring of 4 temperature sensors
 - 📊 CSV logging of all measurements
 - 📈 ASCII and HTML graph generation from log files
+- ⚡ Heat exchanger power calculation using LMTD method
 - 🔬 Hardware support (DS18X20) and simulation mode
 - 📝 Automatic log file creation
 - ⏱️ Configurable sampling interval
@@ -14,10 +15,18 @@ Continuous temperature monitoring utility for BrewNode - monitors 4 temperature 
 
 ## Monitored Sensors
 
-- **Temp Glycol** - Glycol system temperature (ID: 28-000007519802)
-- **Temp Kettle** - Kettle heating system (ID: 28-00000751bbce)
-- **Temp UniTank** - UniTank fermentation vessel (ID: 28-0000071f5017)
-- **Temp SS** - Stainless steel vessel (ID: 28-0000006a79e8)
+- **Temp Glycol** - Glycol system temperature (ID: 28-000007519802) - *Cold outlet*
+- **Temp Kettle** - Kettle heating system (ID: 28-00000751bbce) - *Hot inlet*
+- **Temp UniTank** - UniTank fermentation vessel (ID: 28-0000071f5017) - *Hot outlet*
+- **Temp SS** - Stainless steel vessel (ID: 28-0000006a79e8) - *Cold inlet*
+
+### Heat Exchanger Configuration
+
+These 4 sensors monitor a **counterflow heat exchanger**:
+- **Hot Side**: Temp Kettle (inlet) → Temp UniTank (outlet)
+- **Cold Side**: Temp SS (inlet) → Temp Glycol (outlet)
+
+The system automatically calculates heat transfer power using the LMTD (Log Mean Temperature Difference) method.
 
 ## Installation
 
@@ -162,6 +171,113 @@ node graph-generator.js --input logs/temperatures.csv --html /tmp/my-graph.html
 # View all options
 node graph-generator.js --help
 ```
+
+## Heat Exchanger Power Calculation
+
+The package calculates heat transfer power for the counterflow heat exchanger using the **LMTD (Log Mean Temperature Difference)** method.
+
+### Configuration
+
+**Counterflow Heat Exchanger:**
+- **Hot Side**: Temp Kettle (inlet) → Temp UniTank (outlet)
+- **Cold Side**: Temp SS (inlet) → Temp Glycol (outlet)
+
+### LMTD Method
+
+The heat transfer power is calculated as:
+
+```
+Q = U × A × LMTD
+
+Where:
+  Q    = Heat transfer rate (W)
+  U    = Overall heat transfer coefficient (W/m²·K)
+  A    = Heat transfer area (m²)
+  LMTD = Log Mean Temperature Difference (°C)
+
+LMTD = (ΔT₁ - ΔT₂) / ln(ΔT₁/ΔT₂)
+  ΔT₁ = T_hot_in - T_cold_out
+  ΔT₂ = T_hot_out - T_cold_in
+```
+
+### Usage
+
+**Standalone Calculator:**
+```bash
+# Calculate power with specific temperatures
+node heat-exchanger.js --kettle 80 --unitank 30 --ss 5 --glycol 25
+
+# With custom U-value and area
+node heat-exchanger.js --kettle 80 --unitank 30 --ss 5 --glycol 25 --uvalue 600 --area 1.5
+
+# Show help
+node heat-exchanger.js --help
+```
+
+**Integrated with Monitoring:**
+The heat exchanger power is automatically calculated and displayed during monitoring:
+
+```bash
+npm run start:sim
+```
+
+Output includes:
+```
+[9:29:13 PM] Temperature readings:
+  Temp Glycol          → 23.9°C (raw: 24.86°C)
+  Temp Kettle          → 80.3°C (raw: 79.89°C)
+  Temp UniTank         → 29.2°C (raw: 29.92°C)
+  Temp SS              → 3.9°C (raw: 5.08°C)
+  Heat Exchanger Power → 19.397 kW (19397 W)
+  LMTD                 → 38.79°C
+  Effectiveness        → 26.2%
+```
+
+**Programmatic Access:**
+```javascript
+const TemperatureMonitor = require('./index.js');
+
+const monitor = new TemperatureMonitor({
+  heatExchanger: {
+    enabled: true,
+    uValue: 500,  // W/m²·K
+    area: 1.0     // m²
+  }
+});
+
+await monitor.start();
+
+// Later, get current power calculation
+const power = await monitor.getHeatExchangerPower();
+console.log(`Power: ${power.powerKW} kW`);
+console.log(`LMTD: ${power.lmtd}°C`);
+console.log(`Effectiveness: ${power.effectiveness}%`);
+```
+
+### Configuration Options
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `enabled` | `true` | Enable/disable heat exchanger calculations |
+| `uValue` | `500` | Overall heat transfer coefficient (W/m²·K) |
+| `area` | `1.0` | Heat transfer surface area (m²) |
+
+### Typical U-Values
+
+| Heat Exchanger Type | U-Value (W/m²·K) |
+|---------------------|------------------|
+| Plate heat exchanger (liquid-liquid) | 2500 - 5000 |
+| Shell & tube (liquid-liquid) | 500 - 1500 |
+| Finned tube (liquid-air) | 25 - 100 |
+| Counterflow (brewery application) | 400 - 800 |
+
+### Output Metrics
+
+- **Power** - Heat transfer rate in W, kW, and BTU/hr
+- **LMTD** - Log mean temperature difference (°C)
+- **Effectiveness** - Heat exchanger efficiency (%)
+- **Hot Side Delta** - Temperature drop on hot side (°C)
+- **Cold Side Delta** - Temperature rise on cold side (°C)
 
 ## Features
 
