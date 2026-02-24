@@ -8,10 +8,72 @@
  * you can buy me a beer in return.
  */
 
+const fs = require('fs');
+const path = require('path');
 const TemperatureMonitor = require('./TemperatureMonitor.js');
+
+/**
+ * Clear log files and reset monitoring data
+ */
+function clearLogs() {
+  const logsDir = path.join(process.cwd(), 'logs');
+  try {
+    if (fs.existsSync(logsDir)) {
+      fs.rmSync(logsDir, { recursive: true, force: true });
+      console.log('✅ Log files cleared successfully');
+      console.log(`📁 Logs directory removed: ${logsDir}`);
+    } else {
+      console.log('ℹ️  No log files found to clear');
+    }
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error clearing logs:', err.message);
+    process.exit(1);
+  }
+}
+
+/**
+ * Show help information
+ */
+function showHelp() {
+  console.log(`
+Temperature Monitor - Usage
+
+Commands:
+  npm start              Start monitoring with real sensors
+  npm run start:sim      Start monitoring with simulation mode
+  npm run graph          Generate ASCII temperature graph
+  npm run graph:html     Generate HTML temperature graph
+  npm run heat           Run heat exchanger calculator
+  npm run diagnose       Run hardware diagnostics
+  npm run clean          Clear all log data and reset
+
+Options:
+  SIMULATE=1 npm start   Enable simulation mode
+
+Examples:
+  npm start                              # Start real monitoring
+  SIMULATE=1 npm start                   # Start simulation
+  npm run graph                          # Show graph of logged data
+  npm run clean                          # Clear all log files
+  `);
+  process.exit(0);
+}
 
 // If run as a script, start monitoring
 if (require.main === module) {
+  const args = process.argv.slice(2);
+
+  // Check for help flag
+  if (args.includes('--help') || args.includes('-h')) {
+    showHelp();
+  }
+
+  // Check for clean/reset flag
+  if (args.includes('--clean') || args.includes('--reset') || args.includes('--clear')) {
+    clearLogs();
+  }
+
   const monitor = new TemperatureMonitor({
     simulate: process.env.SIMULATE === '1'
   });

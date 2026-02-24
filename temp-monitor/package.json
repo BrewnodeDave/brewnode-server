@@ -12,7 +12,8 @@
     "graph": "node graph-generator.js",
     "graph:html": "node graph-generator.js --html temperature-graph.html",
     "heat": "node heat-exchanger.js",
-    "diagnose": "node bin/diagnose.js"
+    "diagnose": "node bin/diagnose.js",
+    "clean": "node index.js --clean"
   },
   "keywords": [
     "temperature",

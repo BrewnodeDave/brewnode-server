@@ -44,10 +44,13 @@ npm install
 npm start
 
 # Test mode with simulated sensors
-NSIMULATE=1 npm start
+npm run start:sim
 
 # Diagnose hardware issues
 npm run diagnose
+
+# Clear all log data and start fresh
+npm run clean
 ```
 
 ### As a CLI Tool
@@ -59,11 +62,21 @@ npm start
 # Test mode with simulated sensors
 npm run start:sim
 
+# Generate graphs from logged data
+npm run graph
+npm run graph:html
+
+# Heat exchanger calculator
+npm run heat
+
 # Using the CLI directly
 ./bin/temp-monitor.js
 
-# Show help
+# Show help and available commands
 ./bin/temp-monitor.js --help
+
+# Clear log files (start fresh)
+./bin/temp-monitor.js --clean
 ```
 
 ### Troubleshooting
