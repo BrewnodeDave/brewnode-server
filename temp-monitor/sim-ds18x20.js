@@ -1,4 +1,4 @@
-/*
+ /*
  * Beerware License
  * ----------------
  * As long as you retain this notice, you can do whatever you want with 
@@ -13,17 +13,17 @@ const probes = require('./probes.js');
 /**
  * Simulated temperature sensor for testing without hardware
  * Simulates a counterflow heat exchanger:
- *   Hot side: Kettle (80°C) → UniTank (30°C)
- *   Cold side: Glycol (5°C) → Mash (25°C)
+ *   Hot side: Kettle (80°C) → Glycol (30°C)
+ *   Cold side: UniTank (5°C) → Mash (25°C)
  */
 let simulatedTemps = {};
 probes.forEach(probe => {
   // Set realistic heat exchanger temperatures
   if (probe.name === 'Temp Kettle') {
     simulatedTemps[probe.id] = 80; // Hot inlet
-  } else if (probe.name === 'Temp UniTank') {
-    simulatedTemps[probe.id] = 30; // Hot outlet
   } else if (probe.name === 'Temp Glycol') {
+    simulatedTemps[probe.id] = 30; // Hot outlet
+  } else if (probe.name === 'Temp UniTank') {
     simulatedTemps[probe.id] = 5;  // Cold inlet
   } else if (probe.name === 'Temp Mash') {
     simulatedTemps[probe.id] = 25; // Cold outlet

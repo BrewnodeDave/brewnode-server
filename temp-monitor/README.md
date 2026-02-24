@@ -15,16 +15,16 @@ Continuous temperature monitoring utility for BrewNode - monitors 4 temperature 
 
 ## Monitored Sensors
 
-- **Temp Glycol** - Glycol system temperature (ID: 28-000007519802) - *Cold outlet*
-- **Temp Kettle** - Kettle heating system (ID: 28-00000751bbce) - *Hot inlet*
-- **Temp UniTank** - UniTank fermentation vessel (ID: 28-0000071f5017) - *Hot outlet*
-- **Temp SS** - Stainless steel vessel (ID: 28-0000006a79e8) - *Cold inlet*
+- **Temp Kettle** - Kettle heating system (ID: 28-00000751bbce) - **Hot Inlet**
+- **Temp Glycol** - Glycol system temperature (ID: 28-000007519802) - **Hot Outlet**
+- **Temp UniTank** - UniTank fermentation vessel (ID: 28-0000071f5017) - **Cold Inlet**
+- **Temp Mash** - Mash/Cold storage temperature (ID: 28-0000069be682) - **Cold Outlet**
 
 ### Heat Exchanger Configuration
 
 These 4 sensors monitor a **counterflow heat exchanger**:
-- **Hot Side**: Temp Kettle (inlet) → Temp UniTank (outlet)
-- **Cold Side**: Temp SS (inlet) → Temp Glycol (outlet)
+- **Hot Side**: Temp Kettle (inlet) → Temp Glycol (outlet)
+- **Cold Side**: Temp UniTank (inlet) → Temp Mash (outlet)
 
 The system automatically calculates heat transfer power using the LMTD (Log Mean Temperature Difference) method.
 
@@ -37,6 +37,19 @@ npm install
 
 ## Usage
 
+### Quick Start
+
+```bash
+# Start monitoring (requires hardware with OneWire enabled)
+npm start
+
+# Test mode with simulated sensors
+NSIMULATE=1 npm start
+
+# Diagnose hardware issues
+npm run diagnose
+```
+
 ### As a CLI Tool
 
 ```bash
@@ -47,10 +60,26 @@ npm start
 npm run start:sim
 
 # Using the CLI directly
-./bin/temp-monitor.js --interval 5 --log /tmp/temps.csv
+./bin/temp-monitor.js
 
 # Show help
 ./bin/temp-monitor.js --help
+```
+
+### Troubleshooting
+
+```bash
+# Run comprehensive hardware diagnostics
+npm run diagnose
+
+# Shows:
+# - Platform detection (Raspberry Pi check)
+# - OneWire bus availability
+# - GPIO filesystem access
+# - I2C bus status
+# - Node.js version compatibility
+# - DS18x20 module load status
+# - Detailed recommendations for fixes
 ```
 
 ### Generate Graphs
@@ -62,8 +91,8 @@ npm run graph
 # HTML graph file (interactive in browser)
 npm run graph:html
 
-# Custom input and output
-node graph-generator.js --input logs/temperatures.csv --html /tmp/graph.html
+# Custom output
+node graph-generator.js --html /tmp/graph.html
 
 # Show graph help
 node graph-generator.js --help
@@ -179,8 +208,8 @@ The package calculates heat transfer power for the counterflow heat exchanger us
 ### Configuration
 
 **Counterflow Heat Exchanger:**
-- **Hot Side**: Temp Kettle (inlet) → Temp UniTank (outlet)
-- **Cold Side**: Temp SS (inlet) → Temp Glycol (outlet)
+- **Hot Side**: Temp Kettle (inlet) → Temp Glycol (outlet)
+- **Cold Side**: Temp UniTank (inlet) → Temp Mash (outlet)
 
 ### LMTD Method
 
@@ -205,10 +234,10 @@ LMTD = (ΔT₁ - ΔT₂) / ln(ΔT₁/ΔT₂)
 **Standalone Calculator:**
 ```bash
 # Calculate power with specific temperatures
-node heat-exchanger.js --kettle 80 --unitank 30 --ss 5 --glycol 25
+node heat-exchanger.js --kettle 80 --glycol 30 --unitank 5 --mash 25
 
 # With custom U-value and area
-node heat-exchanger.js --kettle 80 --unitank 30 --ss 5 --glycol 25 --uvalue 600 --area 1.5
+node heat-exchanger.js --kettle 80 --glycol 30 --unitank 5 --mash 25 --uvalue 600 --area 1.5
 
 # Show help
 node heat-exchanger.js --help
@@ -224,10 +253,10 @@ npm run start:sim
 Output includes:
 ```
 [9:29:13 PM] Temperature readings:
-  Temp Glycol          → 23.9°C (raw: 24.86°C)
   Temp Kettle          → 80.3°C (raw: 79.89°C)
-  Temp UniTank         → 29.2°C (raw: 29.92°C)
-  Temp SS              → 3.9°C (raw: 5.08°C)
+  Temp Glycol          → 29.2°C (raw: 29.92°C)
+  Temp UniTank         → 3.9°C (raw: 5.08°C)
+  Temp Mash            → 23.9°C (raw: 24.86°C)
   Heat Exchanger Power → 19.397 kW (19397 W)
   LMTD                 → 38.79°C
   Effectiveness        → 26.2%

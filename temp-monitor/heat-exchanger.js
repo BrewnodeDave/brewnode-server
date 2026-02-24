@@ -12,8 +12,8 @@
  * Calculates heat transfer power for a counterflow heat exchanger using LMTD method
  * 
  * Configuration:
- *   Hot Side: Temp Kettle (inlet) → Temp Mash (outlet)
- *   Cold Side: Temp SS (inlet) → Temp Glycol (outlet)
+ *   Hot Side: Temp Kettle (inlet) → Temp Glycol (outlet)
+ *   Cold Side: Temp UniTank (inlet) → Temp Mash (outlet)
  */
 
 class HeatExchangerCalculator {
@@ -26,8 +26,8 @@ class HeatExchangerCalculator {
    * LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
    * 
    * @param {number} hotIn - Hot fluid inlet temperature (Temp Kettle)
-   * @param {number} hotOut - Hot fluid outlet temperature (Temp UniTank)
-   * @param {number} coldIn - Cold fluid inlet temperature (Temp Glycol)
+   * @param {number} hotOut - Hot fluid outlet temperature (Temp Glycol)
+   * @param {number} coldIn - Cold fluid inlet temperature (Temp UniTank)
    * @param {number} coldOut - Cold fluid outlet temperature (Temp Mash)
    * @returns {number} LMTD in °C
    */
@@ -106,8 +106,8 @@ class HeatExchangerCalculator {
    * 
    * @param {Object} temps - Temperature readings
    * @param {number} temps.kettle - Temp Kettle (hot inlet)
-   * @param {number} temps.unitank - Temp UniTank (hot outlet)
-   * @param {number} temps.glycol - Temp Glycol (cold inlet)
+   * @param {number} temps.glycol - Temp Glycol (hot outlet)
+   * @param {number} temps.unitank - Temp UniTank (cold inlet)
    * @param {number} temps.mash - Temp Mash (cold outlet)
    * @param {number} uValue - Overall heat transfer coefficient (W/m²·K)
    * @param {number} area - Heat transfer area (m²)
@@ -116,8 +116,8 @@ class HeatExchangerCalculator {
   static calculateFromReadings(temps, uValue = 500, area = 1.0) {
     return this.calculatePower(
       temps.kettle,
-      temps.unitank,
       temps.glycol,
+      temps.unitank,
       temps.mash,
       uValue,
       area
@@ -166,13 +166,13 @@ class HeatExchangerCalculator {
     const issues = [];
     
     // Check if hot inlet is hotter than hot outlet
-    if (temps.kettle <= temps.unitank) {
-      issues.push('Hot side: Inlet should be hotter than outlet');
+    if (temps.kettle <= temps.glycol) {
+      issues.push('Hot side: Inlet (Kettle) should be hotter than outlet (Glycol)');
     }
     
     // Check if cold outlet is warmer than cold inlet
-    if (temps.mash <= temps.glycol) {
-      issues.push('Cold side: Outlet should be warmer than inlet');
+    if (temps.mash <= temps.unitank) {
+      issues.push('Cold side: Outlet (Mash) should be warmer than inlet (UniTank)');
     }
     
     // Check for reasonable temperature ranges
@@ -180,11 +180,11 @@ class HeatExchangerCalculator {
       issues.push('Hot inlet temperature out of reasonable range');
     }
     
-    if (temps.unitank < -50 || temps.unitank > 150) {
+    if (temps.glycol < -50 || temps.glycol > 150) {
       issues.push('Hot outlet temperature out of reasonable range');
     }
     
-    if (temps.glycol < -50 || temps.glycol > 50) {
+    if (temps.unitank < -50 || temps.unitank > 50) {
       issues.push('Cold inlet temperature out of reasonable range');
     }
     
@@ -210,15 +210,15 @@ Heat Exchanger Power Calculator
 Calculates heat transfer power for counterflow heat exchanger using LMTD method.
 
 Configuration:
-  Hot Side:  Inlet → Outlet
-  Cold Side: Inlet → Outlet
+  Hot Side:  Temp Kettle (inlet) → Temp Glycol (outlet)
+  Cold Side: Temp UniTank (inlet) → Temp Mash (outlet)
 
 Usage: node heat-exchanger.js [options]
 
 Options:
   --kettle N      Hot inlet temperature (°C)
-  --unitank N     Hot outlet temperature (°C)
-  --glycol N      Cold inlet temperature (°C)
+  --glycol N      Hot outlet temperature (°C)
+  --unitank N     Cold inlet temperature (°C)
   --mash N        Cold outlet temperature (°C)
   --uvalue N      Overall heat transfer coefficient (W/m²·K), default: 500
   --area N        Heat transfer area (m²), default: 1.0
@@ -226,10 +226,10 @@ Options:
 
 Examples:
   # Calculate with specific temperatures
-  node heat-exchanger.js --kettle 80 --unitank 30 --glycol 5 --mash 25
+  node heat-exchanger.js --kettle 80 --glycol 30 --unitank 5 --mash 25
   
   # Calculate with custom U-value and area
-  node heat-exchanger.js --kettle 80 --unitank 30 --glycol 5 --mash 25 --uvalue 600 --area 1.5
+  node heat-exchanger.js --kettle 80 --glycol 30 --unitank 5 --mash 25 --uvalue 600 --area 1.5
     `);
     process.exit(0);
   }

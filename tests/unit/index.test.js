@@ -35,11 +35,11 @@ describe('Index.js - Main Application', () => {
   });
 
   beforeEach(() => {
-    // Mock console functions
-    console.log = jest.fn();
-    console.error = jest.fn();
-    console.warn = jest.fn();
-    process.exit = jest.fn();
+    // Mock console functions using spyOn to properly track calls
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(process, 'exit').mockImplementation(() => {});
 
     // Mock app structure
     mockApp = {
@@ -80,6 +80,7 @@ describe('Index.js - Main Application', () => {
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     jest.resetModules();
   });
 
@@ -483,6 +484,9 @@ describe('Index.js - Main Application', () => {
     });
 
     test('should handle successful service startup', (done) => {
+      // Capture spy references before they're restored
+      const consoleLogSpy = jest.spyOn(console, 'log');
+      
       jest.doMock('../../src/start-stop.js', () => ({
         start: jest.fn(() => Promise.resolve(true))
       }));
@@ -491,15 +495,20 @@ describe('Index.js - Main Application', () => {
       require('../../index.js');
 
       setTimeout(() => {
-        expect(console.log).toHaveBeenCalledWith("🎉 Server started successfully");
-        expect(console.log).toHaveBeenCalledWith(
+        expect(consoleLogSpy).toHaveBeenCalledWith("🎉 Server started successfully");
+        expect(consoleLogSpy).toHaveBeenCalledWith(
           "🌐 Your server is listening on http://localhost:%d", 8080
         );
+        consoleLogSpy.mockRestore();
         done();
       }, 50);
     });
 
     test('should handle service startup failure and exit', (done) => {
+      // Capture spy references before they're restored
+      const consoleErrorSpy = jest.spyOn(console, 'error');
+      const processExitSpy = jest.spyOn(process, 'exit');
+      
       jest.doMock('../../src/start-stop.js', () => ({
         start: jest.fn(() => Promise.resolve(false))
       }));
@@ -508,15 +517,20 @@ describe('Index.js - Main Application', () => {
       require('../../index.js');
 
       setTimeout(() => {
-        expect(console.error).toHaveBeenCalledWith(
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
           "❌ Failed to start the server due to service initialization errors."
         );
-        expect(process.exit).toHaveBeenCalledWith(1);
+        expect(processExitSpy).toHaveBeenCalledWith(1);
+        consoleErrorSpy.mockRestore();
+        processExitSpy.mockRestore();
         done();
       }, 50);
     });
 
     test('should show Raspberry Pi message when on Pi', (done) => {
+      // Capture spy reference before it's restored
+      const consoleLogSpy = jest.spyOn(console, 'log');
+      
       jest.doMock('../../src/brewstack/common/brewdefs.js', () => ({
         isRaspPi: jest.fn(() => true)
       }));
@@ -534,9 +548,10 @@ describe('Index.js - Main Application', () => {
       require('../../index.js');
 
       setTimeout(() => {
-        expect(console.log).toHaveBeenCalledWith(
+        expect(consoleLogSpy).toHaveBeenCalledWith(
           "🔧 Running on Raspberry Pi - hardware validation completed"
         );
+        consoleLogSpy.mockRestore();
         done();
       }, 50);
     });
@@ -613,6 +628,9 @@ describe('Index.js - Main Application', () => {
     });
 
     test('should handle socket connection and events', (done) => {
+      // Capture spy reference before it's restored
+      const consoleLogSpy = jest.spyOn(console, 'log');
+      
       jest.doMock('socket.io', () => {
         const mock = jest.fn(() => mockSocketioServer);
         mock.Server = jest.fn(() => mockSocketioServer);
@@ -624,13 +642,17 @@ describe('Index.js - Main Application', () => {
 
       setTimeout(() => {
         expect(mockSocketioServer.on).toHaveBeenCalledWith('connection', expect.any(Function));
-        expect(console.log).toHaveBeenCalledWith(`socket ${mockSocket.id} connected`);
+        expect(consoleLogSpy).toHaveBeenCalledWith(`socket ${mockSocket.id} connected`);
         expect(mockBroker.attach).toHaveBeenCalledWith(mockSocket);
+        consoleLogSpy.mockRestore();
         done();
       }, 30);
     });
 
     test('should handle socket disconnect events', (done) => {
+      // Capture spy reference before it's restored
+      const consoleLogSpy = jest.spyOn(console, 'log');
+      
       jest.doMock('socket.io', () => {
         const mock = jest.fn(() => mockSocketioServer);
         mock.Server = jest.fn(() => mockSocketioServer);
@@ -649,18 +671,33 @@ describe('Index.js - Main Application', () => {
         if (disconnectCall) {
           const disconnectCallback = disconnectCall[1];
           disconnectCallback('client disconnect');
-          expect(console.log).toHaveBeenCalledWith(
+          expect(consoleLogSpy).toHaveBeenCalledWith(
             `socket ${mockSocket.id} disconnected due to client disconnect`
           );
         }
+        consoleLogSpy.mockRestore();
         done();
       }, 30);
     });
 
     test('should handle nested client connection events', (done) => {
+      // Capture spy reference before it's restored
+      const consoleLogSpy = jest.spyOn(console, 'log');
+      let connectionCallback;
+      
+      const testMockSocketioServer = {
+        ...mockSocketioServer,
+        on: jest.fn((event, callback) => {
+          if (event === 'connection') {
+            connectionCallback = callback;
+          }
+        }),
+        listen: jest.fn(function() { return this; })
+      };
+
       jest.doMock('socket.io', () => {
-        const mock = jest.fn(() => mockSocketioServer);
-        mock.Server = jest.fn(() => mockSocketioServer);
+        const mock = jest.fn(() => testMockSocketioServer);
+        mock.Server = jest.fn(() => testMockSocketioServer);
         return mock;
       });
 
@@ -668,26 +705,32 @@ describe('Index.js - Main Application', () => {
       require('../../index.js');
 
       setTimeout(() => {
-        // Find the connect event handler
-        const connectCall = mockSocket.on.mock.calls.find(
-          call => call[0] === 'connect'
-        );
-        
-        if (connectCall) {
-          const connectCallback = connectCall[1];
-          const clientSocket = { 
-            conn: { remoteAddress: '192.168.1.100' },
-            on: jest.fn()
-          };
+        if (connectionCallback) {
+          // Trigger the connection callback with mockSocket
+          connectionCallback(mockSocket);
           
-          mockBroker.exists.mockReturnValue(false);
-          connectCallback(clientSocket);
-          
-          expect(console.log).toHaveBeenCalledWith(
-            "Client Connected from", '192.168.1.100'
+          // Now find the connect event handler registered on mockSocket
+          const connectCall = mockSocket.on.mock.calls.find(
+            call => call[0] === 'connect'
           );
-          expect(mockBroker.attach).toHaveBeenCalledWith(clientSocket);
+          
+          if (connectCall) {
+            const connectCallback = connectCall[1];
+            const clientSocket = { 
+              conn: { remoteAddress: '192.168.1.100' },
+              on: jest.fn()
+            };
+            
+            mockBroker.exists.mockReturnValue(false);
+            connectCallback(clientSocket);
+            
+            expect(consoleLogSpy).toHaveBeenCalledWith(
+              "Client Connected from", '192.168.1.100'
+            );
+            expect(mockBroker.attach).toHaveBeenCalledWith(clientSocket);
+          }
         }
+        consoleLogSpy.mockRestore();
         done();
       }, 30);
     });

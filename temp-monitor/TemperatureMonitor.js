@@ -74,16 +74,21 @@ class TemperatureMonitor {
         this.ds18x20 = require('./sim-ds18x20.js');
       } else {
         console.log('🌡️  Initializing real hardware sensors');
-        this.ds18x20 = require('ds18x20');
+        this.ds18x20 = require('./ds18x20-wrapper.js');
       }
 
       // Verify driver is loaded
       return new Promise((resolve, reject) => {
         this.ds18x20.isDriverLoaded((err, isLoaded) => {
           if (err) {
-            reject(new Error('Failed to load driver: ' + err.message));
+            // Check if it's a hardware compatibility issue
+            if (err.message.includes('shell') || err.message.includes('native')) {
+              reject(new Error('Hardware sensors not available.\n\n' + err.message));
+            } else {
+              reject(new Error('Failed to load driver:\n' + err.message));
+            }
           } else if (!isLoaded) {
-            reject(new Error('Temperature driver not loaded'));
+            reject(new Error('Temperature driver not loaded. Ensure OneWire is enabled on your system'));
           } else {
             console.log('✅ Temperature driver loaded successfully');
             resolve();
@@ -91,6 +96,10 @@ class TemperatureMonitor {
         });
       });
     } catch (err) {
+      // Handle module loading errors - show full diagnostic info
+      if (err.message.includes('Cannot find module') || err.message.includes('native') || err.message.includes('Diagnostics')) {
+        throw new Error('Failed to initialize hardware sensors:\n\n' + err.message);
+      }
       throw new Error('Initialization failed: ' + err.message);
     }
   }
