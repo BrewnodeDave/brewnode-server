@@ -17,7 +17,7 @@ function round(num) {
 
 module.exports = [
   {
-    name: "Temp Mash",//cold outlet
+    name: "Temp Mash",//hot outlet
     id: '28-0000069be682',
     prevValue: null,
     compensate: x => round(x * 1.018340748 - 1.309362047)
@@ -35,7 +35,11 @@ module.exports = [
     compensate: x => round(x * 1.020492493 - 1.323124509)
   },
   {
+<<<<<<< HEAD
     name: "Temp Glycol",//hot outlet
+=======
+    name: "Temp Glycol",//cold outlet
+>>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
     id: '28-000007519802',
     prevValue: null,
     compensate: x => round(x * 1.023534722 - 1.509305021)

@@ -12,8 +12,13 @@
  * Calculates heat transfer power for a counterflow heat exchanger using LMTD method
  * 
  * Configuration:
+<<<<<<< HEAD
  *   Hot Side: Temp Kettle (inlet) → Temp Glycol (outlet)
  *   Cold Side: Temp UniTank (inlet) → Temp Mash (outlet)
+=======
+ *   Hot Side: Temp Kettle (inlet) → Temp Mash (outlet)
+ *   Cold Side: Temp UniTank (inlet) → Temp Glycol (outlet)
+>>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
  */
 
 class HeatExchangerCalculator {
@@ -26,9 +31,15 @@ class HeatExchangerCalculator {
    * LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
    * 
    * @param {number} hotIn - Hot fluid inlet temperature (Temp Kettle)
+<<<<<<< HEAD
    * @param {number} hotOut - Hot fluid outlet temperature (Temp Glycol)
    * @param {number} coldIn - Cold fluid inlet temperature (Temp UniTank)
    * @param {number} coldOut - Cold fluid outlet temperature (Temp Mash)
+=======
+   * @param {number} hotOut - Hot fluid outlet temperature (Temp Mash)
+   * @param {number} coldIn - Cold fluid inlet temperature (Temp UniTank)
+   * @param {number} coldOut - Cold fluid outlet temperature (Temp Glycol)
+>>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
    * @returns {number} LMTD in °C
    */
   static calculateLMTD(hotIn, hotOut, coldIn, coldOut) {
@@ -106,9 +117,15 @@ class HeatExchangerCalculator {
    * 
    * @param {Object} temps - Temperature readings
    * @param {number} temps.kettle - Temp Kettle (hot inlet)
+<<<<<<< HEAD
    * @param {number} temps.glycol - Temp Glycol (hot outlet)
    * @param {number} temps.unitank - Temp UniTank (cold inlet)
    * @param {number} temps.mash - Temp Mash (cold outlet)
+=======
+   * @param {number} temps.mash - Temp Mash (hot outlet)
+   * @param {number} temps.unitank - Temp UniTank (cold inlet)
+   * @param {number} temps.glycol - Temp Glycol (cold outlet)
+>>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
    * @param {number} uValue - Overall heat transfer coefficient (W/m²·K)
    * @param {number} area - Heat transfer area (m²)
    * @returns {object} Heat transfer calculations
@@ -116,9 +133,15 @@ class HeatExchangerCalculator {
   static calculateFromReadings(temps, uValue = 500, area = 1.0) {
     return this.calculatePower(
       temps.kettle,
+<<<<<<< HEAD
       temps.glycol,
       temps.unitank,
       temps.mash,
+=======
+      temps.mash,
+      temps.unitank,
+      temps.glycol,
+>>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
       uValue,
       area
     );
@@ -166,6 +189,7 @@ class HeatExchangerCalculator {
     const issues = [];
     
     // Check if hot inlet is hotter than hot outlet
+<<<<<<< HEAD
     if (temps.kettle <= temps.glycol) {
       issues.push('Hot side: Inlet (Kettle) should be hotter than outlet (Glycol)');
     }
@@ -173,6 +197,15 @@ class HeatExchangerCalculator {
     // Check if cold outlet is warmer than cold inlet
     if (temps.mash <= temps.unitank) {
       issues.push('Cold side: Outlet (Mash) should be warmer than inlet (UniTank)');
+=======
+    if (temps.kettle <= temps.mash) {
+      issues.push('Hot side: Inlet should be hotter than outlet');
+    }
+    
+    // Check if cold outlet is warmer than cold inlet
+    if (temps.glycol <= temps.unitank) {
+      issues.push('Cold side: Outlet should be warmer than inlet');
+>>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
     }
     
     // Check for reasonable temperature ranges
@@ -180,7 +213,11 @@ class HeatExchangerCalculator {
       issues.push('Hot inlet temperature out of reasonable range');
     }
     
+<<<<<<< HEAD
     if (temps.glycol < -50 || temps.glycol > 150) {
+=======
+    if (temps.mash < -50 || temps.mash > 150) {
+>>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
       issues.push('Hot outlet temperature out of reasonable range');
     }
     
@@ -188,7 +225,7 @@ class HeatExchangerCalculator {
       issues.push('Cold inlet temperature out of reasonable range');
     }
     
-    if (temps.mash < -50 || temps.mash > 50) {
+    if (temps.glycol < -50 || temps.glycol > 50) {
       issues.push('Cold outlet temperature out of reasonable range');
     }
     
@@ -217,19 +254,32 @@ Usage: node heat-exchanger.js [options]
 
 Options:
   --kettle N      Hot inlet temperature (°C)
+<<<<<<< HEAD
   --glycol N      Hot outlet temperature (°C)
   --unitank N     Cold inlet temperature (°C)
   --mash N        Cold outlet temperature (°C)
+=======
+  --mash N        Hot outlet temperature (°C)
+  --unitank N     Cold inlet temperature (°C)
+  --glycol N      Cold outlet temperature (°C)
+>>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
   --uvalue N      Overall heat transfer coefficient (W/m²·K), default: 500
   --area N        Heat transfer area (m²), default: 1.0
   --help, -h      Show this help
 
 Examples:
   # Calculate with specific temperatures
+<<<<<<< HEAD
   node heat-exchanger.js --kettle 80 --glycol 30 --unitank 5 --mash 25
   
   # Calculate with custom U-value and area
   node heat-exchanger.js --kettle 80 --glycol 30 --unitank 5 --mash 25 --uvalue 600 --area 1.5
+=======
+  node heat-exchanger.js --kettle 80 --mash 30 --unitank 5 --glycol 25
+  
+  # Calculate with custom U-value and area
+  node heat-exchanger.js --kettle 80 --mash 30 --unitank 5 --glycol 25 --uvalue 600 --area 1.5
+>>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
     `);
     process.exit(0);
   }
