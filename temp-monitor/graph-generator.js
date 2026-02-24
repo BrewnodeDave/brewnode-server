@@ -260,15 +260,9 @@ class TemperatureGraphGenerator {
       const data = sensorData[sensor].map(v => v === null ? 'null' : v);
       let label = sensor;
       if (sensor === 'Temp Kettle') { label = 'Hot Inlet'; color = colors[0]; }
-<<<<<<< HEAD
       else if (sensor === 'Temp Glycol') { label = 'Hot Outlet'; color = colors[1]; }
       else if (sensor === 'Temp UniTank') { label = 'Cold Inlet'; color = colors[2]; }
       else if (sensor === 'Temp Mash') { label = 'Cold Outlet'; color = colors[3]; }
-=======
-      else if (sensor === 'Temp Mash') { label = 'Hot Outlet'; color = colors[1]; }
-      else if (sensor === 'Temp UniTank') { label = 'Cold Inlet'; color = colors[2]; }
-      else if (sensor === 'Temp Glycol') { label = 'Cold Outlet'; color = colors[3]; }
->>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
       datasets += `
       {
         label: '${label}',
@@ -458,15 +452,9 @@ class TemperatureGraphGenerator {
               const avg = (temps.reduce((a, b) => a + b, 0) / temps.length).toFixed(1);
               let label = sensor;
             if (sensor === 'Temp Kettle') label = 'Hot Inlet';
-<<<<<<< HEAD
             else if (sensor === 'Temp Glycol') label = 'Hot Outlet';
             else if (sensor === 'Temp UniTank') label = 'Cold Inlet';
             else if (sensor === 'Temp Mash') label = 'Cold Outlet';
-=======
-            else if (sensor === 'Temp Mash') label = 'Hot Outlet';
-            else if (sensor === 'Temp UniTank') label = 'Cold Inlet';
-            else if (sensor === 'Temp Glycol') label = 'Cold Outlet';
->>>>>>> 5e1ac86a1b3d7ed44df7945d7dde40aa77a275f2
               return `
                 <div class="stat-card">
                   <h3>${label}</h3>
