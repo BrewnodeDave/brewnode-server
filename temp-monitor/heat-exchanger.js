@@ -13,7 +13,7 @@
  * 
  * Configuration:
  *   Hot Side: Temp Kettle (inlet) → Temp Mash (outlet)
- *   Cold Side: Temp SS (inlet) → Temp Glycol (outlet)
+ *   Cold Side: Temp UniTank (inlet) → Temp Glycol (outlet)
  */
 
 class HeatExchangerCalculator {
@@ -26,9 +26,9 @@ class HeatExchangerCalculator {
    * LMTD = (ΔT1 - ΔT2) / ln(ΔT1/ΔT2)
    * 
    * @param {number} hotIn - Hot fluid inlet temperature (Temp Kettle)
-   * @param {number} hotOut - Hot fluid outlet temperature (Temp UniTank)
-   * @param {number} coldIn - Cold fluid inlet temperature (Temp Glycol)
-   * @param {number} coldOut - Cold fluid outlet temperature (Temp Mash)
+   * @param {number} hotOut - Hot fluid outlet temperature (Temp Mash)
+   * @param {number} coldIn - Cold fluid inlet temperature (Temp UniTank)
+   * @param {number} coldOut - Cold fluid outlet temperature (Temp Glycol)
    * @returns {number} LMTD in °C
    */
   static calculateLMTD(hotIn, hotOut, coldIn, coldOut) {
@@ -106,9 +106,9 @@ class HeatExchangerCalculator {
    * 
    * @param {Object} temps - Temperature readings
    * @param {number} temps.kettle - Temp Kettle (hot inlet)
-   * @param {number} temps.unitank - Temp UniTank (hot outlet)
-   * @param {number} temps.glycol - Temp Glycol (cold inlet)
-   * @param {number} temps.mash - Temp Mash (cold outlet)
+   * @param {number} temps.mash - Temp Mash (hot outlet)
+   * @param {number} temps.unitank - Temp UniTank (cold inlet)
+   * @param {number} temps.glycol - Temp Glycol (cold outlet)
    * @param {number} uValue - Overall heat transfer coefficient (W/m²·K)
    * @param {number} area - Heat transfer area (m²)
    * @returns {object} Heat transfer calculations
@@ -116,9 +116,9 @@ class HeatExchangerCalculator {
   static calculateFromReadings(temps, uValue = 500, area = 1.0) {
     return this.calculatePower(
       temps.kettle,
+      temps.mash,
       temps.unitank,
       temps.glycol,
-      temps.mash,
       uValue,
       area
     );
@@ -166,12 +166,12 @@ class HeatExchangerCalculator {
     const issues = [];
     
     // Check if hot inlet is hotter than hot outlet
-    if (temps.kettle <= temps.unitank) {
+    if (temps.kettle <= temps.mash) {
       issues.push('Hot side: Inlet should be hotter than outlet');
     }
     
     // Check if cold outlet is warmer than cold inlet
-    if (temps.mash <= temps.glycol) {
+    if (temps.glycol <= temps.unitank) {
       issues.push('Cold side: Outlet should be warmer than inlet');
     }
     
@@ -180,15 +180,15 @@ class HeatExchangerCalculator {
       issues.push('Hot inlet temperature out of reasonable range');
     }
     
-    if (temps.unitank < -50 || temps.unitank > 150) {
+    if (temps.mash < -50 || temps.mash > 150) {
       issues.push('Hot outlet temperature out of reasonable range');
     }
     
-    if (temps.glycol < -50 || temps.glycol > 50) {
+    if (temps.unitank < -50 || temps.unitank > 50) {
       issues.push('Cold inlet temperature out of reasonable range');
     }
     
-    if (temps.mash < -50 || temps.mash > 50) {
+    if (temps.glycol < -50 || temps.glycol > 50) {
       issues.push('Cold outlet temperature out of reasonable range');
     }
     
@@ -217,19 +217,19 @@ Usage: node heat-exchanger.js [options]
 
 Options:
   --kettle N      Hot inlet temperature (°C)
-  --unitank N     Hot outlet temperature (°C)
-  --glycol N      Cold inlet temperature (°C)
-  --mash N        Cold outlet temperature (°C)
+  --mash N        Hot outlet temperature (°C)
+  --unitank N     Cold inlet temperature (°C)
+  --glycol N      Cold outlet temperature (°C)
   --uvalue N      Overall heat transfer coefficient (W/m²·K), default: 500
   --area N        Heat transfer area (m²), default: 1.0
   --help, -h      Show this help
 
 Examples:
   # Calculate with specific temperatures
-  node heat-exchanger.js --kettle 80 --unitank 30 --glycol 5 --mash 25
+  node heat-exchanger.js --kettle 80 --mash 30 --unitank 5 --glycol 25
   
   # Calculate with custom U-value and area
-  node heat-exchanger.js --kettle 80 --unitank 30 --glycol 5 --mash 25 --uvalue 600 --area 1.5
+  node heat-exchanger.js --kettle 80 --mash 30 --unitank 5 --glycol 25 --uvalue 600 --area 1.5
     `);
     process.exit(0);
   }

@@ -29,6 +29,11 @@ if (require.main === module) {
 
   monitor.start().catch(err => {
     console.error('Failed to start monitor:', err.message);
+    console.error('\n💡 Troubleshooting tips:');
+    console.error('   • Run diagnostics: npm run diagnose');
+    console.error('   • Test with simulation: SIMULATE=1 npm start');
+    console.error('   • Check OneWire is enabled on Raspberry Pi');
+    console.error('   • Verify sensor connections and power supply\n');
     process.exit(1);
   });
 }
