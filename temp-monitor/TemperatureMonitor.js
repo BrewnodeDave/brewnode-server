@@ -125,19 +125,43 @@ class TemperatureMonitor {
   async readAllTemperatures() {
     const readings = [];
     for (const probe of probes) {
-      try {
-        const rawTemp = await this.readSensor(probe.id);
-        // No compensation: use rawTemp directly
-        readings.push({
-          name: probe.name,
-          id: probe.id,
-          rawTemp,
-          compensatedTemp: rawTemp
-        });
-        this.logger.log(probe.name, probe.id, rawTemp, rawTemp);
-      } catch (err) {
-        console.error(`Error reading ${probe.name}:`, err.message);
+      let rawTemp = null;
+      let success = false;
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          rawTemp = await this.readSensor(probe.id);
+          // Validate value: must be a finite number and within reasonable range
+          const isValid = typeof rawTemp === 'number' && isFinite(rawTemp) && rawTemp > 0 && rawTemp < 85;
+          if (!isValid) {
+            lastError = new Error(`Invalid value for ${probe.name}: ${rawTemp}`);
+            rawTemp = null;
+            if (attempt < 3) {
+              await new Promise(res => setTimeout(res, 200));
+              continue;
+            }
+            break;
+          }
+          success = true;
+          break;
+        } catch (err) {
+          lastError = err;
+          if (attempt < 3) {
+            await new Promise(res => setTimeout(res, 200)); // short delay before retry
+          }
+        }
       }
+      if (!success) {
+        console.error(`Error reading ${probe.name} after 3 attempts:`, lastError && lastError.message);
+        rawTemp = null;
+      }
+      readings.push({
+        name: probe.name,
+        id: probe.id,
+        rawTemp,
+        compensatedTemp: rawTemp
+      });
+      this.logger.log(probe.name, probe.id, rawTemp, rawTemp);
     }
     return readings;
   }
