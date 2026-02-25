@@ -181,7 +181,7 @@ Temperature: Temp Kettle
 ```
 
 ### HTML Graphs (Interactive)
-
+ 
 Generate beautiful interactive charts in HTML:
 
 ```bash

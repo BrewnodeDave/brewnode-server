@@ -17,27 +17,23 @@ function round(num) {
 
 module.exports = [
   {
-    name: "Temp Mash",//hot outlet
+    name: "Temp Mash",//cold outlet
     id: '28-0000069be682',
-    prevValue: null,
-    compensate: x => round(x * 1.018340748 - 1.309362047)
+    prevValue: null
   },
   {
     name: "Temp Kettle",//hot inlet
     id: '28-00000751bbce',
-    prevValue: null,
-    compensate: x => round(x * 1.023534722 - 1.509305021)
+    prevValue: null
   },
   {
     name: "Temp UniTank",//cold inlet
     id: '28-0000071f5017',
-    prevValue: null,
-    compensate: x => round(x * 1.020492493 - 1.323124509)
+    prevValue: null
   },
   {
-    name: "Temp Glycol",//cold outlet
+    name: "Temp Glycol",//hot outlet
     id: '28-000007519802',
-    prevValue: null,
-    compensate: x => round(x * 1.023534722 - 1.509305021)
+    prevValue: null
   }
 ];

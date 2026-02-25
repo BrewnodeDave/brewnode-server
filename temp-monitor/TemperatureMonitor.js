@@ -179,7 +179,11 @@ class TemperatureMonitor {
       const timestamp = new Date().toLocaleTimeString();
       console.log(`[${timestamp}] Temperature readings:`);
       readings.forEach(reading => {
-        console.log(`  ${reading.name.padEnd(20)} → ${reading.compensatedTemp.toFixed(1)}°C (raw: ${reading.rawTemp.toFixed(2)}°C)`);
+        const comp = (typeof reading.compensatedTemp === 'number' && isFinite(reading.compensatedTemp))
+          ? reading.compensatedTemp.toFixed(1) : 'N/A';
+        const raw = (typeof reading.rawTemp === 'number' && isFinite(reading.rawTemp))
+          ? reading.rawTemp.toFixed(2) : 'N/A';
+        console.log(`  ${reading.name.padEnd(20)} → ${comp}°C (raw: ${raw}°C)`);
       });
 
       // Calculate heat exchanger power if enabled
