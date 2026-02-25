@@ -178,12 +178,18 @@ class TemperatureMonitor {
       const readings = await this.readAllTemperatures();
       const timestamp = new Date().toLocaleTimeString();
       console.log(`[${timestamp}] Temperature readings:`);
+      // Map probe names to generic roles
+      const nameMap = {
+        'Temp Kettle': 'Hot Inlet',
+        'Temp Glycol': 'Hot Outlet',
+        'Temp UniTank': 'Cold Inlet',
+        'Temp Mash': 'Cold Outlet'
+      };
       readings.forEach(reading => {
         const comp = (typeof reading.compensatedTemp === 'number' && isFinite(reading.compensatedTemp))
           ? reading.compensatedTemp.toFixed(1) : 'N/A';
-        const raw = (typeof reading.rawTemp === 'number' && isFinite(reading.rawTemp))
-          ? reading.rawTemp.toFixed(2) : 'N/A';
-        console.log(`  ${reading.name.padEnd(20)} → ${comp}°C (raw: ${raw}°C)`);
+        const label = nameMap[reading.name] || reading.name;
+        console.log(`  ${label.padEnd(20)} → ${comp}°C`);
       });
 
       // Calculate heat exchanger power if enabled
