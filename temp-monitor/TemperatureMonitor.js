@@ -127,14 +127,14 @@ class TemperatureMonitor {
     for (const probe of probes) {
       try {
         const rawTemp = await this.readSensor(probe.id);
-        const compensatedTemp = probe.compensate(rawTemp);
+        // No compensation: use rawTemp directly
         readings.push({
           name: probe.name,
           id: probe.id,
           rawTemp,
-          compensatedTemp
+          compensatedTemp: rawTemp
         });
-        this.logger.log(probe.name, probe.id, rawTemp, compensatedTemp);
+        this.logger.log(probe.name, probe.id, rawTemp, rawTemp);
       } catch (err) {
         console.error(`Error reading ${probe.name}:`, err.message);
       }
