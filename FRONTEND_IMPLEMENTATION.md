@@ -45,6 +45,7 @@ I have successfully created a comprehensive React-based frontend GUI that covers
 - `/recirculate` - Complete RIMS recirculation with PID temp control
 - `/recirculate/dutycycle` - Dynamic duty cycle updates during recirculation
 - `/recirculate/status` - Current recirculation state for UI persistence
+  * Both endpoints now accept `mashDutyCycle` to modulate the mash pump independently.
 
 ### Equipment Control APIs (✅ Complete)
 - `/fan` & `/fan/status` - Extractor fan control

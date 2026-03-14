@@ -1943,6 +1943,15 @@ paths:
           maximum: 100
           default: 50
           example: 50
+      - name: mashDutyCycle
+        in: query
+        description: Mash pump duty cycle as percentage of total cycle time (0-100). When provided the mash pump will cycle instead of run continuously.
+        required: false
+        schema:
+          type: number
+          minimum: 1
+          maximum: 100
+          example: 50
       responses:
         "200":
           description: Success - recirculation started or stopped
@@ -1964,6 +1973,14 @@ paths:
         in: query
         description: Kettle pump duty cycle as percentage of total cycle time (1-99)
         required: true
+        schema:
+          type: number
+          minimum: 1
+          maximum: 99
+      - name: mashDutyCycle
+        in: query
+        description: Mash pump duty cycle as percentage of total cycle time (1-99); optional when adjusting kettle duty only.
+        required: false
         schema:
           type: number
           minimum: 1

@@ -489,6 +489,10 @@ let recirculationState = {
   dutyCycle: null,
   onSecs: null,
   offSecs: null
+  ,
+  mashDutyCycle: null,
+  mashOnSecs: null,
+  mashOffSecs: null
 };
 
 /**
@@ -596,6 +600,58 @@ async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
 }
 
 /**
+ * Internal helper to start/stop mash pump modulation without sending HTTP response.
+ * @param {number|null} onSecs - Duration in seconds to keep pump on, or null to stop
+ * @param {number|null} offSecs - Duration in seconds to keep pump off, or null to stop
+ * @returns {Object} Result object with success status and message
+ */
+function startStopMashPumpModulation(onSecs, offSecs) {
+  // If no parameters provided, stop modulation
+  if (!onSecs && !offSecs) {
+    if (mashPumpModulationInterval) {
+      clearTimeout(mashPumpModulationInterval);
+      mashPumpModulationInterval = null;
+      pumps.off("Pump Mash");
+      return { success: true, message: "Mash pump modulation stopped" };
+    } else {
+      return { success: true, message: "Mash pump modulation was not active" };
+    }
+  }
+
+  // Validate parameters
+  const onSecsNum = parseFloat(onSecs);
+  const offSecsNum = parseFloat(offSecs);
+  if (isNaN(onSecsNum) || isNaN(offSecsNum) || onSecsNum < 0.1 || onSecsNum > 3600 || offSecsNum < 0.1 || offSecsNum > 3600) {
+    progressPublish.error(`Invalid mash pump modulation parameters: onSecs=${onSecs}, offSecs=${offSecs}`);
+    return { success: false, message: "Invalid parameters: onSecs and offSecs must be numbers between 0.1 and 3600", status: 400 };
+  }
+
+  // Stop any existing modulation
+  if (mashPumpModulationInterval) {
+    clearTimeout(mashPumpModulationInterval);
+    mashPumpModulationInterval = null;
+    pumps.off("Pump Mash");
+  }
+
+  const simSpeed = getSimulationSpeed();
+  const adjustedOnSecs = onSecsNum / simSpeed;
+  const adjustedOffSecs = offSecsNum / simSpeed;
+
+  const cycle = () => {
+    const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Mash")?.value || 0;
+    if (pumpStatus !== 0) {
+      pumps.off("Pump Mash");
+      mashPumpModulationInterval = setTimeout(cycle, adjustedOffSecs * 1000);
+    } else {
+      pumps.on("Pump Mash");
+      mashPumpModulationInterval = setTimeout(cycle, adjustedOnSecs * 1000);
+    }
+  };
+  cycle();
+  return { success: true, message: "Mash pump modulation started" };
+}
+
+/**
  * Get current recirculation status.
  *
  * @param {Object} req - Express request object
@@ -619,7 +675,7 @@ async function getRecirculationStatus(req, res, next) {
  * @param {Object} next - Express next middleware function
  * @param {number} dutyCycle - Kettle pump duty cycle as percentage (1-99)
  */
-async function updateDutyCycle(req, res, next, dutyCycle) {
+async function updateDutyCycle(req, res, next, dutyCycle, mashDutyCycle) {
   try {
     // Check if recirculation is active
     if (!kettlePumpModulationInterval) {
@@ -648,6 +704,26 @@ async function updateDutyCycle(req, res, next, dutyCycle) {
     
     // Update recirculation state
     recirculationState.dutyCycle = pumpDutyCycle;
+
+    // handle mash pump adjustment if provided
+    if (mashDutyCycle) {
+      const mashCycle = parseFloat(mashDutyCycle);
+      if (isNaN(mashCycle) || mashCycle < 1 || mashCycle > 99) {
+        res.send(400, "Invalid mashDutyCycle: must be between 1 and 99 percent");
+        return;
+      }
+      const totalCycleTime = 13;
+      const mashOnSecs = (mashCycle / 100) * totalCycleTime;
+      const mashOffSecs = totalCycleTime - mashOnSecs;
+      const mashResult = startStopMashPumpModulation(mashOnSecs, mashOffSecs);
+      if (!mashResult.success) {
+        res.send(mashResult.status || 500, mashResult.message);
+        return;
+      }
+      recirculationState.mashDutyCycle = mashCycle;
+      recirculationState.mashOnSecs = parseFloat(mashOnSecs.toFixed(2));
+      recirculationState.mashOffSecs = parseFloat(mashOffSecs.toFixed(2));
+    }
     recirculationState.onSecs = parseFloat(kettleOnSecs.toFixed(2));
     recirculationState.offSecs = parseFloat(kettleOffSecs.toFixed(2));
     
@@ -676,8 +752,9 @@ async function updateDutyCycle(req, res, next, dutyCycle) {
  * @param {string} onOff - "On" to start recirculation, "Off" to stop
  * @param {number} tempC - Target mash temperature in Celsius (required when onOff="On")
  * @param {number} dutyCycle - Kettle pump duty cycle as percentage (1-99, default: 23% = 3s on / 10s off)
+ * @param {number} mashDutyCycle - Optional mash pump duty cycle (1-99); if provided the mash pump will cycle instead of run continuously.
  */
-async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
+async function recirculate(req, res, next, onOff, tempC, dutyCycle, mashDutyCycle) {
   try {
     if (onOff === "Off") {
       // Stop recirculation
@@ -691,7 +768,7 @@ async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
       
       // Stop kettle pump modulation and turn off mash pump
       startStopKettlePumpModulation(null, null);
-      pumps.off("Pump Mash");
+      startStopMashPumpModulation(null, null);
       
       // Clear recirculation state
       recirculationState = {
@@ -700,6 +777,9 @@ async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
         dutyCycle: null,
         onSecs: null,
         offSecs: null
+        ,mashDutyCycle: null,
+        mashOnSecs: null,
+        mashOffSecs: null
       };
       
       res.send(200, { message: "Recirculation stopped" });
@@ -730,8 +810,28 @@ async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
     // Initialize temperature controller
     await tempController.init(800, 0.3, 100);
     
-    // Turn on mash pump permanently
-    pumps.on("Pump Mash");
+    // Determine mash pump behavior
+    let mashOnSecs = null;
+    let mashOffSecs = null;
+    if (mashDutyCycle) {
+      const mashCycle = parseFloat(mashDutyCycle);
+      if (isNaN(mashCycle) || mashCycle < 1 || mashCycle > 99) {
+        res.send(400, "Invalid mashDutyCycle: must be between 1 and 99 percent");
+        return;
+      }
+      // calculate on/off times using same totalCycleTime
+      mashOnSecs = (mashCycle / 100) * totalCycleTime;
+      mashOffSecs = totalCycleTime - mashOnSecs;
+      // start mash pump modulation
+      const mashResult = startStopMashPumpModulation(mashOnSecs, mashOffSecs);
+      if (!mashResult.success) {
+        res.send(mashResult.status || 500, mashResult.message);
+        return;
+      }
+    } else {
+      // Turn on mash pump permanently
+      pumps.on("Pump Mash");
+    }
     
     // Start kettle pump modulation with calculated on/off times
     const modulationResult = startStopKettlePumpModulation(kettleOnSecs, kettleOffSecs);
@@ -750,8 +850,11 @@ async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
       active: true,
       targetTemp: targetTemp,
       dutyCycle: pumpDutyCycle,
+      mashDutyCycle: mashDutyCycle ? parseFloat(mashDutyCycle) : null,
       onSecs: parseFloat(kettleOnSecs.toFixed(2)),
-      offSecs: parseFloat(kettleOffSecs.toFixed(2))
+      offSecs: parseFloat(kettleOffSecs.toFixed(2)),
+      mashOnSecs: mashOnSecs !== null ? parseFloat(mashOnSecs.toFixed(2)) : null,
+      mashOffSecs: mashOffSecs !== null ? parseFloat(mashOffSecs.toFixed(2)) : null
     };
     
     res.send(200, {
@@ -759,7 +862,10 @@ async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
       targetTemp: targetTemp,
       kettlePumpDutyCycle: pumpDutyCycle,
       kettlePumpOnSecs: kettleOnSecs.toFixed(2),
-      kettlePumpOffSecs: kettleOffSecs.toFixed(2)
+      kettlePumpOffSecs: kettleOffSecs.toFixed(2),
+      mashPumpDutyCycle: mashDutyCycle ? parseFloat(mashDutyCycle) : null,
+      mashPumpOnSecs: mashOnSecs !== null ? mashOnSecs.toFixed(2) : null,
+      mashPumpOffSecs: mashOffSecs !== null ? mashOffSecs.toFixed(2) : null
     });
     
   } catch (error) {

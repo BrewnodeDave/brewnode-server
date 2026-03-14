@@ -55,7 +55,7 @@ let simState = {
     ValveFermentIn:     0,
     ValveChillWortIn:   0,
     ValveKettleIn:      0,
-    power:              0,
+    Power:              0,
     prevPower:          0,
     KettleVolume:       10,
     MashVolume:         0,
@@ -83,8 +83,8 @@ function simStateReset(){
     simState.ValveMashIn=        0;
     simState.ValveFermentIn=     0;
     simState.ValveChillWortIn=   0;
-    simState.valveKettleIn=      0;
-    simState.power=              0;
+    simState.ValveKettleIn=      0;
+    simState.Power=              0;
     simState.prevPower=          0;
     simState.KettleVolume=       10;
     simState.MashVolume=         0;
@@ -95,9 +95,8 @@ function simStateReset(){
             SURFACE_AREA:null,
             VOLUME:null,
             temperature:null
-        },
-        progress= ''
-}
+    }
+    simState.progress= '';}
 
 simState.coil.SURFACE_AREA = simState.coil.LENGTH * Math.PI * simState.coil.DIA;
 simState.coil.VOLUME = simState.coil.SURFACE_AREA * simState.coil.LENGTH;
@@ -167,14 +166,14 @@ function simPowerChange(){
     let deltaSecs = ds;
 
     if (simState.KettleVolume > 0){    
-        let dTemp =  (simState.power * deltaSecs * getSimulationSpeed()) / ((simState.KettleVolume) * C);
+        let dTemp =  (simState.Power * deltaSecs * getSimulationSpeed()) / ((simState.KettleVolume) * C);
         if (dTemp > 0){
             let t = dTemp + ds18x20.getByName(KETTLE_TEMP);
             t = (t > 100) ? 100 : t;
             ds18x20.set(KETTLE_TEMP, t);
         }
     }else{
-        if ((simState.KettleVolume == 0) && (simState.power > 0)){
+        if ((simState.KettleVolume == 0) && (simState.Power > 0)){
             console.log("SIM", "Trying to heat an empty kettle");
         }
     }
@@ -207,12 +206,9 @@ function heatTransferKettleToFermenter(deltaSecs){
 }
 
 function simStateChange(){
-    simState.power = simState.Heater;
-
     simPowerChange();
     
-    simState.prevPower = simState.power;
-
+    simState.prevPower = simState.Power;
     const isPumpKettleOn            = (simState.PumpKettle          > 0);
     const isPumpMashOn              = (simState.PumpMash            > 0);
     const isValveKettleInOpen       = (simState.ValveKettleIn       > 0);
@@ -429,7 +425,7 @@ module.exports = {
                 const FERMENTER_COOLING_FACTOR = 0.000001;
                 const MASH_TUN_COOLING_FACTOR = 0.000001;
                 
-                powerChange(simState.power);
+                powerChange(simState.Power);
 
                 ds18x20.set(KETTLE_TEMP,  cooling(KETTLE_COOLING_FACTOR,   KETTLE_TEMP));
                 ds18x20.set(MASHTUN_TEMP, cooling(MASH_TUN_COOLING_FACTOR, MASHTUN_TEMP));

@@ -120,7 +120,9 @@ All controllers are located in the `controllers/` directory and handle HTTP requ
   - `kettlePumpModulate()` - Kettle pump on/off cycling
   - `mashPumpModulate()` - Mash pump on/off cycling
   - `recirculate()` - Complete RIMS operation with PID temperature control
+    * accepts optional `mashDutyCycle` parameter for independent mash pump modulation
   - `updateDutyCycle()` - Dynamic duty cycle updates during recirculation
+    * now also accepts `mashDutyCycle` to adjust mash pump cycle
   - `getRecirculationStatus()` - Current recirculation state for UI persistence
   - `startStopKettlePumpModulation()` - Helper function for pump control logic
   - Global state tracking: `recirculationState` object

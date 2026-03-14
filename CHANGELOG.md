@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `/kettlePumpModulate` and `/mashPumpModulate` endpoints for pump cycling
   - `/recirculate` endpoint with PID temperature control and duty cycle management
   - `/recirculate/dutycycle` for dynamic duty cycle updates during operation
+  - support independent mash pump modulation via `mashDutyCycle` parameter
   - `/recirculate/status` for state persistence across frontend navigation
   - Duty cycle control (1-99%, default 50%) replaces fixed on-time
   - PID controller integration (Kp=800, Ki=0.3, Kd=100) for mash temperature
