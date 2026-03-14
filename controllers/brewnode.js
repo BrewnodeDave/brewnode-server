@@ -1020,10 +1020,11 @@ async function pipeHeatLoss(tempFluid, tempSensorName) {
  * 7. Transfers the liquid back from mash tun to kettle.
  * 8. Returns an object indicating the completion status and details of the mash step.
  */
-function doMashStep(step){
+function doMashStep(step, options = {}){
   return async function(){
     try {
       const {tempC, mins} = step;
+      const { recirculate: doRecirculate = false } = options;
       const deltaT = await pipeHeatLoss(tempC, "Temp Mash");
       const temp = tempC + deltaT;
       await tempController.setTemp(
@@ -1034,7 +1035,25 @@ function doMashStep(step){
         remainingMashMinutes);
 
       await k2m.transfer({flowTimeoutSecs});
+
+      if (doRecirculate) {
+        progressPublish(`Mash step ${tempC}C: starting recirculation for ${mins} min hold`);
+        await tempController.init(800, 0.3, 100);
+        // 50% duty cycle over a 13s total cycle (6.5s on / 6.5s off) — same default as /recirculate
+        startStopKettlePumpModulation(6.5, 6.5);
+        startStopMashPumpModulation(6.5, 6.5);
+        tempController.setMashTemp(tempC, () => {});
+      }
+
       await delay(mins * 60);
+
+      if (doRecirculate) {
+        progressPublish(`Mash step ${tempC}C: stopping recirculation`);
+        tempController.pause();
+        startStopKettlePumpModulation(null, null);
+        startStopMashPumpModulation(null, null);
+      }
+
       await m2k.transfer({flowTimeoutSecs});
 
       return {
@@ -1062,8 +1081,9 @@ function doMashStep(step){
  * @param {string} steps - A JSON string representing an array of mash steps.
  * @returns {Promise<void>} Sends a response indicating the result of the mash process.
  */
-async function mash (req, res, next, steps) {
-  const stepRequests = JSON.parse(steps).map(doMashStep);
+async function mash (req, res, next, steps, recirculate = true) {
+  const doRecirculate = recirculate === true || recirculate === 'true';
+  const stepRequests = JSON.parse(steps).map(step => doMashStep(step, { recirculate: doRecirculate }));
   
   const stepResponses = await promiseSerial(stepRequests);
 

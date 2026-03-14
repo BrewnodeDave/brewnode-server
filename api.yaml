@@ -1902,6 +1902,13 @@ paths:
         schema:
           $ref: '#/components/schemas/MashProfile'
         required: true
+      - name: recirculate
+        in: query
+        description: When true, recirculate wort through the RIMS during each mash step hold (runs kettle and mash pumps with temperature control)
+        required: false
+        schema:
+          type: boolean
+          default: false
       responses:
         "200":
           description: Success
