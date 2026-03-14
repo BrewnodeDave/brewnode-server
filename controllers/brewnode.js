@@ -1070,6 +1070,17 @@ function doMashStep(step, options = {}){
         tempController.pause();
         startStopKettlePumpModulation(null, null);
         startStopMashPumpModulation(null, null);
+
+        recirculationState = {
+          active: false,
+          targetTemp: null,
+          dutyCycle: null,
+          onSecs: null,
+          offSecs: null
+          ,mashDutyCycle: null,
+          mashOnSecs: null,
+          mashOffSecs: null
+        };
       }
 
       if (!doRecirculate){
@@ -1102,25 +1113,17 @@ function doMashStep(step, options = {}){
  * @returns {Promise<void>} Sends a response indicating the result of the mash process.
  */
 async function mash (req, res, next, stepsString, recirculate = true) {
-  await tempController.init(800, 0.3, 100);
-    
-  const doRecirculate = recirculate === true || recirculate === 'true';
-  const steps   = JSON.parse(stepsString);  
-  const stepRequests = steps.map(step => doMashStep(step, { recirculate: doRecirculate }));
-  
-  const stepResponses = await promiseSerial(stepRequests);
+  await tempController.init(800, 0.3, 100);  
 
-  tempController.pause();
-  recirculationState = {
-        active: false,
-        targetTemp: null,
-        dutyCycle: null,
-        onSecs: null,
-        offSecs: null
-        ,mashDutyCycle: null,
-        mashOnSecs: null,
-        mashOffSecs: null
-      };
+  const doRecirculate = recirculate === true || recirculate === 'true';
+  
+  const steps = JSON.parse(stepsString);  
+  const stepRequests = steps.map(step => doMashStep(step, { recirculate: doRecirculate }));
+
+  //reach kettle temp for first step before starting mash process
+  await tempController.setTemp(steps[0].tempC, steps[0].mins);
+
+  const stepResponses = await promiseSerial(stepRequests);
 
   const errs = stepResponses.filter((val) => val.status === 500);
 
