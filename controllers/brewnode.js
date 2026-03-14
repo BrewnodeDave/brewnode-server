@@ -1121,7 +1121,7 @@ async function mash (req, res, next, stepsString, recirculate = true) {
   const stepRequests = steps.map(step => doMashStep(step, { recirculate: doRecirculate }));
 
   //reach kettle temp for first step before starting mash process
-  await tempController.setTemp(steps[0].tempC, steps[0].mins);
+  await tempController.setTemp(steps[0].tempC, 0);
 
   const stepResponses = await promiseSerial(stepRequests);
 
