@@ -39,6 +39,11 @@ const {getSimulationSpeed} = require('../src/sim/sim.js');
 const {DIR_OUTPUT, setDir, writeBit} = require('../src/services/i2c_raspi-service.js');
 const flowTimeoutSecs = 5;
 
+const promiseSerial = funcs =>
+  funcs.reduce((promise, f) =>
+    promise.then(result => f().then(Array.prototype.concat.bind(result))),
+    Promise.resolve([]));
+
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
   const params = {
@@ -1081,9 +1086,10 @@ function doMashStep(step, options = {}){
  * @param {string} steps - A JSON string representing an array of mash steps.
  * @returns {Promise<void>} Sends a response indicating the result of the mash process.
  */
-async function mash (req, res, next, steps, recirculate = true) {
+async function mash (req, res, next, stepsString, recirculate = true) {
   const doRecirculate = recirculate === true || recirculate === 'true';
-  const stepRequests = JSON.parse(steps).map(step => doMashStep(step, { recirculate: doRecirculate }));
+  const steps   = JSON.parse(stepsString);  
+  const stepRequests = steps.map(step => doMashStep(step, { recirculate: doRecirculate }));
   
   const stepResponses = await promiseSerial(stepRequests);
 
