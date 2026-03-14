@@ -109,13 +109,13 @@ function Valve(valveDef) {
 
 	thisValve.openOrClose = (requested) => {
 		
-		if ((requested === VALVE_CLOSE_REQUEST) && (thisValve.status === thisValve.power)){
+		if ((requested === VALVE_CLOSE_REQUEST)){
 			repeatI2C(thisValve.requestPin, requested);
 			doublePublish(thisValve.publish, thisValve.status, 0);
 			thisValve.status = 0;
 		}
-		
-		if ((requested === VALVE_OPEN_REQUEST) && (thisValve.status === 0)){
+		else
+		if ((requested === VALVE_OPEN_REQUEST)){
 			repeatI2C(thisValve.requestPin, requested);
 			doublePublish(thisValve.publish, thisValve.status, thisValve.power);
 			thisValve.status = thisValve.power;
