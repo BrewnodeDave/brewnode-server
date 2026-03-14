@@ -1030,17 +1030,19 @@ function doMashStep(step, options = {}){
     try {
       const {tempC, mins} = step;
       const { recirculate: doRecirculate = false } = options;
-      const deltaT = await pipeHeatLoss(tempC, "Temp Mash");
-      const temp = tempC + deltaT;
-      await tempController.setTemp(
-        temp, 
-        (getSimulationSpeed() !== 1)
-          ? (mins / getSimulationSpeed()) 
-          : mins,
-        remainingMashMinutes);
+      
+      if (!doRecirculate){
+        const deltaT = await pipeHeatLoss(tempC, "Temp Mash");
+        const temp = tempC + deltaT;
+        await tempController.setTemp(
+          temp, 
+          (getSimulationSpeed() !== 1)
+            ? (mins / getSimulationSpeed()) 
+            : mins,
+          remainingMashMinutes);
 
-      await k2m.transfer({flowTimeoutSecs});
-
+        await k2m.transfer({flowTimeoutSecs});
+      }
       if (doRecirculate) {
         progressPublish(`Mash step ${tempC}C: starting recirculation for ${mins} min hold`);
         await tempController.init(800, 0.3, 100);
@@ -1051,7 +1053,7 @@ function doMashStep(step, options = {}){
       }
 
       await delay(mins * 60);
-
+ 
       if (doRecirculate) {
         progressPublish(`Mash step ${tempC}C: stopping recirculation`);
         tempController.pause();
@@ -1059,7 +1061,9 @@ function doMashStep(step, options = {}){
         startStopMashPumpModulation(null, null);
       }
 
-      await m2k.transfer({flowTimeoutSecs});
+      if (!doRecirculate){
+        await m2k.transfer({flowTimeoutSecs});
+      }
 
       return {
         status: 200,
