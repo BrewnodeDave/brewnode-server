@@ -1033,13 +1033,8 @@ function doMashStep(step, options = {}){
 
       const deltaT = await pipeHeatLoss(tempC, "Temp Mash");
       const temp = tempC + deltaT;
-      progressPublish(`Preheating to ${tempC}C`);
-      await tempController.setTemp(
-        temp, 
-        (getSimulationSpeed() !== 1)
-          ? (mins / getSimulationSpeed()) 
-          : mins,
-        () => {});
+      progressPublish(`Preheating to ${temp}C`);
+      await tempController.setTemp(temp, 0, () => {});
 
 
       if (!doRecirculate){
