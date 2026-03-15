@@ -223,7 +223,6 @@ function updateProbeValue(probe, value) {
 
 async function pollTemperatures(){
 	const sensors = await getAllTemps();
-brewlog.info('pollTemperatures');	
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (prevSensorValues[sensor.name].value){
