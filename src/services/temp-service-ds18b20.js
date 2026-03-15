@@ -129,6 +129,8 @@ async function pollTemperatures(deltaSecs){
 		return (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
 	});
 
+	console.log({changedSensors});
+	
 	// Publish changes for sensors with different values
 	changedSensors.forEach(sensor => {
 		sensor?.publish(sensor.value);
@@ -136,7 +138,6 @@ async function pollTemperatures(deltaSecs){
 		// Update previous sensor values
 		prevSensorValues[sensor.name] = sensor.value;
 	});
-
 }
 
 const probeId = name => probes.find(p => p.name === name).id;
