@@ -1030,22 +1030,25 @@ function doMashStep(step, options = {}){
     try {
       const {tempC, mins} = step;
       const { recirculate: doRecirculate = false } = options;
-      
-      if (!doRecirculate){
-        const deltaT = await pipeHeatLoss(tempC, "Temp Mash");
-        const temp = tempC + deltaT;
-        await tempController.setTemp(
-          temp, 
-          (getSimulationSpeed() !== 1)
-            ? (mins / getSimulationSpeed()) 
-            : mins,
-          remainingMashMinutes);
 
+      const deltaT = await pipeHeatLoss(tempC, "Temp Mash");
+      const temp = tempC + deltaT;
+      progressPublish(`Preheating to ${tempC}C`);
+      await tempController.setTemp(
+        temp, 
+        (getSimulationSpeed() !== 1)
+          ? (mins / getSimulationSpeed()) 
+          : mins,
+        () => {});
+
+
+      if (!doRecirculate){
         await k2m.transfer({flowTimeoutSecs});
       }
+
       if (doRecirculate) {
         progressPublish(`Mash step ${tempC}C: starting recirculation for ${mins} mins`);
-        tempController.setMashTemp(tempC, console.log);
+        tempController.setMashTemp(tempC);
         // 50% duty cycle over a 13s total cycle (6.5s on / 6.5s off) — same default as /recirculate
         startStopKettlePumpModulation(6.5, 6.5);
         startStopMashPumpModulation(6.5, 6.5);
@@ -1119,9 +1122,6 @@ async function mash (req, res, next, stepsString, recirculate = true) {
   
   const steps = JSON.parse(stepsString);  
   const stepRequests = steps.map(step => doMashStep(step, { recirculate: doRecirculate }));
-
-  //reach kettle temp for first step before starting mash process
-  await tempController.setTemp(steps[0].tempC, 0);
 
   const stepResponses = await promiseSerial(stepRequests);
 

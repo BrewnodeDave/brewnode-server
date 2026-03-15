@@ -266,8 +266,11 @@ module.exports = {
 			//add heatTimer
 			heatTimer.clearInterval();
 			timeAtTemp = 0;
+			let heatTimerRunning = false;
 
 			heatTimer.setInterval(async () => {
+				if (heatTimerRunning) return;
+				heatTimerRunning = true;
 				try {
 					// Read temperature with retry logic to handle pump interference
 					const temp = await getTempWithRetry(kettleThermName);
@@ -276,28 +279,31 @@ module.exports = {
 					brewlog.error("Failed to read kettle temperature, using last known value", err.message);
 				}
 
-				brewlog.debug("Check kettle temp", `Current:${currentTemp}, Target:${targetTemp}`);
-				if (currentTemp >= targetTemp) {
-					//temp reached
-					timeAtTemp += calculationInterval;
-					if (ms > 0) {
-						remaining(Math.trunc(speedupFactor * (mins - (timeAtTemp / 60000))));
-					}
+				try {
+					brewlog.debug("Check kettle temp", `Current:${currentTemp}, Target:${targetTemp}`);
+					if (currentTemp >= targetTemp) {
+						//temp reached
+						timeAtTemp += calculationInterval;
+						if (ms > 0) {
+							remaining(Math.trunc(speedupFactor * (mins - (timeAtTemp / 60000))));
+						}
 
-					if (timeAtTemp > ms) {
-						pause();
-						heatTimer.clearInterval();
-						resolve();
+						if (timeAtTemp > ms) {
+							pause();
+							heatTimer.clearInterval();
+							resolve();
+						}
 					}
+					if (targetTemp >= MAX_TEMP) {
+						targetTemp = MAX_TEMP;
+						currentPower = kettleHeater.MAX_W;
+					} else {
+						currentPower = calculatePower(currentTemp);
+					}
+					kettleHeater.setPower(currentPower);
+				} finally {
+					heatTimerRunning = false;
 				}
-				if (targetTemp >= MAX_TEMP) {
-					targetTemp = MAX_TEMP;
-					currentPower = kettleHeater.MAX_W;
-				} else {
-					currentPower = calculatePower(currentTemp);
-				}
-				kettleHeater.setPower(currentPower);
-
 			}, '', `${calculationInterval}m`);
 
 			// }else{
@@ -307,7 +313,7 @@ module.exports = {
 		});
 	},
 
-	setMashTemp(desiredTemp, cb) {
+	setMashTemp(desiredTemp, done) {
 		brewlog.info("setMashTemp=", desiredTemp);
 
 		mashTimer.clearInterval();
@@ -317,8 +323,12 @@ module.exports = {
 		const phaseName = `Heating Mash to ${targetTemp}C.`;
 		brewlog.info(phaseName);
 
+		let mashTimerRunning = false;
+
 		//add mashTimer with temperature retry logic
 		mashTimer.setInterval(async () => {
+			if (mashTimerRunning) return;
+			mashTimerRunning = true;
 			try {
 				// Read temperature with retry logic to handle pump interference
 				const temp = await getTempWithRetry(mashThermName);
@@ -333,13 +343,19 @@ module.exports = {
 				brewlog.info("Current Power=", `${currentPower}`);
 				kettleHeater.setPower(currentPower);
 
-				cb({ kW: currentPower, secsAtTemp: timeAtTemp / 1000 });
+				if ( done ) {
+					done({ kW: currentPower, secsAtTemp: timeAtTemp / 1000 });
+				}
 			} catch (err) {
 				brewlog.error("Failed to read mash temperature", err.message);
 				// Continue with last known temperature
 				currentPower = calculatePower(currentTemp);
 				kettleHeater.setPower(currentPower);
-				cb({ kW: currentPower, secsAtTemp: timeAtTemp / 1000 });
+				if ( done ) {
+					done({ kW: currentPower, secsAtTemp: timeAtTemp / 1000 });
+				}
+			} finally {
+				mashTimerRunning = false;
 			}
 		}, '', `${calculationInterval}m`);
 	},
