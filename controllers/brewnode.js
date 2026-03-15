@@ -541,6 +541,10 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   const simSpeed = getSimulationSpeed();
   const adjustedOnSecs = onSecsNum / simSpeed;
   const adjustedOffSecs = offSecsNum / simSpeed;
+
+  // Time to allow the mash-in valve to fully open before starting the pump.
+  // repeatI2C sends 3 pulses over 1s; allow extra margin for physical travel.
+  const VALVE_OPEN_DELAY_MS = simSpeed === 1 ? 1500 : 0;
   
   // Define the cycling function
   const cycle = () => {
@@ -556,13 +560,15 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
         cycle();
       }, adjustedOffSecs * 1000);
     } else {
-      // Pump is off, turn it on and open mash in valve
-      pumps.on("Pump Kettle");
+      // Pump is off, open valve first then start pump after it has had time to open
       valves.open("Valve Mash-in");
-      // Schedule next off cycle
       kettlePumpModulationInterval = setTimeout(() => {
-        cycle();
-      }, adjustedOnSecs * 1000);
+        pumps.on("Pump Kettle");
+        // Schedule next off cycle
+        kettlePumpModulationInterval = setTimeout(() => {
+          cycle();
+        }, (adjustedOnSecs * 1000) - VALVE_OPEN_DELAY_MS);
+      }, VALVE_OPEN_DELAY_MS);
     }
   };
   
@@ -1032,7 +1038,7 @@ function doMashStep(step, options = {}){
       const { recirculate: doRecirculate = false } = options;
 
       const deltaT = await pipeHeatLoss(tempC, "Temp Mash");
-      const temp = tempC + deltaT;
+      const temp = Math.trunc((tempC + deltaT)*10)/10;
       progressPublish(`Preheating to ${temp}C`);
       await tempController.setTemp(temp, 0, () => {});
 
@@ -1044,9 +1050,9 @@ function doMashStep(step, options = {}){
       if (doRecirculate) {
         progressPublish(`Mash step ${tempC}C: starting recirculation for ${mins} mins`);
         tempController.setMashTemp(tempC);
-        // 50% duty cycle over a 13s total cycle (6.5s on / 6.5s off) — same default as /recirculate
-        startStopKettlePumpModulation(6.5, 6.5);
-        startStopMashPumpModulation(6.5, 6.5);
+        // 50% duty cycle
+        startStopKettlePumpModulation(10, 10);
+        startStopMashPumpModulation(10, 10);
         
         // Update recirculation state
         recirculationState = {
@@ -1054,10 +1060,10 @@ function doMashStep(step, options = {}){
           targetTemp: tempC,
           dutyCycle: 50,
           mashDutyCycle: 50 ? parseFloat(mashDutyCycle) : null,
-          onSecs: 6.5,
-          offSecs: 6.5,
-          mashOnSecs: 6.5,
-          mashOffSecs: 6.5
+          onSecs: 10,
+          offSecs: 10,
+          mashOnSecs: 10,
+          mashOffSecs: 10
         };
       }
 
