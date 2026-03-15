@@ -31,6 +31,8 @@ let prevSensorValues = [];
 
 let started = false;
 
+const POLL_INTERVAL_SECS = 10;
+
 function setPollInterval(secs){
 	brewlog.info("setSampleInterval", `${secs} secs`);
 	if (pollInterval !== null){
@@ -40,7 +42,7 @@ function setPollInterval(secs){
 
 	module.exports.getStatus();
 	
-	pollInterval = setInterval(() => pollTemperatures(10), secs * 1000)								
+	pollInterval = setInterval(() => pollTemperatures(), secs * 1000)								
 }
 
 /**
@@ -219,7 +221,7 @@ function updateProbeValue(probe, value) {
 	probe.value = average;
 }
 
-async function pollTemperatures(deltaSecs){
+async function pollTemperatures(){
 	const sensors = await getAllTemps();
 brewlog.info('pollTemperatures');	
 	// Find sensors with different values
@@ -289,10 +291,10 @@ module.exports = {
 							};
 						});
 						if (simulationSpeed !== 1){
-							setPollInterval(60 / simulationSpeed);
+							setPollInterval(POLL_INTERVAL_SECS / simulationSpeed);
 							ambientTemp = 9.9;
 						}else{
-							setPollInterval(60);
+							setPollInterval(POLL_INTERVAL_SECS);
 							ambientTemp = sensors.find(sensor => sensor.name === "Temp Ambient")?.value;
 						}
 						started = true;
