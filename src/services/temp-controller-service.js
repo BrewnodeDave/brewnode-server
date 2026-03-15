@@ -33,6 +33,7 @@ const broker = require('../broker.js');
 const therm = require('./temp-service.js');
 const kettleHeater = require('./kettle-heater-service.js');
 const pumps = require('./pump-service.js');
+const probes = require('../probes.js');
 
 const NanoTimer = require('nanotimer');
 const brewlog = require('../brewstack/common/brewlog.js');
@@ -128,8 +129,10 @@ async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
 
 			// Check if reading is valid (not 85°C error value and within reasonable range)
 			if (temp !== false && temp !== null && temp !== undefined && temp !== 85 && temp >= -10 && temp <= 110) {
+				const probe = probes.find(p => p.name === thermName);
+				const compensated = probe ? probe.compensate(temp) : temp;
 				if (attempt > 1) {
-					brewlog.info(`Temperature read succeeded on attempt ${attempt}`, temp);
+					brewlog.info(`Temperature read succeeded on attempt ${attempt}`, compensated);
 				}
 				// Restore pumps if we turned them off
 				if (mashPumpWasOn) {
@@ -140,8 +143,8 @@ async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
 					brewlog.info("Restoring kettle pump after successful temperature read");
 					pumps.on("Pump Kettle");
 				}
-				brewlog.info(thermName, temp);
-				return temp;
+				brewlog.info(thermName, compensated);
+				return compensated;
 			}
 
 			brewlog.warn(`Invalid temperature reading: ${temp}°C (attempt ${attempt}/${retries})`);
