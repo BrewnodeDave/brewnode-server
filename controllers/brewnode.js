@@ -31,6 +31,7 @@ const startStop = require('../src/start-stop.js');
 const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/publish.js');
 
 const brewlog = require('../src/brewstack/common/brewlog.js');
+const delay = require('../src/brewstack/common/delay.js');
 
 const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
