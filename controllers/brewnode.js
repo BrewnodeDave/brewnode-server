@@ -484,7 +484,11 @@ async function pump(req, res, next, pumpName, onOff) {
 } 
 
 // Global variables to store pump modulation intervals
-let kettlePumpModulationInterval = null;
+// Tracks ALL pending setTimeout handles inside the pump modulation cycle.
+// Using a Set (rather than a single handle) ensures every nested callback
+// can be cancelled on stop, preventing dangling timers from toggling pumps
+// during the next step's preheat phase.
+let kettlePumpModulationTimers = new Set();
 let mashPumpModulationInterval = null;
 let recirculationInterval = null;
 
@@ -510,9 +514,9 @@ let recirculationState = {
 function startStopKettlePumpModulation(onSecs, offSecs) {
   // If no parameters provided, stop modulation
   if (!onSecs && !offSecs) {
-    if (kettlePumpModulationInterval) {
-      clearTimeout(kettlePumpModulationInterval);
-      kettlePumpModulationInterval = null;
+    if (kettlePumpModulationTimers.size > 0) {
+      kettlePumpModulationTimers.forEach(t => clearTimeout(t));
+      kettlePumpModulationTimers.clear();
       pumps.off("Pump Kettle");
       pumps.off("Pump Mash");
       valves.close("Valve Mash-in");
@@ -531,10 +535,10 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
     return { success: false, message: "Invalid parameters: onSecs and offSecs must be numbers between 0.1 and 3600", status: 400 };
   }
 
-  // Stop any existing modulation
-  if (kettlePumpModulationInterval) {
-    clearTimeout(kettlePumpModulationInterval);
-    kettlePumpModulationInterval = null;
+  // Stop any existing modulation — cancel every pending handle
+  if (kettlePumpModulationTimers.size > 0) {
+    kettlePumpModulationTimers.forEach(t => clearTimeout(t));
+    kettlePumpModulationTimers.clear();
     pumps.off("Pump Kettle");
     pumps.off("Pump Mash");
     valves.close("Valve Mash-in");
@@ -558,6 +562,17 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   // so the logic stays correct even if a pump read races the timer.
   let pumpsRunning = false;
 
+  // Helper: schedule a timeout, register it in the Set so it can be
+  // cancelled by stop(), and auto-remove it from the Set when it fires.
+  const scheduleTimer = (fn, delayMs) => {
+    const handle = setTimeout(() => {
+      kettlePumpModulationTimers.delete(handle);
+      fn();
+    }, delayMs);
+    kettlePumpModulationTimers.add(handle);
+    return handle;
+  };
+
   // Define the cycling function
   const cycle = () => {
     if (pumpsRunning) {
@@ -565,24 +580,20 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
       pumps.off("Pump Kettle");
       pumps.off("Pump Mash");
       pumpsRunning = false;
-      kettlePumpModulationInterval = setTimeout(() => {
+      scheduleTimer(() => {
         valves.close("Valve Mash-in");
         // Schedule next on cycle — wait the full off period from pump-stop
-        kettlePumpModulationInterval = setTimeout(() => {
-          cycle();
-        }, (adjustedOffSecs * 1000) - VALVE_CLOSE_DELAY_MS);
+        scheduleTimer(() => cycle(), (adjustedOffSecs * 1000) - VALVE_CLOSE_DELAY_MS);
       }, VALVE_CLOSE_DELAY_MS);
     } else {
       // OFF → ON: open valve first, then start both pumps once valve is open
       valves.open("Valve Mash-in");
-      kettlePumpModulationInterval = setTimeout(() => {
+      scheduleTimer(() => {
         pumps.on("Pump Kettle");
         pumps.on("Pump Mash");
         pumpsRunning = true;
         // Schedule next off cycle — full on period from pump-start
-        kettlePumpModulationInterval = setTimeout(() => {
-          cycle();
-        }, adjustedOnSecs * 1000);
+        scheduleTimer(() => cycle(), adjustedOnSecs * 1000);
       }, VALVE_OPEN_DELAY_MS);
     }
   };
@@ -704,7 +715,7 @@ async function getRecirculationStatus(req, res, next) {
 async function updateDutyCycle(req, res, next, dutyCycle, mashDutyCycle) {
   try {
     // Check if recirculation is active
-    if (!kettlePumpModulationInterval) {
+    if (kettlePumpModulationTimers.size === 0) {
       res.send(400, "Cannot update duty cycle: recirculation is not active");
       return;
     }
