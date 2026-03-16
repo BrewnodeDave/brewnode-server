@@ -576,23 +576,31 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   // Define the cycling function
   const cycle = () => {
     if (pumpsRunning) {
-      // ON → OFF: stop pumps first, then close valve after they spin down
+      // ON → OFF:
+      //  1. Stop both pumps immediately
+      //  2. Wait for pumps to spin down, then command valve close
+      //  3. Wait the full off period (from valve-close command) before next open —
+      //     this guarantees the valve has finished travelling before open arrives.
       pumps.off("Pump Kettle");
       pumps.off("Pump Mash");
       pumpsRunning = false;
       scheduleTimer(() => {
         valves.close("Valve Mash-in");
-        // Schedule next on cycle — wait the full off period from pump-stop
-        scheduleTimer(() => cycle(), (adjustedOffSecs * 1000) - VALVE_CLOSE_DELAY_MS);
+        // Full off period starts now — valve has the entire offSecs to finish closing
+        // before the next open command is sent.
+        scheduleTimer(() => cycle(), adjustedOffSecs * 1000);
       }, VALVE_CLOSE_DELAY_MS);
     } else {
-      // OFF → ON: open valve first, then start both pumps once valve is open
+      // OFF → ON:
+      //  1. Open valve first
+      //  2. Wait for valve to fully open, then start both pumps
+      //  3. Run pumps for the full on period before next off
       valves.open("Valve Mash-in");
       scheduleTimer(() => {
         pumps.on("Pump Kettle");
         pumps.on("Pump Mash");
         pumpsRunning = true;
-        // Schedule next off cycle — full on period from pump-start
+        // Full on period starts from pump-start
         scheduleTimer(() => cycle(), adjustedOnSecs * 1000);
       }, VALVE_OPEN_DELAY_MS);
     }
