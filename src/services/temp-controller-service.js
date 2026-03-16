@@ -103,7 +103,6 @@ function calculatePower(actualTemperature) {
 	prevError = error;    // Save the error for the next loop
 
 	const W = Math.min(Math.max(U, 0), kettleHeater.MAX_W);
-	// brewlog.info(`delta T=${Math.floor(Math.trunc(error*10)/10)}C. P=${W}W.`);
 	return W;
 };
 
@@ -143,7 +142,6 @@ async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
 					brewlog.info("Restoring kettle pump after successful temperature read");
 					pumps.on("Pump Kettle");
 				}
-				// brewlog.info(thermName, compensated);
 				return compensated;
 			}
 
@@ -224,7 +222,6 @@ function init(P, I, D) {
 		//Force a temperature reading with retry logic
 		getTempWithRetry(kettleThermName)
 			.then(t => {
-				brewlog.info("init PID: Current Temp=", t);
 				currentTemp = t;
 				resolve(currentTemp);
 			}, err => {
@@ -339,7 +336,6 @@ module.exports = {
 				const temp = await getTempWithRetry(mashThermName);
 				currentTemp = temp;
 
-				brewlog.info("Check Mash temp", `${currentTemp}, ${targetTemp}`);
 				if (currentTemp >= targetTemp) {
 					//temp reached
 					timeAtTemp += calculationInterval;
@@ -347,7 +343,6 @@ module.exports = {
 				// Use cutoffTemp for PID so the heater starts ramping down before
 				// the true target, preventing thermal inertia overshoot.
 				currentPower = currentTemp >= cutoffTemp ? 0 : calculatePower(currentTemp);
-				brewlog.info("Current Power=", `${currentPower}`);
 				kettleHeater.setPower(currentPower);
 
 				if ( done ) {

@@ -549,15 +549,6 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   const adjustedOnSecs = onSecsNum / simSpeed;
   const adjustedOffSecs = offSecsNum / simSpeed;
 
-  // Time to allow the mash-in valve to fully open before starting the pumps.
-  // repeatI2C sends 3 pulses over 1s; allow extra margin for physical valve travel.
-  const VALVE_OPEN_DELAY_MS = simSpeed === 1 ? 1500 : 0;
-
-  // Time to allow the pumps to fully stop before commanding the valve to close.
-  // Prevents pressure surge from closing the valve against a running pump, and
-  // ensures the valve is fully closed before the next open command arrives.
-  const VALVE_CLOSE_DELAY_MS = simSpeed === 1 ? 1500 : 0;
-
   // Track cycle state explicitly rather than querying pump hardware,
   // so the logic stays correct even if a pump read races the timer.
   let pumpsRunning = false;
@@ -576,33 +567,19 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   // Define the cycling function
   const cycle = () => {
     if (pumpsRunning) {
-      // ON → OFF:
-      //  1. Stop both pumps immediately
-      //  2. Wait for pumps to spin down, then command valve close
-      //  3. Wait the full off period (from valve-close command) before next open —
-      //     this guarantees the valve has finished travelling before open arrives.
+      // ON → OFF: stop pumps and close valve immediately, then wait off period
       pumps.off("Pump Kettle");
       pumps.off("Pump Mash");
+      valves.close("Valve Mash-in");
       pumpsRunning = false;
-      scheduleTimer(() => {
-        valves.close("Valve Mash-in");
-        // Full off period starts now — valve has the entire offSecs to finish closing
-        // before the next open command is sent.
-        scheduleTimer(() => cycle(), adjustedOffSecs * 1000);
-      }, VALVE_CLOSE_DELAY_MS);
+      scheduleTimer(cycle, adjustedOffSecs * 1000);
     } else {
-      // OFF → ON:
-      //  1. Open valve first
-      //  2. Wait for valve to fully open, then start both pumps
-      //  3. Run pumps for the full on period before next off
+      // OFF → ON: open valve and start pumps immediately, then wait on period
       valves.open("Valve Mash-in");
-      scheduleTimer(() => {
-        pumps.on("Pump Kettle");
-        pumps.on("Pump Mash");
-        pumpsRunning = true;
-        // Full on period starts from pump-start
-        scheduleTimer(() => cycle(), adjustedOnSecs * 1000);
-      }, VALVE_OPEN_DELAY_MS);
+      pumps.on("Pump Kettle");
+      pumps.on("Pump Mash");
+      pumpsRunning = true;
+      scheduleTimer(cycle, adjustedOnSecs * 1000);
     }
   };
   
@@ -1059,26 +1036,18 @@ async function pipeHeatLoss(tempFluid, tempSensorName, includeVesselMass = true)
 }
 
 /**
- * Executes a mash step in the brewing process.
+ * Executes a recirculating mash step in the brewing process.
  *
- * @param {string} step - A JSON string containing the temperature in Celsius and the duration in minutes for the mash step.
+ * @param {Object} step - Object containing tempC and mins for the mash step.
+ * @param {Object} options - Options object.
+ * @param {number} [options.stepIndex=0] - Step index (0 = first step, affects preheat offset).
  * @returns {Function} An asynchronous function that performs the mash step.
- *
- * The returned function performs the following actions:
- * 1. Parses the input step to extract temperature and duration.
- * 2. Calculates the temperature loss in the pipe.
- * 3. Logs the temperature loss.
- * 4. Sets the kettle temperature.
- * 5. Transfers the liquid from kettle to mash tun.
- * 6. Waits for the specified duration.
- * 7. Transfers the liquid back from mash tun to kettle.
- * 8. Returns an object indicating the completion status and details of the mash step.
  */
 function doMashStep(step, options = {}){
   return async function(){
     try {
       const {tempC, mins} = step;
-      const { recirculate: doRecirculate = false, stepIndex = 0 } = options;
+      const { stepIndex = 0 } = options;
 
       // Preheat always uses aggressive kettle gains — need to heat water quickly.
       await tempController.init(800, 0.3, 100);
@@ -1092,54 +1061,40 @@ function doMashStep(step, options = {}){
       progressPublish(`Preheating to ${temp}C`);
       await tempController.setTemp(temp, 0, () => {});
 
+      progressPublish(`Mash step recirc @ ${tempC}C for ${mins} mins`);
+      // Switch to gentler mash gains now that we're controlling via the mash tun probe
+      await tempController.init(200, 0.05, 50);
+      tempController.setMashTemp(tempC);
+      // Both pumps are driven in lockstep by the kettle pump modulation cycle
+      startStopKettlePumpModulation(10, 10);
 
-      if (!doRecirculate){
-        await k2m.transfer({flowTimeoutSecs});
-      }
-
-      if (doRecirculate) {
-        progressPublish(`Mash step recirc @ ${tempC}C for ${mins} mins`);
-        // Switch to gentler mash gains now that we're controlling via the mash tun probe
-        await tempController.init(200, 0.05, 50);
-        tempController.setMashTemp(tempC);
-        // Both pumps are driven in lockstep by the kettle pump modulation cycle
-        startStopKettlePumpModulation(10, 10);
-        
-        // Update recirculation state
-        recirculationState = {
-          active: true,
-          targetTemp: tempC,
-          dutyCycle: 50,
-          mashDutyCycle: null,
-          onSecs: 10,
-          offSecs: 10,
-          mashOnSecs: 10,
-          mashOffSecs: 10
-        };
-      }
+      recirculationState = {
+        active: true,
+        targetTemp: tempC,
+        dutyCycle: 50,
+        mashDutyCycle: null,
+        onSecs: 10,
+        offSecs: 10,
+        mashOnSecs: 10,
+        mashOffSecs: 10
+      };
 
       await delay(mins * 60);
- 
-      if (doRecirculate) {
-        progressPublish(`Mash step ${tempC}C: stopping recirculation`);
-        tempController.pause();
-        startStopKettlePumpModulation(null, null);
 
-        recirculationState = {
-          active: false,
-          targetTemp: null,
-          dutyCycle: null,
-          onSecs: null,
-          offSecs: null,
-          mashDutyCycle: null,
-          mashOnSecs: null,
-          mashOffSecs: null
-        };
-      }
+      progressPublish(`Mash step ${tempC}C: stopping recirculation`);
+      tempController.pause();
+      startStopKettlePumpModulation(null, null);
 
-      if (!doRecirculate){
-        await m2k.transfer({flowTimeoutSecs});
-      }
+      recirculationState = {
+        active: false,
+        targetTemp: null,
+        dutyCycle: null,
+        onSecs: null,
+        offSecs: null,
+        mashDutyCycle: null,
+        mashOnSecs: null,
+        mashOffSecs: null
+      };
 
       return {
         status: 200,
@@ -1166,11 +1121,9 @@ function doMashStep(step, options = {}){
  * @param {string} steps - A JSON string representing an array of mash steps.
  * @returns {Promise<void>} Sends a response indicating the result of the mash process.
  */
-async function mash (req, res, next, stepsString, recirculate = true) {
-  const doRecirculate = recirculate === true || recirculate === 'true';
-
+async function mash (req, res, next, stepsString) {
   const steps = JSON.parse(stepsString);  
-  const stepRequests = steps.map((step, i) => doMashStep(step, { recirculate: doRecirculate, stepIndex: i }));
+  const stepRequests = steps.map((step, i) => doMashStep(step, { stepIndex: i }));
 
   const stepResponses = await promiseSerial(stepRequests);
 

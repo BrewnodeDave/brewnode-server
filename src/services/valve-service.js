@@ -99,24 +99,16 @@ function Valve(valveDef) {
 
 	thisValve.publish = broker.create(valveDef.name);
 
-	const repeatI2C = (pin, value) => {
-		const REPEAT_COUNT = 3;
-		const REPEAT_INTERVAL_MS = 500;
-		for (let i = 0; i < REPEAT_COUNT; i++) {
-			setTimeout(() => i2c.writeBit(pin, value), i * REPEAT_INTERVAL_MS);
-		}
-	};
-
 	thisValve.openOrClose = (requested) => {
 		
 		if ((requested === VALVE_CLOSE_REQUEST)){
-			repeatI2C(thisValve.requestPin, requested);
+			i2c.writeBit(thisValve.requestPin, requested);
 			doublePublish(thisValve.publish, thisValve.status, 0);
 			thisValve.status = 0;
 		}
 		else
 		if ((requested === VALVE_OPEN_REQUEST)){
-			repeatI2C(thisValve.requestPin, requested);
+			i2c.writeBit(thisValve.requestPin, requested);
 			doublePublish(thisValve.publish, thisValve.status, thisValve.power);
 			thisValve.status = thisValve.power;
 		}
@@ -149,7 +141,6 @@ module.exports = {
 	 * @param {string} name - Valve name
 	 */
 	open(name) {
-		brewlog.info("OPEN", name);
 	    const v = _valves.find(valve => (valve.name === name));	
 		if (v) {
 		  v.open();
@@ -164,7 +155,6 @@ module.exports = {
 	 * @param {string} name - Valve name
 	 */
 	close(name) {
-		brewlog.info("CLOSE", name);
 	    const v = _valves.find(valve => (valve.name === name));	
 		if (v) {
 		  v.close();
