@@ -143,7 +143,7 @@ async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
 					brewlog.info("Restoring kettle pump after successful temperature read");
 					pumps.on("Pump Kettle");
 				}
-				brewlog.info(thermName, compensated);
+				// brewlog.info(thermName, compensated);
 				return compensated;
 			}
 
