@@ -1042,16 +1042,15 @@ function doMashStep(step, options = {}){
       if (doRecirculate) {
         progressPublish(`Mash step recirc @ ${tempC}C for ${mins} mins`);
         tempController.setMashTemp(tempC);
-        // 50% duty cycle
+        // Both pumps are driven in lockstep by the kettle pump modulation cycle
         startStopKettlePumpModulation(10, 10);
-        startStopMashPumpModulation(10, 10);
         
         // Update recirculation state
         recirculationState = {
           active: true,
           targetTemp: tempC,
           dutyCycle: 50,
-          mashDutyCycle: 50 ? parseFloat(mashDutyCycle) : null,
+          mashDutyCycle: null,
           onSecs: 10,
           offSecs: 10,
           mashOnSecs: 10,
@@ -1065,15 +1064,14 @@ function doMashStep(step, options = {}){
         progressPublish(`Mash step ${tempC}C: stopping recirculation`);
         tempController.pause();
         startStopKettlePumpModulation(null, null);
-        startStopMashPumpModulation(null, null);
 
         recirculationState = {
           active: false,
           targetTemp: null,
           dutyCycle: null,
           onSecs: null,
-          offSecs: null
-          ,mashDutyCycle: null,
+          offSecs: null,
+          mashDutyCycle: null,
           mashOnSecs: null,
           mashOffSecs: null
         };
@@ -1109,9 +1107,10 @@ function doMashStep(step, options = {}){
  * @returns {Promise<void>} Sends a response indicating the result of the mash process.
  */
 async function mash (req, res, next, stepsString, recirculate = true) {
-  await tempController.init(800, 0.3, 100);  
-
   const doRecirculate = recirculate === true || recirculate === 'true';
+
+  // Use gentler PID gains for recirculation (mash tun), aggressive for non-recirc (kettle only)
+  await tempController.init(doRecirculate ? 200 : 800, doRecirculate ? 0.05 : 0.3, doRecirculate ? 50 : 100);
   
   const steps = JSON.parse(stepsString);  
   const stepRequests = steps.map(step => doMashStep(step, { recirculate: doRecirculate }));

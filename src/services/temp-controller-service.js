@@ -354,9 +354,12 @@ module.exports = {
 					done({ kW: currentPower, secsAtTemp: timeAtTemp / 1000 });
 				}
 			} catch (err) {
-				brewlog.error("Failed to read mash temperature", err.message);
-				// Continue with last known temperature
-				currentPower = calculatePower(currentTemp);
+				brewlog.error("Failed to read mash temperature, using last known value", err.message);
+				// Apply the same cutoff check even on read error — prevents heater
+				// running at full PID power just because a temp read failed.
+				currentPower = (currentTemp !== undefined && currentTemp >= cutoffTemp)
+					? 0
+					: calculatePower(currentTemp);
 				kettleHeater.setPower(currentPower);
 				if ( done ) {
 					done({ kW: currentPower, secsAtTemp: timeAtTemp / 1000 });
