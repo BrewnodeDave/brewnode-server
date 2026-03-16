@@ -1003,29 +1003,51 @@ const getPump = (name) => {
 }
 
 /**
- * Calculates the heat loss in a pipe and returns the temperature difference.
+ * Calculates the temperature drop the wort will experience when transferred
+ * into the mash tun, accounting for two effects:
  *
- * @param {number} tempFluid - The temperature of the fluid inside the pipe.
- * @param {string} tempSensorName - The name of the temperature sensor to get the ambient temperature.
- * @returns {Promise<number>} - The temperature difference due to heat loss.
+ *  1. Pipe conduction loss — heat conducted through the stainless pipe wall
+ *     from the hot wort to the cooler ambient air during transfer.
+ *
+ *  2. Vessel thermal mass — energy absorbed by the cold stainless vessel body
+ *     as it heats up from ambient to the target mash temperature.
+ *     For a 50 L vessel this is the dominant offset (~1-3°C depending on ΔT).
+ *     Only included on the first mash step; subsequent steps find the vessel
+ *     already at temperature so this term is omitted.
+ *
+ * @param {number}  tempFluid        - Target mash temperature (°C).
+ * @param {string}  tempSensorName   - Sensor name used to read ambient temperature.
+ * @param {boolean} [includeVesselMass=true] - Include vessel thermal mass offset (first step only).
+ * @returns {Promise<number>}        - Combined ΔT to add to the kettle set-point.
  */
-async function pipeHeatLoss(tempFluid, tempSensorName) {
-  const tempAmbient = await therm.getTemp(tempSensorName)
-  const k = 16;// W/mC the heat transfer coefficient of stainless steel
-  const L = 1.76;//0.35;//1.32;//1.76;//the length of pipe
-  const innerDiameter = 12.5;//0.022;
-  const outerDiameter = 31;//0.027;
-  const flowRate = 0.200;
+async function pipeHeatLoss(tempFluid, tempSensorName, includeVesselMass = true) {
+  const tempAmbient = await therm.getTemp(tempSensorName);
 
-  const C = 4200; //Sepcific heat capacity of water
-  const heatLossJPerSec = 2 * Math.PI * k * L * (tempFluid - tempAmbient) / (Math.log(outerDiameter / innerDiameter));
+  // ── Pipe conduction loss ──────────────────────────────────────────────────
+  const k_ss   = 16;     // W/(m·°C)  thermal conductivity of stainless steel
+  const L      = 1.76;   // m         transfer pipe length
+  const r_i    = 0.0125; // m         pipe inner radius (12.5 mm → 25 mm ID)
+  const r_o    = 0.0155; // m         pipe outer radius (31 mm OD)
+  const C_w    = 4200;   // J/(kg·°C) specific heat of water
+  const flow   = 0.200;  // kg/s      wort flow rate during transfer
 
-  const k2 = 18 / (60 - 18);
-  const empiricalDeltaTemp = k2 * (tempFluid - tempAmbient);
+  const heatLossJPerSec = 2 * Math.PI * k_ss * L * (tempFluid - tempAmbient)
+                          / Math.log(r_o / r_i);
+  const deltaTpipe = heatLossJPerSec / C_w / flow;
 
-  const deltaTemp = heatLossJPerSec / C / flowRate;
-  
-  return deltaTemp;
+  // ── Vessel thermal mass ───────────────────────────────────────────────────
+  // Only applied on the first mash step when the vessel is cold.  Subsequent
+  // steps find the vessel already at mash temperature so this term is zero.
+  // A 50 L stainless mash tun: ~3 kg of steel (1.5 mm wall, ~0.5 m² surface).
+  const m_vessel = 3.0;  // kg         stainless steel mass of the vessel
+  const c_ss     = 500;  // J/(kg·°C)  specific heat of stainless steel
+  const m_wort   = 50.0; // kg         nominal wort volume (50 L ≈ 50 kg)
+
+  const deltaTvessel = includeVesselMass
+    ? (m_vessel * c_ss * (tempFluid - tempAmbient)) / (m_wort * C_w)
+    : 0;
+
+  return deltaTpipe + deltaTvessel;
 }
 
 /**
@@ -1048,9 +1070,13 @@ function doMashStep(step, options = {}){
   return async function(){
     try {
       const {tempC, mins} = step;
-      const { recirculate: doRecirculate = false } = options;
+      const { recirculate: doRecirculate = false, stepIndex = 0 } = options;
 
-      const deltaT = await pipeHeatLoss(tempC, "Temp Mash");
+      // On the first step the vessel is cold — include vessel thermal mass in the
+      // preheat offset.  On subsequent steps the vessel is already at temperature
+      // so only pipe conduction loss applies.
+      const isFirstStep = stepIndex === 0;
+      const deltaT = await pipeHeatLoss(tempC, "Temp Mash", isFirstStep);
       const temp = Math.trunc((tempC + deltaT)*10)/10;
       progressPublish(`Preheating to ${temp}C`);
       await tempController.setTemp(temp, 0, () => {});
@@ -1134,7 +1160,7 @@ async function mash (req, res, next, stepsString, recirculate = true) {
   await tempController.init(doRecirculate ? 200 : 800, doRecirculate ? 0.05 : 0.3, doRecirculate ? 50 : 100);
   
   const steps = JSON.parse(stepsString);  
-  const stepRequests = steps.map(step => doMashStep(step, { recirculate: doRecirculate }));
+  const stepRequests = steps.map((step, i) => doMashStep(step, { recirculate: doRecirculate, stepIndex: i }));
 
   const stepResponses = await promiseSerial(stepRequests);
 
