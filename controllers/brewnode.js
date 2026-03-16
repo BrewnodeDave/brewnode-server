@@ -1064,7 +1064,7 @@ function doMashStep(step, options = {}){
       progressPublish(`Mash step recirc @ ${tempC}C for ${mins} mins`);
       // Switch to gentler mash gains now that we're controlling via the mash tun probe
       await tempController.init(200, 0.05, 50);
-      tempController.setMashTemp(tempC);
+
       // Both pumps are driven in lockstep by the kettle pump modulation cycle
       startStopKettlePumpModulation(10, 10);
 
@@ -1079,6 +1079,15 @@ function doMashStep(step, options = {}){
         mashOffSecs: 10
       };
 
+      // Wait until the mash temperature is first reached before starting the hold timer.
+      // secsAtTemp is incremented by setMashTemp on every tick where temp >= target.
+      await new Promise(resolve => {
+        tempController.setMashTemp(tempC, ({ secsAtTemp }) => {
+          if (secsAtTemp > 0) resolve();
+        });
+      });
+
+      progressPublish(`Mash step ${tempC}C reached — holding for ${mins} mins`);
       await delay(mins * 60);
 
       progressPublish(`Mash step ${tempC}C: stopping recirculation`);
