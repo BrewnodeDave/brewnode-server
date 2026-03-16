@@ -545,34 +545,44 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   const adjustedOnSecs = onSecsNum / simSpeed;
   const adjustedOffSecs = offSecsNum / simSpeed;
 
-  // Time to allow the mash-in valve to fully open before starting the pump.
-  // repeatI2C sends 3 pulses over 1s; allow extra margin for physical travel.
+  // Time to allow the mash-in valve to fully open before starting the pumps.
+  // repeatI2C sends 3 pulses over 1s; allow extra margin for physical valve travel.
   const VALVE_OPEN_DELAY_MS = simSpeed === 1 ? 1500 : 0;
-  
+
+  // Time to allow the pumps to fully stop before commanding the valve to close.
+  // Prevents pressure surge from closing the valve against a running pump, and
+  // ensures the valve is fully closed before the next open command arrives.
+  const VALVE_CLOSE_DELAY_MS = simSpeed === 1 ? 1500 : 0;
+
+  // Track cycle state explicitly rather than querying pump hardware,
+  // so the logic stays correct even if a pump read races the timer.
+  let pumpsRunning = false;
+
   // Define the cycling function
   const cycle = () => {
-    // Get current pump status (0 = off, non-zero = on)
-    const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value || 0;
-    
-    if (pumpStatus !== 0) {
-      // Both pumps on — turn them both off and close mash in valve
+    if (pumpsRunning) {
+      // ON → OFF: stop pumps first, then close valve after they spin down
       pumps.off("Pump Kettle");
       pumps.off("Pump Mash");
-      valves.close("Valve Mash-in");
-      // Schedule next on cycle
+      pumpsRunning = false;
       kettlePumpModulationInterval = setTimeout(() => {
-        cycle();
-      }, adjustedOffSecs * 1000);
+        valves.close("Valve Mash-in");
+        // Schedule next on cycle — wait the full off period from pump-stop
+        kettlePumpModulationInterval = setTimeout(() => {
+          cycle();
+        }, (adjustedOffSecs * 1000) - VALVE_CLOSE_DELAY_MS);
+      }, VALVE_CLOSE_DELAY_MS);
     } else {
-      // Both pumps off — open valve first then start both pumps together
+      // OFF → ON: open valve first, then start both pumps once valve is open
       valves.open("Valve Mash-in");
       kettlePumpModulationInterval = setTimeout(() => {
         pumps.on("Pump Kettle");
         pumps.on("Pump Mash");
-        // Schedule next off cycle
+        pumpsRunning = true;
+        // Schedule next off cycle — full on period from pump-start
         kettlePumpModulationInterval = setTimeout(() => {
           cycle();
-        }, (adjustedOnSecs * 1000) - VALVE_OPEN_DELAY_MS);
+        }, adjustedOnSecs * 1000);
       }, VALVE_OPEN_DELAY_MS);
     }
   };
