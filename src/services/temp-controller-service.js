@@ -295,6 +295,8 @@ module.exports = {
 							pause();
 							heatTimer.clearInterval();
 							resolve();
+							heatTimerRunning = false;
+							return;
 						}
 					}
 					if (targetTemp >= MAX_TEMP) {
@@ -308,11 +310,6 @@ module.exports = {
 					heatTimerRunning = false;
 				}
 			}, '', `${calculationInterval}m`);
-
-			// }else{
-			// 	//pause();
-			// 	resolve();
-			// }
 		});
 	},
 
