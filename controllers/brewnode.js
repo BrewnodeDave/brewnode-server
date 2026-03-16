@@ -514,6 +514,7 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
       clearTimeout(kettlePumpModulationInterval);
       kettlePumpModulationInterval = null;
       pumps.off("Pump Kettle");
+      pumps.off("Pump Mash");
       valves.close("Valve Mash-in");
       return { success: true, message: "Kettle pump modulation stopped" };
     } else {
@@ -535,6 +536,7 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
     clearTimeout(kettlePumpModulationInterval);
     kettlePumpModulationInterval = null;
     pumps.off("Pump Kettle");
+    pumps.off("Pump Mash");
     valves.close("Valve Mash-in");
   }
   
@@ -553,18 +555,20 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
     const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value || 0;
     
     if (pumpStatus !== 0) {
-      // Pump is on, turn it off and close mash in valve
+      // Both pumps on — turn them both off and close mash in valve
       pumps.off("Pump Kettle");
+      pumps.off("Pump Mash");
       valves.close("Valve Mash-in");
       // Schedule next on cycle
       kettlePumpModulationInterval = setTimeout(() => {
         cycle();
       }, adjustedOffSecs * 1000);
     } else {
-      // Pump is off, open valve first then start pump after it has had time to open
+      // Both pumps off — open valve first then start both pumps together
       valves.open("Valve Mash-in");
       kettlePumpModulationInterval = setTimeout(() => {
         pumps.on("Pump Kettle");
+        pumps.on("Pump Mash");
         // Schedule next off cycle
         kettlePumpModulationInterval = setTimeout(() => {
           cycle();
@@ -826,24 +830,10 @@ async function recirculate(req, res, next, onOff, tempC, dutyCycle, mashDutyCycl
     // Determine mash pump behavior
     let mashOnSecs = null;
     let mashOffSecs = null;
+    // Note: mash pump is now synchronised with the kettle pump inside
+    // startStopKettlePumpModulation — both run together to prevent volume imbalance.
     if (mashDutyCycle) {
-      const mashCycle = parseFloat(mashDutyCycle);
-      if (isNaN(mashCycle) || mashCycle < 1 || mashCycle > 99) {
-        res.send(400, "Invalid mashDutyCycle: must be between 1 and 99 percent");
-        return;
-      }
-      // calculate on/off times using same totalCycleTime
-      mashOnSecs = (mashCycle / 100) * totalCycleTime;
-      mashOffSecs = totalCycleTime - mashOnSecs;
-      // start mash pump modulation
-      const mashResult = startStopMashPumpModulation(mashOnSecs, mashOffSecs);
-      if (!mashResult.success) {
-        res.send(mashResult.status || 500, mashResult.message);
-        return;
-      }
-    } else {
-      // Turn on mash pump permanently
-      pumps.on("Pump Mash");
+      brewlog.warn("recirculate", "mashDutyCycle parameter ignored — mash pump is synchronised with kettle pump");
     }
     
     // Start kettle pump modulation with calculated on/off times
@@ -1050,7 +1040,7 @@ function doMashStep(step, options = {}){
       }
 
       if (doRecirculate) {
-        progressPublish(`Mash step ${tempC}C: starting recirculation for ${mins} mins`);
+        progressPublish(`Mash step recirc @ ${tempC}C for ${mins} mins`);
         tempController.setMashTemp(tempC);
         // 50% duty cycle
         startStopKettlePumpModulation(10, 10);
