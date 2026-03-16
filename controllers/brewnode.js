@@ -1080,6 +1080,9 @@ function doMashStep(step, options = {}){
       const {tempC, mins} = step;
       const { recirculate: doRecirculate = false, stepIndex = 0 } = options;
 
+      // Preheat always uses aggressive kettle gains — need to heat water quickly.
+      await tempController.init(800, 0.3, 100);
+
       // On the first step the vessel is cold — include vessel thermal mass in the
       // preheat offset.  On subsequent steps the vessel is already at temperature
       // so only pipe conduction loss applies.
@@ -1096,6 +1099,8 @@ function doMashStep(step, options = {}){
 
       if (doRecirculate) {
         progressPublish(`Mash step recirc @ ${tempC}C for ${mins} mins`);
+        // Switch to gentler mash gains now that we're controlling via the mash tun probe
+        await tempController.init(200, 0.05, 50);
         tempController.setMashTemp(tempC);
         // Both pumps are driven in lockstep by the kettle pump modulation cycle
         startStopKettlePumpModulation(10, 10);
@@ -1164,9 +1169,6 @@ function doMashStep(step, options = {}){
 async function mash (req, res, next, stepsString, recirculate = true) {
   const doRecirculate = recirculate === true || recirculate === 'true';
 
-  // Use gentler PID gains for recirculation (mash tun), aggressive for non-recirc (kettle only)
-  await tempController.init(doRecirculate ? 200 : 800, doRecirculate ? 0.05 : 0.3, doRecirculate ? 50 : 100);
-  
   const steps = JSON.parse(stepsString);  
   const stepRequests = steps.map((step, i) => doMashStep(step, { recirculate: doRecirculate, stepIndex: i }));
 
