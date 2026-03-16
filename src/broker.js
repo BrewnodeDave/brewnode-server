@@ -61,7 +61,7 @@ function create(sensorName) {
 		   _socket.broadcast.emit(sensorName,  value);
 		   _socket.emit(sensorName,  value);
 	   	}
-
+if (sensorName != 'Watchdog') console.log(sensorName, value);
 	   	sensor.emit(sensorName, value);
 		const dt = timestamp ? timestamp : new Date().getTime();
 		const mysqlDatetime = new Date(dt).toISOString().slice(0, 23).replace('T', ' ');
