@@ -222,12 +222,15 @@ function updateProbeValue(probe, value) {
 }
 
 async function pollTemperatures(){
+	const minDeltaC = 0.5;
+
 	const sensors = await getAllTemps();
+	
 	// Find sensors with different values
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (prevSensorValues[sensor.name].value){
-			const changed = Math.abs((prevSensorValues[sensor.name].value - sensor.value)) >= 0.5;
-//console.log({changed},sensor.name, prevSensorValues[sensor.name].value,sensor.value);
+			const changed = Math.abs((prevSensorValues[sensor.name].value - sensor.value)) >= minDeltaC;
+if (changed) console.log("changed:", sensor.name, prevSensorValues[sensor.name].value, sensor.value);
 			prevSensorValues[sensor.name].value = changed ? sensor.value : prevSensorValues[sensor.name].value; 
 			return changed;
 		}else{
@@ -363,3 +366,4 @@ module.exports = {
 		});
 	}
 }
+
