@@ -321,7 +321,12 @@ module.exports = {
 
 		mashTimer.clearInterval();
 
+		// Cut the heater this many degrees before the target to compensate for
+		// thermal inertia in the element and pipework during recirculation.
+		const THERMAL_INERTIA_OFFSET_C = 1.5;
+
 		targetTemp = Math.round(desiredTemp * 10) / 10;
+		const cutoffTemp = Math.round((desiredTemp - THERMAL_INERTIA_OFFSET_C) * 10) / 10;
 
 		const phaseName = `Heating Mash to ${targetTemp}C.`;
 		brewlog.info(phaseName);
@@ -342,7 +347,9 @@ module.exports = {
 					//temp reached
 					timeAtTemp += calculationInterval;
 				}
-				currentPower = calculatePower(currentTemp);
+				// Use cutoffTemp for PID so the heater starts ramping down before
+				// the true target, preventing thermal inertia overshoot.
+				currentPower = currentTemp >= cutoffTemp ? 0 : calculatePower(currentTemp);
 				brewlog.info("Current Power=", `${currentPower}`);
 				kettleHeater.setPower(currentPower);
 
