@@ -314,6 +314,7 @@ module.exports = {
 		brewlog.info("setMashTemp=", desiredTemp);
 
 		mashTimer.clearInterval();
+		timeAtTemp = 0;
 
 		// Cut the heater this many degrees before the target to compensate for
 		// thermal inertia in the element and pipework during recirculation.
