@@ -1050,7 +1050,7 @@ function doMashStep(step, options = {}){
       const { stepIndex = 0 } = options;
 
       // Preheat always uses aggressive kettle gains — need to heat water quickly.
-      await tempController.init(800, 0.3, 100);
+      await tempController.init(400, 0.3, 100);
 
       // On the first step the vessel is cold — include vessel thermal mass in the
       // preheat offset.  On subsequent steps the vessel is already at temperature

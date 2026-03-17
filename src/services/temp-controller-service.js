@@ -113,90 +113,64 @@ function tempHandler(value) {
 
 /**
  * Get temperature with retry logic to handle electrical interference from pumps.
- * If temperature reading fails, temporarily stops both mash and kettle pumps to get a valid reading.
+ * On the first failed attempt, all running pumps are stopped to reduce noise.
+ * Whichever pumps were running are restored to their original state afterwards,
+ * whether the read ultimately succeeded or failed.
  * @param {string} thermName - Name of the temperature sensor
  * @param {number} retries - Number of retry attempts (default 3)
  * @param {number} delayMs - Delay between retries in milliseconds (default 200)
  * @returns {Promise<number>} Temperature reading
  */
 async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
-	let mashPumpWasOn = false;
-	let kettlePumpWasOn = false;
-	for (let attempt = 1; attempt <= retries; attempt++) {
-		try {
-			const temp = await therm.getTemp(thermName);
+	// Snapshot which pumps are on before we touch anything
+	const activePumpNames = pumps.getStatus()
+		.filter(p => p.value !== 0)
+		.map(p => p.name);
+	let pumpsWereStopped = false;
 
-			// Check if reading is valid (not 85°C error value and within reasonable range)
-			if (temp !== false && temp !== null && temp !== undefined && temp !== 85 && temp >= -10 && temp <= 110) {
-				const probe = probes.find(p => p.name === thermName);
-				const compensated = probe ? probe.compensate(temp) : temp;
-				if (attempt > 1) {
-					brewlog.info(`Temperature read succeeded on attempt ${attempt}`, compensated);
+	try {
+		for (let attempt = 1; attempt <= retries; attempt++) {
+			try {
+				const temp = await therm.getTemp(thermName);
+
+				// Check if reading is valid (not 85°C error value and within reasonable range)
+				if (temp !== false && temp !== null && temp !== undefined && temp !== 85 && temp >= -10 && temp <= 110) {
+					const probe = probes.find(p => p.name === thermName);
+					const compensated = probe ? probe.compensate(temp) : temp;
+					if (attempt > 1) {
+						brewlog.info(`Temperature read succeeded on attempt ${attempt}`, compensated);
+					}
+					return compensated;
 				}
-				// Restore pumps if we turned them off
-				if (mashPumpWasOn) {
-					brewlog.info("Restoring mash pump after successful temperature read");
-					pumps.on("Pump Mash");
-				}
-				if (kettlePumpWasOn) {
-					brewlog.info("Restoring kettle pump after successful temperature read");
-					pumps.on("Pump Kettle");
-				}
-				return compensated;
+			} catch (err) {
+				brewlog.warn(`Temperature read failed (attempt ${attempt}/${retries})`, err.message);
 			}
 
-			brewlog.warn(`Invalid temperature reading: ${temp}°C (attempt ${attempt}/${retries})`);
-
-		} catch (err) {
-			brewlog.warn(`Temperature read failed (attempt ${attempt}/${retries})`, err.message);
-		}
-
-		// If we've failed once and pumps are running, stop them temporarily to reduce interference
-		if (attempt === 1) {
-			const mashPumpStatus = pumps.getStatus().find(p => p.name === "Pump Mash")?.value || 0;
-			const kettlePumpStatus = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value || 0;
-
-			if (mashPumpStatus !== 0) {
-				brewlog.info("Temporarily stopping mash pump to get clean temperature reading");
-				mashPumpWasOn = true;
-				pumps.off("Pump Mash");
-			}
-
-			if (kettlePumpStatus !== 0) {
-				brewlog.info("Temporarily stopping kettle pump to get clean temperature reading");
-				kettlePumpWasOn = true;
-				pumps.off("Pump Kettle");
-			}
-
-			// Give pumps time to stop and electrical noise to settle
-			if (mashPumpWasOn || kettlePumpWasOn) {
-				await new Promise(resolve => setTimeout(resolve, 1000));
+			// On first failure, stop any running pumps to clear electrical noise
+			if (attempt === 1 && activePumpNames.length > 0) {
+				activePumpNames.forEach(name => pumps.off(name));
+				pumpsWereStopped = true;
+				// Allow noise to settle before retrying
+				await new Promise(resolve => setTimeout(resolve, 500));
+			} else if (attempt < retries) {
+				await new Promise(resolve => setTimeout(resolve, delayMs));
 			}
 		}
 
-		// Wait before retry (except on last attempt)
-		if (attempt < retries) {
-			await new Promise(resolve => setTimeout(resolve, delayMs));
+		// All retries failed — fall back to last known value
+		if (currentTemp !== null && currentTemp !== undefined) {
+			brewlog.error(`All temperature read attempts failed, using last known value: ${currentTemp}°C`);
+			return currentTemp;
+		}
+
+		throw new Error(`Failed to read temperature from ${thermName} after ${retries} attempts`);
+
+	} finally {
+		// Always restore pumps to their original state
+		if (pumpsWereStopped) {
+			activePumpNames.forEach(name => pumps.on(name));
 		}
 	}
-
-	// All retries failed - restore pumps if we turned them off
-	if (mashPumpWasOn) {
-		brewlog.warn("Temperature read failed, restoring mash pump");
-		pumps.on("Pump Mash");
-	}
-	if (kettlePumpWasOn) {
-		brewlog.warn("Temperature read failed, restoring kettle pump");
-		pumps.on("Pump Kettle");
-	}
-
-	// Return last known good value or throw
-	if (currentTemp !== null && currentTemp !== undefined) {
-		brewlog.error(`All temperature read attempts failed, using last known value: ${currentTemp}°C`);
-		return currentTemp;
-	}
-
-	throw new Error(`Failed to read temperature from ${thermName} after ${retries} attempts`);
 }
 
 function pause() {
@@ -262,8 +236,6 @@ module.exports = {
 			const phaseName = `Heating to ${targetTemp}C for ${minutes * speedupFactor} mins.`;
 
 			brewlog.info(phaseName);
-			// if (currentTemp < targetTemp){
-			//add heatTimer
 			heatTimer.clearInterval();
 			timeAtTemp = 0;
 			let heatTimerRunning = false;
