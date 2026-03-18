@@ -111,6 +111,7 @@ function Pump(name, requestPin){
 }
 
 function on(name){
+	console.log(`[${new Date().toISOString()}] PUMP ON:  ${name}`);
 	if (name === MASH_PUMP){
 		return mashPump.onSync();
 	}else if (name === KETTLE_PUMP){
@@ -121,6 +122,7 @@ function on(name){
 }
 
 function off(name){
+	console.log(`[${new Date().toISOString()}] PUMP OFF: ${name}`);
 	if (name === MASH_PUMP){
 		return mashPump.offSync();
 	}else if (name === KETTLE_PUMP){

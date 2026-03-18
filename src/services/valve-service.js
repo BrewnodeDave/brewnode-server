@@ -102,12 +102,14 @@ function Valve(valveDef) {
 	thisValve.openOrClose = (requested) => {
 		
 		if ((requested === VALVE_CLOSE_REQUEST)){
+			console.log(`[${new Date().toISOString()}] VALVE CLOSE: ${thisValve.name}`);
 			i2c.writeBit(thisValve.requestPin, requested);
 			doublePublish(thisValve.publish, thisValve.status, 0);
 			thisValve.status = 0;
 		}
 		else
 		if ((requested === VALVE_OPEN_REQUEST)){
+			console.log(`[${new Date().toISOString()}] VALVE OPEN:  ${thisValve.name}`);
 			i2c.writeBit(thisValve.requestPin, requested);
 			doublePublish(thisValve.publish, thisValve.status, thisValve.power);
 			thisValve.status = thisValve.power;
