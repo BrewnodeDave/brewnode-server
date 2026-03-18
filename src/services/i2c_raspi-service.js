@@ -319,6 +319,47 @@ module.exports = {
 		}	
 	},
 	
+	/**
+	 * Atomically open the mash valve and turn on both pumps.
+	 * Mash valve (bit 6) is on reg 0x12; kettle pump (bit 0) and mash pump (bit 1) are on reg 0x13.
+	 * Both are active-low (0 = on/open). We write both registers back-to-back so there is
+	 * no intermediate state where a pump runs against a closed valve or vice-versa.
+	 */
+	atomicMashOn() {
+		// Valve bit 6 on reg 0x12: clear bit 6 to open (active low)
+		const VALVE_BIT = 6;
+		dataByte[0] = dataByte[0] & ~(1 << VALVE_BIT);
+		_i2c.writeByteSync(REGx20, 0x12, dataByte[0]);
+
+		// Kettle pump bit 0, mash pump bit 1 on reg 0x13: clear both bits to turn on (active low)
+		const KETTLE_BIT = 0;
+		const MASH_BIT   = 1;
+		dataByte[1] = dataByte[1] & ~(1 << KETTLE_BIT) & ~(1 << MASH_BIT);
+		_i2c.writeByteSync(REGx20, 0x13, dataByte[1]);
+
+		brewlog.debug('atomicMashOn', `0x12=0x${dataByte[0].toString(16)} 0x13=0x${dataByte[1].toString(16)}`);
+		return array2Hex(dataByte);
+	},
+
+	/**
+	 * Atomically close the mash valve and turn off both pumps.
+	 */
+	atomicMashOff() {
+		// Valve bit 6 on reg 0x12: set bit 6 to close (active low)
+		const VALVE_BIT = 6;
+		dataByte[0] = dataByte[0] | (1 << VALVE_BIT);
+		_i2c.writeByteSync(REGx20, 0x12, dataByte[0]);
+
+		// Kettle pump bit 0, mash pump bit 1 on reg 0x13: set both bits to turn off (active low)
+		const KETTLE_BIT = 0;
+		const MASH_BIT   = 1;
+		dataByte[1] = dataByte[1] | (1 << KETTLE_BIT) | (1 << MASH_BIT);
+		_i2c.writeByteSync(REGx20, 0x13, dataByte[1]);
+
+		brewlog.debug('atomicMashOff', `0x12=0x${dataByte[0].toString(16)} 0x13=0x${dataByte[1].toString(16)}`);
+		return array2Hex(dataByte);
+	},
+
 	getWord() {
 		try {
 			const byte0 = _i2c.readByteSync(REGx20, 0x12);
