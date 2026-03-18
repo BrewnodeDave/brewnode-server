@@ -589,12 +589,16 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
       pumpsRunning = false;
       scheduleTimer(cycle, adjustedOffSecs * 1000);
     } else {
-      // OFF → ON: open valve and start pumps immediately, then wait on period
+      // OFF → ON: open valve first, then start pumps after a short delay to
+      // allow the solenoid to fully open before flow is demanded.
       valves.open("Valve Mash-in");
-      pumps.on("Pump Kettle");
-      pumps.on("Pump Mash");
       pumpsRunning = true;
-      scheduleTimer(cycle, adjustedOnSecs * 1000);
+      scheduleTimer(() => {
+        if (myGeneration !== cycleGeneration) return;
+        pumps.on("Pump Kettle");
+        pumps.on("Pump Mash");
+        scheduleTimer(cycle, adjustedOnSecs * 1000);
+      }, 500);
     }
   };
   
