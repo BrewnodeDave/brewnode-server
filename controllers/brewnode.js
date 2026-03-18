@@ -489,6 +489,12 @@ async function pump(req, res, next, pumpName, onOff) {
 // can be cancelled on stop, preventing dangling timers from toggling pumps
 // during the next step's preheat phase.
 let kettlePumpModulationTimers = new Set();
+// Module-level cycle state — shared across all calls to startStopKettlePumpModulation
+// so that restarting the cycle always resets the state seen by the new cycle's callbacks.
+let pumpsRunning = false;
+// Incremented each time the cycle is (re)started. Callbacks capture their generation
+// at creation time and bail out if it no longer matches, making stale callbacks no-ops.
+let cycleGeneration = 0;
 let mashPumpModulationInterval = null;
 let recirculationInterval = null;
 
@@ -549,9 +555,11 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   const adjustedOnSecs = onSecsNum / simSpeed;
   const adjustedOffSecs = offSecsNum / simSpeed;
 
-  // Track cycle state explicitly rather than querying pump hardware,
-  // so the logic stays correct even if a pump read races the timer.
-  let pumpsRunning = false;
+  // Reset shared cycle state so the new cycle always starts from OFF.
+  pumpsRunning = false;
+  // Advance the generation so any already-queued callbacks from the previous
+  // cycle see a stale generation and exit immediately.
+  const myGeneration = ++cycleGeneration;
 
   // Helper: schedule a timeout, register it in the Set so it can be
   // cancelled by stop(), and auto-remove it from the Set when it fires.
@@ -566,6 +574,7 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
 
   // Define the cycling function
   const cycle = () => {
+    if (myGeneration !== cycleGeneration) return; // stale callback — a newer cycle has started
     if (pumpsRunning) {
       // ON → OFF: stop pumps and close valve immediately, then wait off period
       pumps.off("Pump Kettle");
