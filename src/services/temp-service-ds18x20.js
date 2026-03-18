@@ -23,7 +23,6 @@ let ds18x20;
 const brewlog = require("../brewstack/common/brewlog.js");
 const broker = require("../broker.js");
 let probes = require('../probes.js');
-let pumps = null; // Lazy loaded to avoid circular dependency
 
 let pollInterval = null;
 
@@ -57,24 +56,13 @@ function isValidTemp(temp) {
 
 /**
  * Get all temperatures with retry logic to handle electrical interference from pumps.
- * If temperature readings fail, temporarily stops both mash and kettle pumps to get valid readings.
+ * Retries with a short delay between attempts. Does not stop or restore pumps —
+ * pump state is owned by the modulation cycle in brewnode.js.
  * @param {number} retries - Number of retry attempts (default 3)
- * @param {number} delayMs - Delay between retries in milliseconds (default 200)
+ * @param {number} delayMs - Delay between retries in milliseconds (default 500)
  * @returns {Promise<Array>} Array of temperature sensor objects
  */
-async function getAllTemps(retries = 3, delayMs = 200) {
-	// Lazy load pumps service to avoid circular dependency
-	if (!pumps) {
-		try {
-			pumps = require('./pump-service.js');
-		} catch (err) {
-			brewlog.warn("Could not load pump service for temperature retry logic", err.message);
-		}
-	}
-	
-	let mashPumpWasOn = false;
-	let kettlePumpWasOn = false;
-	
+async function getAllTemps(retries = 3, delayMs = 500) {
 	for (let attempt = 1; attempt <= retries; attempt++) {
 		const result = [];
 		let allValid = true;
@@ -115,18 +103,10 @@ async function getAllTemps(retries = 3, delayMs = 200) {
 				}
 			});
 			
-			// If all readings are valid, restore pumps and return
+			// If all readings are valid, return
 			if (allValid) {
 				if (attempt > 1) {
 					brewlog.info(`All temperature reads succeeded on attempt ${attempt}`);
-				}
-				if (mashPumpWasOn && pumps) {
-					brewlog.info("Restoring mash pump after successful temperature read");
-					pumps.on("Pump Mash");
-				}
-				if (kettlePumpWasOn && pumps) {
-					brewlog.info("Restoring kettle pump after successful temperature read");
-					pumps.on("Pump Kettle");
 				}
 				return result;
 			}
@@ -136,48 +116,9 @@ async function getAllTemps(retries = 3, delayMs = 200) {
 			allValid = false;
 		}
 		
-		// If we've failed once and pumps are running, stop them temporarily to reduce interference
-		if (attempt === 1 && pumps) {
-			try {
-				const mashPumpStatus = pumps.getStatus().find(p => p.name === "Pump Mash")?.value || 0;
-				const kettlePumpStatus = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value || 0;
-				
-				if (mashPumpStatus !== 0) {
-					brewlog.info("Temporarily stopping mash pump to get clean temperature readings");
-					mashPumpWasOn = true;
-					pumps.off("Pump Mash");
-				}
-				
-				if (kettlePumpStatus !== 0) {
-					brewlog.info("Temporarily stopping kettle pump to get clean temperature readings");
-					kettlePumpWasOn = true;
-					pumps.off("Pump Kettle");
-				}
-				
-				// Give pumps time to stop and electrical noise to settle
-				if (mashPumpWasOn || kettlePumpWasOn) {
-					await new Promise(resolve => setTimeout(resolve, 500));
-				}
-			} catch (pumpErr) {
-				brewlog.warn("Error managing pumps for temperature retry", pumpErr.message);
-			}
-		}
-		
 		// Wait before retry (except on last attempt)
 		if (attempt < retries) {
 			await new Promise(resolve => setTimeout(resolve, delayMs));
-		}
-	}
-	
-	// All retries failed - restore pumps if we turned them off and return what we have
-	if (pumps) {
-		if (mashPumpWasOn) {
-			brewlog.warn("Temperature reads failed, restoring mash pump");
-			pumps.on("Pump Mash");
-		}
-		if (kettlePumpWasOn) {
-			brewlog.warn("Temperature reads failed, restoring kettle pump");
-			pumps.on("Pump Kettle");
 		}
 	}
 	
