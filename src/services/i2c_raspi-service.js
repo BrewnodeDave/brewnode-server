@@ -122,8 +122,6 @@ let dataByte = [0x00, 0x00, 0x00, 0x00];
  * @param {Number} value 
  */	
 function writeReg(chipAddress, address, currentByte, bit, value){
-	//brewlog.debug("writeReg", `0x${chipAddress.toString(16)}, 0x${address.toString(16)}, Bit ${bit}=${value}`);
-
 	const mask = 1 << bit;
 	let result;
 	if (value == 1){
@@ -134,13 +132,14 @@ function writeReg(chipAddress, address, currentByte, bit, value){
 	  brewlog.critical("writeReg value=", `${value}`)
 	}
 
-	//setDir(bit, DIR_OUTPUT);
-	_i2c.writeByteSync(chipAddress, address, result);
-	_i2c.writeByteSync(chipAddress, address, result);
-	_i2c.writeByteSync(chipAddress, address, result);
-	_i2c.writeByteSync(chipAddress, address, result);
-	_i2c.writeByteSync(chipAddress, address, result);
-	//setDir(bit, DIR_INPUT);
+	// Write then verify with read-back. Retry up to 5 times if the hardware
+	// doesn't reflect the written value — more reliable than blind repeated writes.
+	for (let attempt = 0; attempt < 5; attempt++) {
+		_i2c.writeByteSync(chipAddress, address, result);
+		const readback = _i2c.readByteSync(chipAddress, address);
+		if (readback === result) break;
+		brewlog.warn(`writeReg readback mismatch (attempt ${attempt + 1}): wrote 0x${result.toString(16)}, read 0x${readback.toString(16)}`);
+	}
 
 	return result;
 }
@@ -227,6 +226,7 @@ module.exports = {
 		try {
 			if (bit < 16) {
 			  if (bit < 8) {
+				// Update cache first so concurrent calls in the same tick see the accumulated state
 				dataByte[0] = writeReg(REGx20, 0x12, dataByte[0], bit - (0 * 8), value);
 			  } else {
 				dataByte[1] = writeReg(REGx20, 0x13, dataByte[1], bit - (1 * 8), value);
