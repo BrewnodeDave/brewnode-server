@@ -115,6 +115,8 @@ function Valve(valveDef) {
 			i2c.writeBit(thisValve.requestPin, requested);
 			setTimeout(() => i2c.writeBit(thisValve.requestPin, requested), 200);
 			setTimeout(() => i2c.writeBit(thisValve.requestPin, requested), 400);
+			setTimeout(() => i2c.writeBit(thisValve.requestPin, requested), 600);
+			setTimeout(() => i2c.writeBit(thisValve.requestPin, requested), 800);
 			doublePublish(thisValve.publish, thisValve.status, thisValve.power);
 			thisValve.status = thisValve.power;
 		}
