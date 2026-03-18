@@ -541,13 +541,19 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
     return { success: false, message: "Invalid parameters: onSecs and offSecs must be numbers between 0.1 and 3600", status: 400 };
   }
 
-  // Stop any existing modulation — cancel every pending handle
+  // Stop any existing modulation — cancel every pending handle.
+  // Also stop mash pump modulation: it runs independently and will fight
+  // the kettle cycle if both are active at the same time.
   if (kettlePumpModulationTimers.size > 0) {
     kettlePumpModulationTimers.forEach(t => clearTimeout(t));
     kettlePumpModulationTimers.clear();
     pumps.off("Pump Kettle");
     pumps.off("Pump Mash");
     valves.close("Valve Mash-in");
+  }
+  if (mashPumpModulationInterval) {
+    clearTimeout(mashPumpModulationInterval);
+    mashPumpModulationInterval = null;
   }
   
   // Adjust timing for simulation speed
