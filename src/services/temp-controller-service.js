@@ -32,7 +32,6 @@ cause the system to be highly sensitive to noise.
 const broker = require('../broker.js');
 const therm = require('./temp-service.js');
 const kettleHeater = require('./kettle-heater-service.js');
-const pumps = require('./pump-service.js');
 const probes = require('../probes.js');
 
 const NanoTimer = require('nanotimer');
@@ -113,64 +112,44 @@ function tempHandler(value) {
 
 /**
  * Get temperature with retry logic to handle electrical interference from pumps.
- * On the first failed attempt, all running pumps are stopped to reduce noise.
- * Whichever pumps were running are restored to their original state afterwards,
- * whether the read ultimately succeeded or failed.
+ * Retries with a short delay between attempts. Does not stop or restore pumps —
+ * pump state is owned by the modulation cycle in brewnode.js.
  * @param {string} thermName - Name of the temperature sensor
  * @param {number} retries - Number of retry attempts (default 3)
- * @param {number} delayMs - Delay between retries in milliseconds (default 200)
+ * @param {number} delayMs - Delay between retries in milliseconds (default 500)
  * @returns {Promise<number>} Temperature reading
  */
-async function getTempWithRetry(thermName, retries = 3, delayMs = 200) {
-	// Snapshot which pumps are on before we touch anything
-	const activePumpNames = pumps.getStatus()
-		.filter(p => p.value !== 0)
-		.map(p => p.name);
-	let pumpsWereStopped = false;
+async function getTempWithRetry(thermName, retries = 3, delayMs = 500) {
+	for (let attempt = 1; attempt <= retries; attempt++) {
+		try {
+			const temp = await therm.getTemp(thermName);
 
-	try {
-		for (let attempt = 1; attempt <= retries; attempt++) {
-			try {
-				const temp = await therm.getTemp(thermName);
-
-				// Check if reading is valid (not 85°C error value and within reasonable range)
-				if (temp !== false && temp !== null && temp !== undefined && temp !== 85 && temp >= -10 && temp <= 110) {
-					const probe = probes.find(p => p.name === thermName);
-					const compensated = probe ? probe.compensate(temp) : temp;
-					if (attempt > 1) {
-						brewlog.info(`Temperature read succeeded on attempt ${attempt}`, compensated);
-					}
-					return compensated;
+			if (temp !== false && temp !== null && temp !== undefined && temp !== 85 && temp >= -10 && temp <= 110) {
+				const probe = probes.find(p => p.name === thermName);
+				const compensated = probe ? probe.compensate(temp) : temp;
+				if (attempt > 1) {
+					brewlog.info(`Temperature read succeeded on attempt ${attempt}`, compensated);
 				}
-			} catch (err) {
-				brewlog.warn(`Temperature read failed (attempt ${attempt}/${retries})`, err.message);
+				return compensated;
 			}
 
-			// On first failure, stop any running pumps to clear electrical noise
-			if (attempt === 1 && activePumpNames.length > 0) {
-				activePumpNames.forEach(name => pumps.off(name));
-				pumpsWereStopped = true;
-				// Allow noise to settle before retrying
-				await new Promise(resolve => setTimeout(resolve, 500));
-			} else if (attempt < retries) {
-				await new Promise(resolve => setTimeout(resolve, delayMs));
-			}
+			brewlog.warn(`Invalid temperature reading: ${temp}°C (attempt ${attempt}/${retries})`);
+
+		} catch (err) {
+			brewlog.warn(`Temperature read failed (attempt ${attempt}/${retries})`, err.message);
 		}
 
-		// All retries failed — fall back to last known value
-		if (currentTemp !== null && currentTemp !== undefined) {
-			brewlog.error(`All temperature read attempts failed, using last known value: ${currentTemp}°C`);
-			return currentTemp;
-		}
-
-		throw new Error(`Failed to read temperature from ${thermName} after ${retries} attempts`);
-
-	} finally {
-		// Always restore pumps to their original state
-		if (pumpsWereStopped) {
-			activePumpNames.forEach(name => pumps.on(name));
+		if (attempt < retries) {
+			await new Promise(resolve => setTimeout(resolve, delayMs));
 		}
 	}
+
+	if (currentTemp !== null && currentTemp !== undefined) {
+		brewlog.error(`All temperature read attempts failed, using last known value: ${currentTemp}°C`);
+		return currentTemp;
+	}
+
+	throw new Error(`Failed to read temperature from ${thermName} after ${retries} attempts`);
 }
 
 function pause() {
