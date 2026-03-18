@@ -132,13 +132,19 @@ function writeReg(chipAddress, address, currentByte, bit, value){
 	  brewlog.critical("writeReg value=", `${value}`)
 	}
 
-	// Write then verify with read-back. Retry up to 5 times if the hardware
-	// doesn't reflect the written value — more reliable than blind repeated writes.
+	// Write then verify with read-back from the output latch register (OLAT).
+	// On MCP23017, reading the GPIO register (0x12/0x13) reads the actual pin state,
+	// which may differ from what was written if a load is pulling the line.
+	// The OLAT registers (0x14/0x15 for chip 0x20, 0x14/0x15 for chip 0x21) reflect
+	// what was actually latched — so we verify against those instead.
+	// Direction registers (0x0/0x1) have no OLAT equivalent, so read them back directly.
+	const isDataReg = (address === 0x12 || address === 0x13);
+	const verifyAddress = isDataReg ? (address + 2) : address; // 0x12→0x14, 0x13→0x15
 	for (let attempt = 0; attempt < 5; attempt++) {
 		_i2c.writeByteSync(chipAddress, address, result);
-		const readback = _i2c.readByteSync(chipAddress, address);
+		const readback = _i2c.readByteSync(chipAddress, verifyAddress);
 		if (readback === result) break;
-		brewlog.warn(`writeReg readback mismatch (attempt ${attempt + 1}): wrote 0x${result.toString(16)}, read 0x${readback.toString(16)}`);
+		brewlog.warn(`writeReg readback mismatch (attempt ${attempt + 1}): wrote 0x${result.toString(16)}, read 0x${readback.toString(16)} from 0x${verifyAddress.toString(16)}`);
 	}
 
 	return result;

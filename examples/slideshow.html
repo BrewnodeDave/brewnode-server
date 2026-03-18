@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imperative vs Functional JavaScript</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/black.css">
+    <style>
+        .reveal pre {
+            width: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            font-size: 0.5em !important;
+            max-height: none !important;
+        }
+        .reveal pre code {
+            font-size: 0.5em !important;
+            white-space: pre-wrap !important;
+            word-break: break-word !important;
+            overflow-wrap: break-word !important;
+            max-width: 100% !important;
+            display: block !important;
+            padding: 5px !important;
+        }
+        .reveal h2 {
+            font-size: 1.3em !important;
+            margin-bottom: 0.3em !important;
+        }
+        .reveal p {
+            margin: 0.3em 0 !important;
+            font-size: 0.8em !important;
+        }
+        .reveal section {
+            padding: 5px !important;
+        }
+        .comparison {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .comparison div {
+            flex: 1;
+            min-width: 0;
+        }
+        .output {
+            font-size: 0.65em;
+            margin-top: 3px;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- Title Slide -->
+            <section>
+                <h1>Imperative vs Functional JavaScript</h1>
+                <h2>Comparing Loops with If Statements vs Array Methods</h2>
+                <p>Presented by: GitHub Copilot</p>
+                <p>Date: March 9, 2026</p>
+            </section>
+
+            <!-- Overview -->
+            <section>
+                <h2>Overview</h2>
+                <ul>
+                    <li><strong>Imperative Programming:</strong> Using <code>for</code> loops and <code>if</code> statements</li>
+                    <li><strong>Functional Programming:</strong> Using <code>filter</code>, <code>map</code>, <code>reduce</code>, etc.</li>
+                    <li><strong>Examples:</strong> Simple (numbers) and Complex (objects)</li>
+                    <li><strong>Helper Functions:</strong> Extracted named functions for readability and reusability</li>
+                    <li><strong>Comparison:</strong> Readability, Performance, Best Use Cases</li>
+                </ul>
+            </section>
+
+            <!-- Simple Example 1 -->
+            <section>
+                <h2>Simple Example 1: Filter Evens</h2>
+                <p><strong>Task:</strong> Extract even numbers from [1,2,3,4,5,6,7,8,9,10]</p>
+                <div class="comparison">
+                    <div>
+                        <h3>Imperative</h3>
+                        <pre><code class="language-javascript">const evens = [];
+for (let i = 0; i < numbers.length; i++) {
+  if (numbers[i] % 2 === 0) {
+    evens.push(numbers[i]);
+  }
+}</code></pre>
+                    </div>
+                    <div>
+                        <h3>Functional</h3>
+                        <pre><code class="language-javascript">numbers.filter(num => num % 2 === 0);</code></pre>
+                    </div>
+                </div>
+                <p class="output"><strong>Output:</strong> [2, 4, 6, 8, 10]</p>
+            </section>
+
+            <!-- Simple Example 2 -->
+            <section>
+                <h2>Simple Example 2: Conditional Transform</h2>
+                <p><strong>Task:</strong> Double evens, leave odds unchanged</p>
+                <div class="comparison">
+                    <div>
+                        <h3>Imperative</h3>
+                        <pre><code class="language-javascript">const transformed = [];
+for (let i = 0; i < numbers.length; i++) {
+  if (numbers[i] % 2 === 0) {
+    transformed.push(numbers[i] * 2);
+  } else {
+    transformed.push(numbers[i]);
+  }
+}</code></pre>
+                    </div>
+                    <div>
+                        <h3>Functional</h3>
+                        <pre><code class="language-javascript">numbers.map(num => num % 2 === 0 ? num * 2 : num);</code></pre>
+                    </div>
+                </div>
+                <p class="output"><strong>Output:</strong> [1, 4, 3, 8, 5, 12, 7, 16, 9, 20]</p>
+            </section>
+
+            <!-- Simple Example 3 -->
+            <section>
+                <h2>Simple Example 3: Conditional Sum</h2>
+                <p><strong>Task:</strong> Sum numbers greater than 5</p>
+                <div class="comparison">
+                    <div>
+                        <h3>Imperative</h3>
+                        <pre><code class="language-javascript">let sum = 0;
+for (let i = 0; i < numbers.length; i++) {
+  if (numbers[i] > 5) {
+    sum += numbers[i];
+  }
+}</code></pre>
+                    </div>
+                    <div>
+                        <h3>Functional</h3>
+                        <pre><code class="language-javascript">numbers.filter(num => num > 5).reduce((a, b) => a + b, 0);</code></pre>
+                    </div>
+                </div>
+                <p class="output"><strong>Output:</strong> 40</p>
+            </section>
+
+            <!-- Simple Example 4 -->
+            <section>
+                <h2>Simple Example 4: Find First Match</h2>
+                <p><strong>Task:</strong> Find first number > 7</p>
+                <div class="comparison">
+                    <div>
+                        <h3>Imperative</h3>
+                        <pre><code class="language-javascript">let found = null;
+for (let i = 0; i < numbers.length; i++) {
+  if (numbers[i] > 7) {
+    found = numbers[i];
+    break;
+  }
+}</code></pre>
+                    </div>
+                    <div>
+                        <h3>Functional</h3>
+                        <pre><code class="language-javascript">numbers.find(num => num > 7);</code></pre>
+                    </div>
+                </div>
+                <p class="output"><strong>Output:</strong> 8</p>
+            </section>
+
+            <!-- Simple Example 5 -->
+            <section>
+                <h2>Simple Example 5: Count with Conditions</h2>
+                <p><strong>Task:</strong> Count evens greater than 5</p>
+                <div class="comparison">
+                    <div>
+                        <h3>Imperative</h3>
+                        <pre><code class="language-javascript">let count = 0;
+for (let i = 0; i < numbers.length; i++) {
+  if (numbers[i] % 2 === 0 && numbers[i] > 5) {
+    count++;
+  }
+}</code></pre>
+                    </div>
+                    <div>
+                        <h3>Functional</h3>
+                        <pre><code class="language-javascript">numbers.filter(num => num % 2 === 0 && num > 5).length;</code></pre>
+                    </div>
+                </div>
+                <p class="output"><strong>Output:</strong> 3</p>
+            </section>
+
+            <!-- Complex Example 1 -->
+            <section>
+                <h2>Complex Example 1: Process Users</h2>
+                <p><strong>Task:</strong> Filter active users, avg score >=80, categorize by age</p>
+                <div class="comparison">
+                    <div>
+                        <h3>Imperative (Nested loops, mutations)</h3>
+                        <pre><code class="language-javascript">function processUsersImperative(users) {
+  const result = { young: [], middle: [], senior: [] };
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+    if (user.active) {
+      let totalScore = 0;
+      for (let j = 0; j < user.scores.length; j++) {
+        totalScore += user.scores[j];
+      }
+      const avgScore = totalScore / user.scores.length;
+      if (avgScore >= 80) {
+        const category = user.age < 25 ? 'young' : user.age < 35 ? 'middle' : 'senior';
+        result[category].push({ name: user.name, avgScore: Math.round(avgScore) });
+      }
+    }
+  }
+  return result;
+}</code></pre>
+                    </div>
+                    <div>
+                        <h3>Functional (Chained methods)</h3>
+                        <pre><code class="language-javascript">function processUsersFunctional(users) {
+  return users
+    .filter(isActive)
+    .map(addAvgScore)
+    .filter(hasHighAvgScore)
+    .reduce(categorizeByAge, { young: [], middle: [], senior: [] });
+}</code></pre>
+                    </div>
+                </div>
+                <p class="output"><strong>Output:</strong> { young: [{ name: 'Charlie', avgScore: 95 }], middle: [{ name: 'Alice', avgScore: 88 }], senior: [] }</p>
+            </section>
+
+            <!-- Complex Example 2 -->
+            <section>
+                <h2>Complex Example 2: Build Report</h2>
+                <p><strong>Task:</strong> Find active users with score >85, build summary</p>
+                <div class="comparison">
+                    <div>
+                        <h3>Imperative (Loop with nested check)</h3>
+                        <pre><code class="language-javascript">function buildReportImperative(users, threshold = 85) {
+  const report = { totalQualified: 0, details: [] };
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+    let hasHighScore = false;
+    for (let j = 0; j < user.scores.length; j++) {
+      if (user.scores[j] > threshold) {
+        hasHighScore = true;
+        break;
+      }
+    }
+    if (hasHighScore && user.active) {
+      report.totalQualified++;
+      report.details.push({
+        id: user.id,
+        name: user.name,
+        maxScore: Math.max(...user.scores)
+      });
+    }
+  }
+  return report;
+}</code></pre>
+                    </div>
+                    <div>
+                        <h3>Functional (Filter with some, map)</h3>
+                        <pre><code class="language-javascript">function buildReportFunctional(users, threshold = 85) {
+  const qualified = users
+    .filter(user => isQualified(user, threshold))
+    .map(toSummary);
+
+  return {
+    totalQualified: qualified.length,
+    details: qualified
+  };
+}</code></pre>
+                    </div>
+                </div>
+                <p class="output"><strong>Output:</strong> { totalQualified: 2, details: [{ id: 1, name: 'Alice', maxScore: 90 }, { id: 3, name: 'Charlie', maxScore: 98 }] }</p>
+            </section>
+
+            <!-- Complex Example 3 -->
+            <section>
+                <h2>Complex Example 3: Transform & Accumulate</h2>
+                <p><strong>Task:</strong> Transform based on performance, accumulate stats</p>
+                <div class="comparison">
+                    <div>
+                        <h3>Imperative (Multiple loops, mutations)</h3>
+                        <pre><code class="language-javascript">function transformAndAccumulateImperative(users) {
+  const transformed = [];
+  let stats = { totalActive: 0, avgAge: 0, highPerformers: 0 };
+  let ageSum = 0;
+  for (let i = 0; i < users.length; i++) {
+    const user = users[i];
+    if (user.active) {
+      stats.totalActive++;
+      ageSum += user.age;
+      const avgScore = user.scores.reduce((a, b) => a + b, 0) / user.scores.length;
+      if (avgScore > 85) {
+        stats.highPerformers++;
+        transformed.push({
+          fullName: user.name.toUpperCase(),
+          age: user.age,
+          performance: avgScore > 90 ? 'Excellent' : 'Good',
+          scores: user.scores.map(score => score + 5)
+        });
+      } else if (avgScore > 75) {
+        transformed.push({
+          fullName: user.name,
+          age: user.age,
+          performance: 'Average',
+          scores: user.scores
+        });
+      }
+    }
+  }
+  stats.avgAge = ageSum / stats.totalActive;
+  return { transformed, stats };
+}</code></pre>
+                    </div>
+                    <div>
+                        <h3>Functional (Separate chains)</h3>
+                        <pre><code class="language-javascript">function transformAndAccumulateFunctional(users) {
+  const activeUsers = users.filter(isActive);
+
+  const transformed = activeUsers
+    .map(addAvgScoreForTransform)
+    .filter(hasGoodAvgScore)
+    .map(transformUser);
+
+  const stats = activeUsers.reduce(accumulateStats, { totalActive: 0, avgAge: 0, highPerformers: 0 });
+  stats.avgAge /= stats.totalActive;
+
+  return { transformed, stats };
+}</code></pre>
+                    </div>
+                </div>
+                <p class="output"><strong>Output:</strong> { transformed: [{ fullName: 'ALICE', age: 25, performance: 'Good', scores: [90,95,93] }, { fullName: 'CHARLIE', age: 22, performance: 'Excellent', scores: [100,97,103] }], stats: { totalActive: 3, avgAge: 25, highPerformers: 2 } }</p>
+            </section>
+
+            <!-- Key Differences -->
+            <section>
+                <h2>Key Differences Summary</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Aspect</th>
+                            <th>Imperative</th>
+                            <th>Functional</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Control</td>
+                            <td>Explicit loops, breaks</td>
+                            <td>Declarative methods</td>
+                        </tr>
+                        <tr>
+                            <td>State</td>
+                            <td>Mutable variables</td>
+                            <td>Immutable</td>
+                        </tr>
+                        <tr>
+                            <td>Readability</td>
+                            <td>Step-by-step</td>
+                            <td>Expressive chains</td>
+                        </tr>
+                        <tr>
+                            <td>Performance</td>
+                            <td>Faster for large data</td>
+                            <td>Optimized by JS engines</td>
+                        </tr>
+                        <tr>
+                            <td>Debugging</td>
+                            <td>Easier with breakpoints</td>
+                            <td>Chain debugging</td>
+                        </tr>
+                        <tr>
+                            <td>Best For</td>
+                            <td>Complex control flow</td>
+                            <td>Data transformations</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- When to Use Each -->
+            <section>
+                <h2>When to Use Each</h2>
+                <div class="comparison">
+                    <div>
+                        <h3>Use Imperative When:</h3>
+                        <ul>
+                            <li>Performance-critical code</li>
+                            <li>Need fine-grained control (e.g., early exits)</li>
+                            <li>Complex nested logic</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3>Use Functional When:</h3>
+                        <ul>
+                            <li>Data processing pipelines</li>
+                            <li>Readability and maintainability matter</li>
+                            <li>Avoiding side effects</li>
+                        </ul>
+                    </div>
+                </div>
+                <p><strong>Hybrid Approach:</strong> Mix both in real code!</p>
+            </section>
+
+            <!-- Conclusion -->
+            <section>
+                <h2>Conclusion</h2>
+                <ul>
+                    <li>Both paradigms achieve the same results</li>
+                    <li>Functional is often more concise and safer</li>
+                    <li>Choose based on context and team preferences</li>
+                    <li>Practice both to become a better developer</li>
+                </ul>
+                <p><strong>Questions?</strong></p>
+            </section>
+
+            <!-- References -->
+            <section>
+                <h2>References</h2>
+                <ul>
+                    <li>Files: <code>examples/imperative.js</code>, <code>examples/functional.js</code></li>
+                    <li>Run with: <code>node examples/imperative.js</code></li>
+                    <li>Documentation: <code>examples/README.md</code></li>
+                </ul>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/plugin/highlight/highlight.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            plugins: [ RevealHighlight ]
+        });
+    </script>
+</body>
+</html>
