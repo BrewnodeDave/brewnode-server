@@ -582,7 +582,7 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   const cycle = () => {
     if (myGeneration !== cycleGeneration) return; // stale callback — a newer cycle has started
     if (pumpsRunning) {
-      // ON → OFF: stop pumps and close valve immediately, then wait off period
+      // ON → OFF: stop pumps and close valve, then wait off period
       pumps.off("Pump Kettle");
       pumps.off("Pump Mash");
       valves.close("Valve Mash-in");

@@ -171,7 +171,6 @@ async function pollTemperatures(){
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (prevSensorValues[sensor.name].value){
 			const changed = Math.abs((prevSensorValues[sensor.name].value - sensor.value)) >= minDeltaC;
-if (changed) console.log("changed:", sensor.name, prevSensorValues[sensor.name].value, sensor.value);
 			prevSensorValues[sensor.name].value = changed ? sensor.value : prevSensorValues[sensor.name].value; 
 			return changed;
 		}else{
