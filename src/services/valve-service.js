@@ -110,13 +110,7 @@ function Valve(valveDef) {
 		else
 		if ((requested === VALVE_OPEN_REQUEST)){
 			console.log(`[${new Date().toISOString()}] VALVE OPEN:  ${thisValve.name}`);
-			// Send the open command 3 times with 200ms gaps to ensure the valve
-			// actuator receives and acts on it, compensating for occasional I2C glitches.
 			i2c.writeBit(thisValve.requestPin, requested);
-			setTimeout(() => i2c.writeBit(thisValve.requestPin, requested), 200);
-			setTimeout(() => i2c.writeBit(thisValve.requestPin, requested), 400);
-			setTimeout(() => i2c.writeBit(thisValve.requestPin, requested), 600);
-			setTimeout(() => i2c.writeBit(thisValve.requestPin, requested), 800);
 			doublePublish(thisValve.publish, thisValve.status, thisValve.power);
 			thisValve.status = thisValve.power;
 		}
