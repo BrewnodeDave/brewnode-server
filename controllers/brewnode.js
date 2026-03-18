@@ -37,7 +37,7 @@ const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
 const mysqlService = require('../src/services/mysql-service.js');
 const {getSimulationSpeed} = require('../src/sim/sim.js');
-const {DIR_OUTPUT, setDir, writeBit, atomicMashOn, atomicMashOff} = require('../src/services/i2c_raspi-service.js');
+const {DIR_OUTPUT, setDir, writeBit} = require('../src/services/i2c_raspi-service.js');
 const flowTimeoutSecs = 5;
 
 const promiseSerial = funcs =>
@@ -523,7 +523,9 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
     if (kettlePumpModulationTimers.size > 0) {
       kettlePumpModulationTimers.forEach(t => clearTimeout(t));
       kettlePumpModulationTimers.clear();
-      atomicMashOff();
+      pumps.off("Pump Kettle");
+      pumps.off("Pump Mash");
+      valves.close("Valve Mash-in");
       return { success: true, message: "Kettle pump modulation stopped" };
     } else {
       return { success: true, message: "Kettle pump modulation was not active" };
@@ -545,7 +547,9 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   if (kettlePumpModulationTimers.size > 0) {
     kettlePumpModulationTimers.forEach(t => clearTimeout(t));
     kettlePumpModulationTimers.clear();
-    atomicMashOff();
+    pumps.off("Pump Kettle");
+    pumps.off("Pump Mash");
+    valves.close("Valve Mash-in");
   }
   if (mashPumpModulationInterval) {
     clearTimeout(mashPumpModulationInterval);
@@ -578,15 +582,23 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   const cycle = () => {
     if (myGeneration !== cycleGeneration) return; // stale callback — a newer cycle has started
     if (pumpsRunning) {
-      // ON → OFF: close valve and stop both pumps in a single atomic I2C write per register
-      atomicMashOff();
+      // ON → OFF: stop pumps and close valve immediately, then wait off period
+      pumps.off("Pump Kettle");
+      pumps.off("Pump Mash");
+      valves.close("Valve Mash-in");
       pumpsRunning = false;
       scheduleTimer(cycle, adjustedOffSecs * 1000);
     } else {
-      // OFF → ON: open valve and start both pumps in a single atomic I2C write per register
-      atomicMashOn();
+      // OFF → ON: open valve first, then start pumps after a short delay to
+      // allow the solenoid to fully open before flow is demanded.
+      valves.open("Valve Mash-in");
       pumpsRunning = true;
-      scheduleTimer(cycle, adjustedOnSecs * 1000);
+      scheduleTimer(() => {
+        if (myGeneration !== cycleGeneration) return;
+        pumps.on("Pump Kettle");
+        pumps.on("Pump Mash");
+        scheduleTimer(cycle, adjustedOnSecs * 1000);
+      }, 500);
     }
   };
   
