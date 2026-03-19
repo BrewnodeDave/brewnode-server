@@ -119,8 +119,7 @@ function create(sensorName) {
     subscribe(sensorName, cb) {
 		if (sensorNames.includes(sensorName)){
 			sensor.on(sensorName, cb);
-			return cb;
-		}else{
+			return { sensorName, cb };
 		}
 
 		/**
@@ -137,10 +136,12 @@ function create(sensorName) {
 	 * Stop subscribing to a sensor 
 	 * @param {*} listener 
 	 */
-    unSubscribe(listener) {	
-		if (listener) sensor.removeListener("sensor", listener);
-		listener = null;
-		sensor.removeAllListeners("sensor");
+    unSubscribe(listener) {
+		if (listener && listener.sensorName && listener.cb) {
+			sensor.removeListener(listener.sensorName, listener.cb);
+		} else if (listener) {
+			sensor.removeListener("sensor", listener);
+		}
     },
 
 	exists,
@@ -155,10 +156,13 @@ function create(sensorName) {
 			clients.push(socket);
 			console.log(`New Attached client ${socket.conn.remoteAddress}`);
 			
-			// Catch socket disconnect
+			// Catch socket disconnect — remove from clients array so we don't
+			// keep emitting to a dead socket for the rest of the brew session.
 			_socket.on('disconnect', () => {
 				console.log(`Socket ${_socket.id} disconnected`);
-				// Perform any necessary cleanup or logging here
+				const idx = clients.indexOf(socket);
+				if (idx !== -1) clients.splice(idx, 1);
+				if (_socket === socket) _socket = null;
 			});
 			
 			return true;
