@@ -331,7 +331,7 @@ module.exports = {
 		brewlog.warn("temp-controller-service", "Stop");
 		pause();
 		broker.unSubscribe(tempListener);
-		broker.unSubscribe(tempListener);
+		tempListener = null;
 	},
 }
 
