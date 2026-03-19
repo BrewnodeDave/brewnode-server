@@ -77,7 +77,7 @@ module.exports = {
 				}, msPerLitre);
 			
 				//t must be in secs.
-				return delay(tSecs, "Fill")
+				return delay(tSecs)
 					.then(() => {
 						clearInterval(progressInterval);
 						console.log(0)

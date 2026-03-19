@@ -21,9 +21,8 @@ describe('Delay Utility', () => {
 
   test('should create delay for specified seconds', async () => {
     const delaySecs = 1; // 1 second
-    const name = 'test-delay';
     
-    const delayPromise = delay(delaySecs, name);
+    const delayPromise = delay(delaySecs);
     
     // Fast-forward time
     jest.advanceTimersByTime(delaySecs * 1000);
@@ -33,27 +32,30 @@ describe('Delay Utility', () => {
   });
 
   test('should log delay start message', () => {
-    const delaySecs = 2;
-    const name = 'mash-step';
+    const delaySecs = 120;
+    const cb = jest.fn();
     
-    delay(delaySecs, name);
+    delay(delaySecs, cb);
     
-    expect(brewlog.info).toHaveBeenCalledWith(
-      expect.stringContaining(`${name} delay for`)
+    // Advance by report interval (60 seconds)
+    jest.advanceTimersByTime(60 * 1000);
+    
+    expect(cb).toHaveBeenCalledWith(
+      expect.stringContaining('mins to go')
     );
   });
 
   test('should log progress updates during delay', () => {
     const delaySecs = 120; // 2 minutes
-    const name = 'boil-step';
+    const cb = jest.fn();
     
-    delay(delaySecs, name);
+    delay(delaySecs, cb);
     
     // Advance by report interval (60 seconds)
     jest.advanceTimersByTime(60 * 1000);
     
-    expect(brewlog.info).toHaveBeenCalledWith(
-      expect.stringContaining(`${name}:`)
+    expect(cb).toHaveBeenCalledWith(
+      expect.stringContaining('mins to go')
     );
   });
 
@@ -61,7 +63,7 @@ describe('Delay Utility', () => {
     const delaySecs = 2;
     let resolved = false;
     
-    delay(delaySecs, 'test').then(() => {
+    delay(delaySecs).then(() => {
       resolved = true;
     });
     
@@ -75,7 +77,7 @@ describe('Delay Utility', () => {
     const delaySecs = 1;
     let resolved = false;
     
-    const delayPromise = delay(delaySecs, 'test').then(() => {
+    const delayPromise = delay(delaySecs).then(() => {
       resolved = true;
     });
     
@@ -89,7 +91,7 @@ describe('Delay Utility', () => {
   test('should handle zero delay', async () => {
     let resolved = false;
     
-    const delayPromise = delay(0, 'instant').then(() => {
+    const delayPromise = delay(0).then(() => {
       resolved = true;
     });
     
@@ -101,13 +103,15 @@ describe('Delay Utility', () => {
 
   test('should calculate minutes correctly', () => {
     const delaySecs = 90; // 1.5 minutes
-    const name = 'test-step';
+    const cb = jest.fn();
     
-    delay(delaySecs, name);
+    delay(delaySecs, cb);
     
-    // Should log "2 mins" (ceiling of 1.5)
-    expect(brewlog.info).toHaveBeenCalledWith(
-      expect.stringContaining('2 mins')
+    // Advance by 60s — toGoSecs becomes 30s, ceil(30/60) = 1 min
+    jest.advanceTimersByTime(60 * 1000);
+    
+    expect(cb).toHaveBeenCalledWith(
+      expect.stringContaining('1 mins to go')
     );
   });
 
@@ -115,7 +119,7 @@ describe('Delay Utility', () => {
     const delaySecs = 1;
     const clearIntervalSpy = jest.spyOn(global, 'clearInterval');
     
-    const delayPromise = delay(delaySecs, 'test');
+    const delayPromise = delay(delaySecs);
     
     jest.advanceTimersByTime(delaySecs * 1000);
     
