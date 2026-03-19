@@ -1107,7 +1107,7 @@ function doMashStep(step, options = {}){
       });
 
       progressPublish(`Mash step ${tempC}C reached — holding for ${mins} mins`);
-      await delay(mins * 60);
+      await delay(mins * 60, progressPublish);
 
       progressPublish(`Mash step ${tempC}C: stopping recirculation`);
       tempController.pause();
