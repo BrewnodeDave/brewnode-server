@@ -31,7 +31,7 @@ let i2c = require('./i2c_raspi-service.js');
  */
 const KICK_MS       = 200;   // ms at 100% duty to guarantee opening
 const HOLD_DUTY_PCT = 40;    // % duty cycle during hold phase
-const HOLD_FREQ_HZ  = 100;   // PWM frequency during hold phase (Hz)
+const HOLD_FREQ_HZ  = 25;    // PWM frequency during hold phase (Hz) — 25 Hz gives 16 ms ON / 24 ms OFF, well within setTimeout accuracy
 
 const HOLD_PERIOD_MS  = 1000 / HOLD_FREQ_HZ;                        // 10 ms
 const HOLD_ON_MS      = HOLD_PERIOD_MS * (HOLD_DUTY_PCT / 100);     // 4 ms on
