@@ -19,6 +19,7 @@ const brewdefs = require('./brewdefs.js');
 let rollbar;
 const Rollbar = require('rollbar');
 const mysqlService = require('../../services/mysql-service.js');
+const emailService = require('../../services/email-service.js');
 
 								
 let prevPower = null;
@@ -156,6 +157,7 @@ module.exports = {
 			} else {
 				gLogger.error(msg);
 			}
+			emailService.sendAlert(`Error: ${msg}`, data ? `${msg}\n\n${data}` : msg);
 		}	
 	},
 
@@ -169,6 +171,7 @@ module.exports = {
 			} else {
 				gLogger.error(msg);
 			}
+			emailService.sendAlert(`Critical: ${msg}`, data ? `${msg}\n\n${data}` : msg);
 		}
 	},
 
