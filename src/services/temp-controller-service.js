@@ -127,16 +127,11 @@ async function getTempWithRetry(thermName, retries = 3, delayMs = 500) {
 			if (temp !== false && temp !== null && temp !== undefined && temp !== 85 && temp >= -10 && temp <= 110) {
 				const probe = probes.find(p => p.name === thermName);
 				const compensated = probe ? probe.compensate(temp) : temp;
-				if (attempt > 1) {
-					brewlog.info(`Temperature read succeeded on attempt ${attempt}`, compensated);
-				}
 				return compensated;
 			}
-
-			brewlog.warn(`Invalid temperature reading: ${temp}°C (attempt ${attempt}/${retries})`);
-
+			
 		} catch (err) {
-			brewlog.warn(`Temperature read failed (attempt ${attempt}/${retries})`, err.message);
+			// brewlog.error(`Temperature read failed (attempt ${attempt}/${retries})`, err.message);
 		}
 
 		if (attempt < retries) {
