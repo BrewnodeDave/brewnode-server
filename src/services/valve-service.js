@@ -24,6 +24,78 @@ const {doublePublish} = require('./mysql-service.js');
 // @ts-ignore
 let i2c = require('./i2c_raspi-service.js');
 
+/**
+ * Kick-and-hold PWM constants.
+ * The valve solenoid receives 100% duty for KICK_MS to ensure it opens,
+ * then drops to HOLD_DUTY_PCT to maintain the open state with ~60% less heat.
+ */
+const KICK_MS       = 200;   // ms at 100% duty to guarantee opening
+const HOLD_DUTY_PCT = 40;    // % duty cycle during hold phase
+const HOLD_FREQ_HZ  = 100;   // PWM frequency during hold phase (Hz)
+
+const HOLD_PERIOD_MS  = 1000 / HOLD_FREQ_HZ;                        // 10 ms
+const HOLD_ON_MS      = HOLD_PERIOD_MS * (HOLD_DUTY_PCT / 100);     // 4 ms on
+const HOLD_OFF_MS     = HOLD_PERIOD_MS - HOLD_ON_MS;                // 6 ms off
+
+/**
+ * Per-valve kick-and-hold driver.
+ * Starts a 100% kick, then maintains a PWM hold cycle.
+ * All timers are stored so they can be cancelled on close().
+ */
+class ValvePwm {
+    constructor(writeBit, pin) {
+        this._writeBit  = writeBit;
+        this._pin       = pin;
+        this._kickTimer = null;
+        this._pwmTimer  = null;
+        this._running   = false;
+    }
+
+    start() {
+        this._stop();
+        this._running = true;
+
+        // Kick: assert pin HIGH (OPEN) for KICK_MS at 100% duty
+        this._writeBit(this._pin, VALVE_OPEN_REQUEST);
+
+        this._kickTimer = setTimeout(() => {
+            if (!this._running) return;
+            // Transition to hold phase PWM
+            this._scheduleCycle();
+        }, KICK_MS);
+    }
+
+    _scheduleCycle() {
+        if (!this._running) return;
+
+        // ON phase
+        this._writeBit(this._pin, VALVE_OPEN_REQUEST);
+
+        this._pwmTimer = setTimeout(() => {
+            if (!this._running) return;
+
+            // OFF phase
+            this._writeBit(this._pin, VALVE_CLOSE_REQUEST);
+
+            this._pwmTimer = setTimeout(() => {
+                this._scheduleCycle();
+            }, HOLD_OFF_MS);
+        }, HOLD_ON_MS);
+    }
+
+    _stop() {
+        this._running = false;
+        if (this._kickTimer) { clearTimeout(this._kickTimer); this._kickTimer = null; }
+        if (this._pwmTimer)  { clearTimeout(this._pwmTimer);  this._pwmTimer  = null; }
+    }
+
+    stop() {
+        this._stop();
+        // Ensure the pin is de-energised when PWM stops
+        this._writeBit(this._pin, VALVE_CLOSE_REQUEST);
+    }
+}
+
 /** 
  @const {number} 
  @desc I2C value used to OPEN the valve.
@@ -99,18 +171,21 @@ function Valve(valveDef) {
 
 	thisValve.publish = broker.create(valveDef.name);
 
+	// Per-valve kick-and-hold PWM instance
+	thisValve._pwm = new ValvePwm((pin, val) => i2c.writeBit(pin, val), thisValve.requestPin);
+
 	thisValve.openOrClose = (requested) => {
 		
 		if ((requested === VALVE_CLOSE_REQUEST)){
 			console.log(`[${new Date().toISOString()}] VALVE CLOSE: ${thisValve.name}`);
-			i2c.writeBit(thisValve.requestPin, requested);
+			thisValve._pwm.stop();
 			doublePublish(thisValve.publish, thisValve.status, 0);
 			thisValve.status = 0;
 		}
 		else
 		if ((requested === VALVE_OPEN_REQUEST)){
 			console.log(`[${new Date().toISOString()}] VALVE OPEN:  ${thisValve.name}`);
-			i2c.writeBit(thisValve.requestPin, requested);
+			thisValve._pwm.start();
 			doublePublish(thisValve.publish, thisValve.status, thisValve.power);
 			thisValve.status = thisValve.power;
 		}
@@ -205,7 +280,10 @@ module.exports = {
 			});
 			timeouts = [];
 
-			const allClosed = _valves.map(({ close }) => close)
+			const allClosed = _valves.map(({ close, _pwm }) => {
+				if (_pwm) _pwm.stop();
+				return close;
+			})
 	
 			Promise.all(allClosed).then(() => {
 				_valves.forEach((v) => {
