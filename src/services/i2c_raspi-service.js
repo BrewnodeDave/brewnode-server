@@ -132,19 +132,15 @@ function writeReg(chipAddress, address, currentByte, bit, value){
 	  brewlog.critical("writeReg value=", `${value}`)
 	}
 
-	// Write then verify with read-back from the output latch register (OLAT).
-	// On MCP23017, reading the GPIO register (0x12/0x13) reads the actual pin state,
-	// which may differ from what was written if a load is pulling the line.
-	// The OLAT registers (0x14/0x15 for chip 0x20, 0x14/0x15 for chip 0x21) reflect
-	// what was actually latched — so we verify against those instead.
-	// Direction registers (0x0/0x1) have no OLAT equivalent, so read them back directly.
+	// Write then verify with a single readback from the OLAT register.
+	// OLAT (0x14/0x15) reflects what was latched, not the actual pin state.
+	// Direction registers (0x0/0x1) have no OLAT, so read them back directly.
 	const isDataReg = (address === 0x12 || address === 0x13);
 	const verifyAddress = isDataReg ? (address + 2) : address; // 0x12→0x14, 0x13→0x15
-	for (let attempt = 0; attempt < 5; attempt++) {
-		_i2c.writeByteSync(chipAddress, address, result);
-		const readback = _i2c.readByteSync(chipAddress, verifyAddress);
-		if (readback === result) break;
-		brewlog.warn(`writeReg readback mismatch (attempt ${attempt + 1}): wrote 0x${result.toString(16)}, read 0x${readback.toString(16)} from 0x${verifyAddress.toString(16)}`);
+	_i2c.writeByteSync(chipAddress, address, result);
+	const readback = _i2c.readByteSync(chipAddress, verifyAddress);
+	if (readback !== result) {
+		brewlog.warn(`writeReg readback mismatch: wrote 0x${result.toString(16)}, read 0x${readback.toString(16)} from 0x${verifyAddress.toString(16)}`);
 	}
 
 	return result;
@@ -251,6 +247,34 @@ module.exports = {
 		  }
 	},
 	
+	/**
+	 * Write a bit without readback verification.
+	 * Use ONLY for high-frequency PWM hold cycles where the kick phase has
+	 * already confirmed the valve opened. Avoids saturating the I2C bus.
+	 * @param {number} bit - Bit number [0:31]
+	 * @param {number} value - 0 or 1
+	 */
+	writeBitFast(bit, value) {
+		try {
+			const mask = 1 << (bit % 8);
+			if (bit < 8) {
+				dataByte[0] = value ? (dataByte[0] | mask) : (dataByte[0] & ~mask);
+				_i2c.writeByteSync(REGx20, 0x12, dataByte[0]);
+			} else if (bit < 16) {
+				dataByte[1] = value ? (dataByte[1] | mask) : (dataByte[1] & ~mask);
+				_i2c.writeByteSync(REGx20, 0x13, dataByte[1]);
+			} else if (bit < 24) {
+				dataByte[2] = value ? (dataByte[2] | mask) : (dataByte[2] & ~mask);
+				_i2c.writeByteSync(REGx21, 0x12, dataByte[2]);
+			} else {
+				dataByte[3] = value ? (dataByte[3] | mask) : (dataByte[3] & ~mask);
+				_i2c.writeByteSync(REGx21, 0x13, dataByte[3]);
+			}
+		} catch (err) {
+			brewlog.error('Error in writeBitFast:', JSON.stringify(err.stack));
+		}
+	},
+
 	/** Read any single bit
 	 * @param {number} bit - Bit number [0:31]
 	 */
