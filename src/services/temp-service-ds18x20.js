@@ -167,9 +167,10 @@ async function pollTemperatures(){
 
 	const sensors = await getAllTemps();
 	
-	// Find sensors with different values
+	// Find sensors with different values (skip sensors with no valid reading yet)
 	const changedSensors = sensors.filter((sensor, index) => {
-		if (prevSensorValues[sensor.name].value){
+		if (sensor.value == null) return false;
+		if (prevSensorValues[sensor.name].value != null){
 			const changed = Math.abs((prevSensorValues[sensor.name].value - sensor.value)) >= minDeltaC;
 			prevSensorValues[sensor.name].value = changed ? sensor.value : prevSensorValues[sensor.name].value; 
 			return changed;
@@ -179,8 +180,12 @@ async function pollTemperatures(){
 		}
 	});			
 
-	// Publish changes for sensors with different values
-	changedSensors.forEach(async (sensor) => await sensor?.publish(sensor.value));
+	// Publish changes for sensors with different values (skip null/undefined — sensor not yet read)
+	changedSensors.forEach(async (sensor) => {
+		if (sensor?.value != null) {
+			await sensor.publish(sensor.value);
+		}
+	});
 }
 
 module.exports = { 	
