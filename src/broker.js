@@ -159,7 +159,7 @@ function create(sensorName) {
 			// Catch socket disconnect — remove from clients array so we don't
 			// keep emitting to a dead socket for the rest of the brew session.
 			_socket.on('disconnect', () => {
-				console.log(`Socket ${_socket.id} disconnected`);
+				console.log(`Socket ${socket.id} disconnected`);
 				const idx = clients.indexOf(socket);
 				if (idx !== -1) clients.splice(idx, 1);
 				if (_socket === socket) _socket = null;
