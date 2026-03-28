@@ -109,6 +109,7 @@ const BYTE_INPUT = (DIR_INPUT << 0) | (DIR_INPUT << 1) | (DIR_INPUT << 2) | (DIR
 
 let I2C;
 let raspi;
+let _started = false;
 
 //IN=1, OUT=0
 let dataDir  = [BYTE_INPUT, BYTE_INPUT, BYTE_INPUT, BYTE_INPUT];
@@ -204,8 +205,15 @@ module.exports = {}
 module.exports = { 
 	DIR_INPUT,
 	DIR_OUTPUT,
+	stop() {
+		_started = false;
+		_i2c = null;
+	},
+
 	start : (simulationSpeed) => 
 		new Promise((resolve, reject) => {
+			if (_started) { resolve(); return; }
+
 			const ispi = brewdefs.isRaspPi();
 			const sim = simulationSpeed !== 1;
 			//console.log (`raspi=${ispi}. sim=${sim}`);
@@ -236,12 +244,14 @@ module.exports = {
 						return;
 					}
 					brewlog.debug("Raspi I2C initialised");
+					_started = true;
 					resolve();
 				});
 				return; // resolve() called inside raspi.init callback above
 			}else{
 				_i2c = require('../sim/raspi-i2c.js');
 				init(_i2c);
+				_started = true;
 			}
 			resolve();
 		}),

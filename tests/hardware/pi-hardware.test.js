@@ -21,26 +21,36 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
   let pumpService;
   let valveService;
 
-  beforeAll(() => {
-    //console.log('🍺 Running Raspberry Pi hardware integration tests...');
-    //console.log('Platform:', process.platform);
-    //console.log('Architecture:', process.arch);
-  });
-
-  beforeEach(() => {
-    // Dynamically import services to avoid loading on non-Pi systems
-    i2cService = require('../../src/services/i2c_raspi-service.js');
-    tempService = require('../../src/services/temp-service.js');
-    pumpService = require('../../src/services/pump-service.js');
+  beforeAll(async () => {
+    // Load services once — module cache means repeated require() returns the same instance
+    i2cService  = require('../../src/services/i2c_raspi-service.js');
+    tempService  = require('../../src/services/temp-service.js');
+    pumpService  = require('../../src/services/pump-service.js');
     valveService = require('../../src/services/valve-service.js');
+    // Initialise I2C once for the whole suite — raspi.init() can only run once
+    await i2cService.start(1);
   });
 
-  afterEach(async () => {
-    // Clean shutdown of all services
+  afterAll(async () => {
     try {
       await pumpService.stop();
       await valveService.stop();
       await tempService.stop();
+      i2cService.stop();
+    } catch (error) {
+      // Ignore cleanup errors
+    }
+  });
+
+  beforeEach(() => {
+    // Services already loaded and i2c already started in beforeAll
+  });
+
+  afterEach(async () => {
+    // Per-test teardown: stop higher-level services so each test starts clean
+    try {
+      await pumpService.stop();
+      await valveService.stop();
     } catch (error) {
       // Ignore cleanup errors in tests
     }
