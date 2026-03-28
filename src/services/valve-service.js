@@ -44,11 +44,12 @@ const HOLD_OFF_MS     = HOLD_PERIOD_MS - HOLD_ON_MS;                // 6 ms off
  */
 class ValvePwm {
     constructor(writeBit, pin) {
-        this._writeBit  = writeBit;
-        this._pin       = pin;
-        this._kickTimer = null;
-        this._pwmTimer  = null;
-        this._running   = false;
+        this._writeBit    = writeBit;
+        this._pin         = pin;
+        this._kickTimer   = null;
+        this._pwmOnTimer  = null;  // ON phase of each hold cycle
+        this._pwmOffTimer = null;  // OFF phase of each hold cycle
+        this._running     = false;
     }
 
     start() {
@@ -71,13 +72,15 @@ class ValvePwm {
         // ON phase
         this._writeBit(this._pin, VALVE_OPEN_REQUEST);
 
-        this._pwmTimer = setTimeout(() => {
+        this._pwmOnTimer = setTimeout(() => {
+            this._pwmOnTimer = null;
             if (!this._running) return;
 
             // OFF phase
             this._writeBit(this._pin, VALVE_CLOSE_REQUEST);
 
-            this._pwmTimer = setTimeout(() => {
+            this._pwmOffTimer = setTimeout(() => {
+                this._pwmOffTimer = null;
                 this._scheduleCycle();
             }, HOLD_OFF_MS);
         }, HOLD_ON_MS);
@@ -85,8 +88,9 @@ class ValvePwm {
 
     _stop() {
         this._running = false;
-        if (this._kickTimer) { clearTimeout(this._kickTimer); this._kickTimer = null; }
-        if (this._pwmTimer)  { clearTimeout(this._pwmTimer);  this._pwmTimer  = null; }
+        if (this._kickTimer)   { clearTimeout(this._kickTimer);   this._kickTimer   = null; }
+        if (this._pwmOnTimer)  { clearTimeout(this._pwmOnTimer);  this._pwmOnTimer  = null; }
+        if (this._pwmOffTimer) { clearTimeout(this._pwmOffTimer); this._pwmOffTimer = null; }
     }
 
     stop() {
