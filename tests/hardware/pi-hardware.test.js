@@ -27,9 +27,14 @@ describeOnPi('Raspberry Pi Hardware Tests', () => {
     tempService  = require('../../src/services/temp-service.js');
     pumpService  = require('../../src/services/pump-service.js');
     valveService = require('../../src/services/valve-service.js');
-    // Initialise I2C once for the whole suite — raspi.init() can only run once
-    await i2cService.start(1);
-  });
+    // Initialise I2C once for the whole suite — raspi.init() can only run once.
+    // Allow 10s: the service itself will reject after 8s if hardware is unavailable.
+    try {
+      await i2cService.start(1);
+    } catch (err) {
+      console.warn('I2C hardware not available for test suite:', err.message);
+    }
+  }, 10000);
 
   afterAll(async () => {
     try {

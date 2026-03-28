@@ -231,7 +231,19 @@ module.exports = {
 				}
 				// raspi.init() MUST be called before instantiating I2C —
 				// the Peripheral base class validates liveness on every operation.
-				raspi.init(() => {
+				// Guard: if raspi is already initialised (e.g. called twice in same
+				// process), skip raspi.init() — calling it again never fires the callback.
+				const raspiAlreadyInit = raspi.isInitialised ? raspi.isInitialised() : false;
+
+				const doInit = (cb) => raspiAlreadyInit ? cb() : raspi.init(cb);
+
+				// Reject if raspi.init never fires (e.g. bad hardware or test environment)
+				const initTimeout = setTimeout(() => {
+					reject(new Error('raspi.init() timed out — I2C hardware not available'));
+				}, 8000);
+
+				doInit(() => {
+					clearTimeout(initTimeout);
 					try {
 						_i2c = new I2C();
 					} catch (e) {
@@ -247,7 +259,7 @@ module.exports = {
 					_started = true;
 					resolve();
 				});
-				return; // resolve() called inside raspi.init callback above
+				return; // resolve() called inside doInit callback above
 			}else{
 				_i2c = require('../sim/raspi-i2c.js');
 				init(_i2c);
