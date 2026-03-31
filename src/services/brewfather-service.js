@@ -24,6 +24,11 @@ async function getFermenterTemp() {
     const glycolT = await therm.getTemp("Temp Glycol");
     const ambientT = await therm.getTemp("Temp Ambient");
 
+    if (fermenterT == null || glycolT == null || ambientT == null) {
+        brewlog.warn("brewfather-service", `Skipping Brewfather post — null sensor: fermenter=${fermenterT} glycol=${glycolT} ambient=${ambientT}`);
+        return;
+    }
+
     try {
         await logTemps(fermenterT, ambientT, glycolT);
     } catch (err) {
