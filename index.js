@@ -174,6 +174,15 @@ insertMiddleware(app, corsMiddleware);
 
 // Initialize the Swagger middleware
 const httpServer = http.createServer(app).listen(serverPort, async function () {
+  // Step 1: Validate Pi hardware if running on Raspberry Pi
+  // Removed in bc7b7ae ("dont validate hardware from service") — re-enable if needed
+  // const hardwareValid = await validatePiHardware();
+  // if (!hardwareValid) {
+  //   console.error("🚨 CRITICAL: Hardware validation failed - shutting down server");
+  //   process.exit(1);
+  // }
+
+  // Step 2: Start all brewery services
   const started = await start();
   if (!started) {
     console.error("❌ Failed to start the server due to service initialization errors.");
