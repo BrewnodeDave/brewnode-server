@@ -300,12 +300,14 @@ module.exports = {
 					if (err){
 						reject(err);
 					}else{
-						// updateProbeValue(probe, temp);
+						if (isValidTemp(temp)) {
+							updateProbeValue(probe, temp);
+						}
 						resolve(probe.value);
 					}
 				});
 			} catch (err) {
-				console.log(name);
+				brewlog.warn('getTemp', `${name}: ${err.message}`);
 				reject(err);
 			}
 		});

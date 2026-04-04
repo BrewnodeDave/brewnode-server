@@ -95,8 +95,11 @@ function post(data, id = process.env.BREWFATHER_CUSTOM_STREAM) {
       });
     });
 
-    req.on("error",err => {
-      brewlog.error("brewfather-stream", `Error: ${err}`);
+    req.on("error", err => {
+      // Downgrade to warn — ENOTFOUND/ECONNREFUSED are connectivity issues,
+      // not code errors, and error level triggers email alerts.
+      const level = (err.code === 'ENOTFOUND' || err.code === 'ECONNREFUSED') ? 'warn' : 'error';
+      brewlog[level]("brewfather-stream", `${err.code}: ${err.message}`);
       reject(err);
     });
 

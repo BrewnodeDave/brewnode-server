@@ -24,7 +24,17 @@ async function getFermenterTemp() {
     const glycolT = await therm.getTemp("Temp Glycol");
     const ambientT = await therm.getTemp("Temp Ambient");
 
-    await logTemps(fermenterT, ambientT, glycolT);
+    if (fermenterT == null || glycolT == null || ambientT == null) {
+        brewlog.warn("brewfather-service", `Skipping Brewfather post — null sensor: fermenter=${fermenterT} glycol=${glycolT} ambient=${ambientT}`);
+        return;
+    }
+
+    try {
+        await logTemps(fermenterT, ambientT, glycolT);
+    } catch (err) {
+        // Network errors (ENOTFOUND etc.) are already logged in post() — don't rethrow
+        // so the setInterval continues running on the next tick.
+    }
 }
 
 
