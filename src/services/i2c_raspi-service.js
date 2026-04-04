@@ -109,6 +109,7 @@ const BYTE_INPUT = (DIR_INPUT << 0) | (DIR_INPUT << 1) | (DIR_INPUT << 2) | (DIR
 
 let I2C;
 let raspi;
+let _started = false;
 
 //IN=1, OUT=0
 let dataDir  = [BYTE_INPUT, BYTE_INPUT, BYTE_INPUT, BYTE_INPUT];
@@ -132,9 +133,16 @@ function writeReg(chipAddress, address, currentByte, bit, value){
 	  brewlog.critical("writeReg value=", `${value}`)
 	}
 
-	// Write then verify with a single readback from the OLAT register.
-	// OLAT (0x14/0x15) reflects what was latched, not the actual pin state.
-	// Direction registers (0x0/0x1) have no OLAT, so read them back directly.
+	// Write then verify with read-back from the output latch register (OLAT).
+	// On MCP23017, reading the GPIO register (0x12/0x13) reads the actual pin state,
+	// which may differ from what was written if a load is pulling the line.
+	// The OLAT registers (0x14/0x15 for chip 0x20, 0x14/0x15 for chip 0x21) reflect
+	// what was actually latched — so we verify against those instead.
+	// Direction registers (0x0/0x1) have no OLAT equivalent, so read them back directly.
+	// Single write + single readback for verify.
+	// Read back from OLAT (0x14/0x15) for data registers, since GPIO pins
+	// reflect actual pin state (may differ from what was written under load).
+	// Direction registers (0x0/0x1) have no OLAT so read them back directly.
 	const isDataReg = (address === 0x12 || address === 0x13);
 	const verifyAddress = isDataReg ? (address + 2) : address; // 0x12→0x14, 0x13→0x15
 	_i2c.writeByteSync(chipAddress, address, result);
@@ -197,25 +205,65 @@ module.exports = {}
 module.exports = { 
 	DIR_INPUT,
 	DIR_OUTPUT,
+	stop() {
+		_started = false;
+		_i2c = null;
+	},
+
 	start : (simulationSpeed) => 
 		new Promise((resolve, reject) => {
+			if (_started) { resolve(); return; }
+
 			const ispi = brewdefs.isRaspPi();
 			const sim = simulationSpeed !== 1;
 			//console.log (`raspi=${ispi}. sim=${sim}`);
 			if (ispi && !sim) {
-				raspi = require('raspi');
-				I2C = require('raspi-i2c').I2C;
-				_i2c = new I2C();
-				const ok = init(_i2c);
-				if (!ok) {
-					reject(new Error("Failed to initialise I2C"));
+				try {
+					raspi = require('raspi');
+					I2C = require('raspi-i2c').I2C;
+				} catch (e) {
+					reject(new Error(`raspi-i2c not installed — run: npm install raspi-i2c (${e.message})`));
 					return;
 				}
-				brewlog.debug("Raspi I2C initialised");
-				raspi.init(()=>ok);
+				if (typeof I2C !== 'function') {
+					reject(new Error('raspi-i2c did not export a valid I2C class — check installation'));
+					return;
+				}
+				// raspi.init() MUST be called before instantiating I2C —
+				// the Peripheral base class validates liveness on every operation.
+				// Guard: if raspi is already initialised (e.g. called twice in same
+				// process), skip raspi.init() — calling it again never fires the callback.
+				const raspiAlreadyInit = raspi.isInitialised ? raspi.isInitialised() : false;
+
+				const doInit = (cb) => raspiAlreadyInit ? cb() : raspi.init(cb);
+
+				// Reject if raspi.init never fires (e.g. bad hardware or test environment)
+				const initTimeout = setTimeout(() => {
+					reject(new Error('raspi.init() timed out — I2C hardware not available'));
+				}, 8000);
+
+				doInit(() => {
+					clearTimeout(initTimeout);
+					try {
+						_i2c = new I2C();
+					} catch (e) {
+						reject(new Error(`Failed to create I2C instance: ${e.message}`));
+						return;
+					}
+					const ok = init(_i2c);
+					if (!ok) {
+						reject(new Error("Failed to initialise I2C"));
+						return;
+					}
+					brewlog.debug("Raspi I2C initialised");
+					_started = true;
+					resolve();
+				});
+				return; // resolve() called inside doInit callback above
 			}else{
 				_i2c = require('../sim/raspi-i2c.js');
 				init(_i2c);
+				_started = true;
 			}
 			resolve();
 		}),
@@ -245,6 +293,32 @@ module.exports = {
 			brewlog.critcal('Error in writeBit:', JSON.stringify(err.stack));
 			return err;
 		  }
+	},
+
+	/** Set or clear any bit WITHOUT readback verify — for high-frequency PWM hold cycles.
+	 *  Updates the dataByte cache and issues a single writeByteSync, no I2C readback.
+	 * @param {number} bit - Bit number [0:31]
+	 * @param {number} value - 0 or 1
+	 */
+	writeBitFast(bit, value) {
+		try {
+			const mask = 1 << (bit % 8);
+			if (bit < 8) {
+				dataByte[0] = value ? (dataByte[0] | mask) : (dataByte[0] & ~mask);
+				_i2c.writeByteSync(REGx20, 0x12, dataByte[0]);
+			} else if (bit < 16) {
+				dataByte[1] = value ? (dataByte[1] | mask) : (dataByte[1] & ~mask);
+				_i2c.writeByteSync(REGx20, 0x13, dataByte[1]);
+			} else if (bit < 24) {
+				dataByte[2] = value ? (dataByte[2] | mask) : (dataByte[2] & ~mask);
+				_i2c.writeByteSync(REGx21, 0x12, dataByte[2]);
+			} else {
+				dataByte[3] = value ? (dataByte[3] | mask) : (dataByte[3] & ~mask);
+				_i2c.writeByteSync(REGx21, 0x13, dataByte[3]);
+			}
+		} catch (err) {
+			brewlog.critical('Error in writeBitFast:', JSON.stringify(err.stack));
+		}
 	},
 	
 	/**
