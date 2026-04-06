@@ -290,7 +290,7 @@ module.exports = {
 			}
 			return array2Hex(dataByte);
 		  } catch (err) {
-			brewlog.critcal('Error in writeBit:', JSON.stringify(err.stack));
+			brewlog.critical('Error in writeBit:', JSON.stringify(err.stack));
 			return err;
 		  }
 	},
