@@ -1027,16 +1027,21 @@ const getPump = (name) => {
 async function pipeHeatLoss(tempFluid, tempSensorName, includeVesselMass = true) {
   const tempAmbient = await therm.getTemp(tempSensorName);
 
-  // ── Pipe conduction loss ──────────────────────────────────────────────────
-  const k_ss   = 16;     // W/(m·°C)  thermal conductivity of stainless steel
+  // ── Pipe convective loss ──────────────────────────────────────────────────
+  // Heat lost from the outer pipe surface to ambient air via natural convection.
+  // Q = h · A · ΔT  where A = 2π·r_o·L (outer surface area of the pipe).
+  // Using the stainless steel radial-conduction formula (k_ss / ln(r_o/r_i))
+  // was incorrect here — that formula gives the resistance of the steel wall
+  // itself, not the dominant air-side convective resistance. Because ln(r_o/r_i)
+  // is very small for thin-walled pipe, it produced absurdly large (>40°C) offsets.
+  const h      = 10;     // W/(m²·°C) natural convection coefficient in air
   const L      = 1.76;   // m         transfer pipe length
-  const r_i    = 0.0125; // m         pipe inner radius (12.5 mm → 25 mm ID)
   const r_o    = 0.0155; // m         pipe outer radius (31 mm OD)
   const C_w    = 4200;   // J/(kg·°C) specific heat of water
   const flow   = 0.200;  // kg/s      wort flow rate during transfer
 
-  const heatLossJPerSec = 2 * Math.PI * k_ss * L * (tempFluid - tempAmbient)
-                          / Math.log(r_o / r_i);
+  const A = 2 * Math.PI * r_o * L;            // m²  outer surface area
+  const heatLossJPerSec = h * A * (tempFluid - tempAmbient);
   const deltaTpipe = heatLossJPerSec / C_w / flow;
 
   // ── Vessel thermal mass ───────────────────────────────────────────────────
