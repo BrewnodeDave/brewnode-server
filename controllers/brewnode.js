@@ -1025,7 +1025,9 @@ const getPump = (name) => {
  * @returns {Promise<number>}        - Combined ΔT to add to the kettle set-point.
  */
 async function pipeHeatLoss(tempFluid, tempSensorName, includeVesselMass = true) {
-  const tempAmbient = await therm.getTemp(tempSensorName);
+  const FALLBACK_AMBIENT = 20; // °C — used if sensor not yet read or unavailable
+  const rawAmbient = await therm.getTemp(tempSensorName).catch(() => null);
+  const tempAmbient = (rawAmbient != null && !isNaN(rawAmbient)) ? rawAmbient : FALLBACK_AMBIENT;
 
   // ── Pipe convective loss ──────────────────────────────────────────────────
   // Heat lost from the outer pipe surface to ambient air via natural convection.
