@@ -1,6 +1,6 @@
 {
   "name": "@brewnode/server",
-  "version": "2.5.0",
+  "version": "2.7.0",
   "description": "Comprehensive Node.js backend server for brewery automation and monitoring with BrewNode hardware integration",
   "publishConfig": {
     "access": "public"
