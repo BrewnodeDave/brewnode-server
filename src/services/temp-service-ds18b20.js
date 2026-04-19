@@ -8,6 +8,7 @@
 
 const PIN = 4;
 const FAHRENHEIT = false;
+const POLL_INTERVAL_SECS = 10;
 
 /**
  * Temperature Sensor Driver.
@@ -128,6 +129,8 @@ async function pollTemperatures(deltaSecs){
 		return (deltaC > minDeltaC) && (degPerMin < maxDegPerMin);
 	});
 
+	console.log({changedSensors});
+	
 	// Publish changes for sensors with different values
 	changedSensors.forEach(sensor => {
 		sensor?.publish(sensor.value);
@@ -135,7 +138,6 @@ async function pollTemperatures(deltaSecs){
 		// Update previous sensor values
 		prevSensorValues[sensor.name] = sensor.value;
 	});
-
 }
 
 const probeId = name => probes.find(p => p.name === name).id;
@@ -174,12 +176,11 @@ module.exports = {
 				});
 										
 				if (simulationSpeed !== 1){
-					setPollInterval(60 / simulationSpeed);
+					setPollInterval(POLL_INTERVAL_SECS / simulationSpeed);
 					ambientTemp = 9.9;
 				}else{
-					setPollInterval(10);
-					const probeName = activeFermenter === "UNI" ? "Temp UniTank" : "Temp SS";
-					const ambientId = probeId(probeName); 
+					setPollInterval(POLL_INTERVAL_SECS);
+					const ambientId = probeId("Temp Ambient"); 
 					ambientTemp = readSensor(ambientId);
 				}
 				started = true;

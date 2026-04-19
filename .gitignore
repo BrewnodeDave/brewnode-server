@@ -131,3 +131,7 @@ dist
 frontend/
 *.log
 **/log.txt
+
+# TLS certificates
+server.key
+server.crt

@@ -211,10 +211,18 @@ curl -X PUT "http://localhost:3000/i2c?bit=17&value=1"
           minimum: 1
           maximum: 100
           default: 50
+      - name: mashDutyCycle
+        required: false
+        description: Mash pump duty cycle percentage (1-100); when provided the mash pump will cycle instead of running continuously.
+        schema:
+          type: number
+          minimum: 1
+          maximum: 100
     description: |
       Complete RIMS operation control:
       - Turns on mash pump continuously
-      - Modulates kettle pump with configurable duty cycle
+        - Modulates kettle pump with configurable duty cycle
+        - Optionally modulates mash pump with its own duty cycle
       - Controls mash temperature via PID and kettle heater
       - Synchronizes mash-in valve with kettle pump
       - Duty cycle: 50% = 6.5s on / 6.5s off in 13s total cycle
@@ -230,8 +238,15 @@ curl -X PUT "http://localhost:3000/i2c?bit=17&value=1"
           type: number
           minimum: 1
           maximum: 99
+      - name: mashDutyCycle
+        required: false
+        schema:
+          type: number
+          minimum: 1
+          maximum: 99
     description: |
       Dynamically adjusts kettle pump on/off times while recirculation runs.
+      Optionally adjusts mash pump cycle as well using mashDutyCycle.
       Recalculates onSecs and offSecs to maintain 13-second total cycle.
 
 /recirculate/status:

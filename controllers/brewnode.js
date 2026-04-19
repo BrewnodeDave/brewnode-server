@@ -31,6 +31,7 @@ const startStop = require('../src/start-stop.js');
 const {progressPublish, remainingMashMinutes, remainingBoilMinutes, remainingKettleMinutes} = require('../src/publish.js');
 
 const brewlog = require('../src/brewstack/common/brewlog.js');
+const delay = require('../src/brewstack/common/delay.js');
 
 const axios = require('axios');
 const { brewfatherV2, getAuth } = require('./common.js');
@@ -38,6 +39,11 @@ const mysqlService = require('../src/services/mysql-service.js');
 const {getSimulationSpeed} = require('../src/sim/sim.js');
 const {DIR_OUTPUT, setDir, writeBit} = require('../src/services/i2c_raspi-service.js');
 const flowTimeoutSecs = 5;
+
+const promiseSerial = funcs =>
+  funcs.reduce((promise, f) =>
+    promise.then(result => f().then(Array.prototype.concat.bind(result))),
+    Promise.resolve([]));
 
 async function whatsBrewing (req, res, next) {
   const auth = getAuth(req);
@@ -489,7 +495,17 @@ async function pump(req, res, next, pumpName, onOff) {
 } 
 
 // Global variables to store pump modulation intervals
-let kettlePumpModulationInterval = null;
+// Tracks ALL pending setTimeout handles inside the pump modulation cycle.
+// Using a Set (rather than a single handle) ensures every nested callback
+// can be cancelled on stop, preventing dangling timers from toggling pumps
+// during the next step's preheat phase.
+let kettlePumpModulationTimers = new Set();
+// Module-level cycle state — shared across all calls to startStopKettlePumpModulation
+// so that restarting the cycle always resets the state seen by the new cycle's callbacks.
+let pumpsRunning = false;
+// Incremented each time the cycle is (re)started. Callbacks capture their generation
+// at creation time and bail out if it no longer matches, making stale callbacks no-ops.
+let cycleGeneration = 0;
 let mashPumpModulationInterval = null;
 let recirculationInterval = null;
 
@@ -500,6 +516,10 @@ let recirculationState = {
   dutyCycle: null,
   onSecs: null,
   offSecs: null
+  ,
+  mashDutyCycle: null,
+  mashOnSecs: null,
+  mashOffSecs: null
 };
 
 /**
@@ -511,10 +531,11 @@ let recirculationState = {
 function startStopKettlePumpModulation(onSecs, offSecs) {
   // If no parameters provided, stop modulation
   if (!onSecs && !offSecs) {
-    if (kettlePumpModulationInterval) {
-      clearTimeout(kettlePumpModulationInterval);
-      kettlePumpModulationInterval = null;
+    if (kettlePumpModulationTimers.size > 0) {
+      kettlePumpModulationTimers.forEach(t => clearTimeout(t));
+      kettlePumpModulationTimers.clear();
       pumps.off("Pump Kettle");
+      pumps.off("Pump Mash");
       valves.close("Valve Mash-in");
       return { success: true, message: "Kettle pump modulation stopped" };
     } else {
@@ -531,40 +552,64 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
     return { success: false, message: "Invalid parameters: onSecs and offSecs must be numbers between 0.1 and 3600", status: 400 };
   }
 
-  // Stop any existing modulation
-  if (kettlePumpModulationInterval) {
-    clearTimeout(kettlePumpModulationInterval);
-    kettlePumpModulationInterval = null;
+  // Stop any existing modulation — cancel every pending handle.
+  // Also stop mash pump modulation: it runs independently and will fight
+  // the kettle cycle if both are active at the same time.
+  if (kettlePumpModulationTimers.size > 0) {
+    kettlePumpModulationTimers.forEach(t => clearTimeout(t));
+    kettlePumpModulationTimers.clear();
     pumps.off("Pump Kettle");
+    pumps.off("Pump Mash");
     valves.close("Valve Mash-in");
+  }
+  if (mashPumpModulationInterval) {
+    clearTimeout(mashPumpModulationInterval);
+    mashPumpModulationInterval = null;
   }
   
   // Adjust timing for simulation speed
   const simSpeed = getSimulationSpeed();
   const adjustedOnSecs = onSecsNum / simSpeed;
   const adjustedOffSecs = offSecsNum / simSpeed;
-  
+
+  // Reset shared cycle state so the new cycle always starts from OFF.
+  pumpsRunning = false;
+  // Advance the generation so any already-queued callbacks from the previous
+  // cycle see a stale generation and exit immediately.
+  const myGeneration = ++cycleGeneration;
+
+  // Helper: schedule a timeout, register it in the Set so it can be
+  // cancelled by stop(), and auto-remove it from the Set when it fires.
+  const scheduleTimer = (fn, delayMs) => {
+    const handle = setTimeout(() => {
+      kettlePumpModulationTimers.delete(handle);
+      fn();
+    }, delayMs);
+    kettlePumpModulationTimers.add(handle);
+    return handle;
+  };
+
   // Define the cycling function
   const cycle = () => {
-    // Get current pump status (0 = off, non-zero = on)
-    const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value || 0;
-    
-    if (pumpStatus !== 0) {
-      // Pump is on, turn it off and close mash in valve
+    if (myGeneration !== cycleGeneration) return; // stale callback — a newer cycle has started
+    if (pumpsRunning) {
+      // ON → OFF: stop pumps and close valve, then wait off period
       pumps.off("Pump Kettle");
+      pumps.off("Pump Mash");
       valves.close("Valve Mash-in");
-      // Schedule next on cycle
-      kettlePumpModulationInterval = setTimeout(() => {
-        cycle();
-      }, adjustedOffSecs * 1000);
+      pumpsRunning = false;
+      scheduleTimer(cycle, adjustedOffSecs * 1000);
     } else {
-      // Pump is off, turn it on and open mash in valve
-      pumps.on("Pump Kettle");
+      // OFF → ON: open valve first, then start pumps after a short delay to
+      // allow the solenoid to fully open before flow is demanded.
       valves.open("Valve Mash-in");
-      // Schedule next off cycle
-      kettlePumpModulationInterval = setTimeout(() => {
-        cycle();
-      }, adjustedOnSecs * 1000);
+      pumpsRunning = true;
+      scheduleTimer(() => {
+        if (myGeneration !== cycleGeneration) return;
+        pumps.on("Pump Kettle");
+        pumps.on("Pump Mash");
+        scheduleTimer(cycle, adjustedOnSecs * 1000);
+      }, 500);
     }
   };
   
@@ -574,79 +619,6 @@ function startStopKettlePumpModulation(onSecs, offSecs) {
   return {
     success: true,
     message: "Kettle pump modulation started",
-    onSecs: onSecsNum,
-    offSecs: offSecsNum
-  };
-}
-
-/**
- * Internal helper to start/stop mash pump modulation without sending HTTP response.
- * @param {number|null} onSecs - Duration in seconds to keep pump on, or null to stop
- * @param {number|null} offSecs - Duration in seconds to keep pump off, or null to stop
- * @returns {Object} Result object with success status and message
- */
-function startStopMashPumpModulation(onSecs, offSecs) {
-  // If no parameters provided, stop modulation
-  if (!onSecs && !offSecs) {
-    if (mashPumpModulationInterval) {
-      clearTimeout(mashPumpModulationInterval);
-      mashPumpModulationInterval = null;
-      pumps.off("Pump Mash");
-      return { success: true, message: "Mash pump modulation stopped" };
-    } else {
-      return { success: true, message: "Mash pump modulation was not active" };
-    }
-  }
-  
-  // Validate parameters
-  const onSecsNum = parseFloat(onSecs);
-  const offSecsNum = parseFloat(offSecs);
-  
-  if (isNaN(onSecsNum) || isNaN(offSecsNum) || onSecsNum < 0.1 || onSecsNum > 3600 || offSecsNum < 0.1 || offSecsNum > 3600) {
-    progressPublish.error(`Invalid mash pump modulation parameters: onSecs=${onSecs}, offSecs=${offSecs}`);
-    return { success: false, message: "Invalid parameters: onSecs and offSecs must be numbers between 0.1 and 3600", status: 400 };
-  }
-
-  // Stop any existing modulation
-  if (mashPumpModulationInterval) {
-    clearTimeout(mashPumpModulationInterval);
-    mashPumpModulationInterval = null;
-    pumps.off("Pump Mash");
-  }
-  
-  // Adjust timing for simulation speed
-  const simSpeed = getSimulationSpeed();
-  const adjustedOnSecs = onSecsNum / simSpeed;
-  const adjustedOffSecs = offSecsNum / simSpeed;
-  
-  // Define the cycling function
-  const cycle = () => {
-    // Get current pump status (0 = off, non-zero = on)
-    const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Mash")?.value || 0;
-    
-    if (pumpStatus !== 0) {
-      // Pump is on, turn it off
-      pumps.off("Pump Mash");
-      // Schedule next on cycle
-      mashPumpModulationInterval = setTimeout(() => {
-        cycle();
-      }, adjustedOffSecs * 1000);
-    } else {
-      // Pump is off, turn it on
-      pumps.on("Pump Mash");
-      // Schedule next off cycle
-      mashPumpModulationInterval = setTimeout(() => {
-        cycle();
-      }, adjustedOnSecs * 1000);
-    }
-  };
-  
-  // Start the first cycle (turn pump on)
-  cycle();
-  
-  return {
-    success: true,
-    message: "Mash pump modulation started",
     onSecs: onSecsNum,
     offSecs: offSecsNum
   };
@@ -680,6 +652,58 @@ async function kettlePumpModulate(req, res, next, onSecs, offSecs) {
 }
 
 /**
+ * Internal helper to start/stop mash pump modulation without sending HTTP response.
+ * @param {number|null} onSecs - Duration in seconds to keep pump on, or null to stop
+ * @param {number|null} offSecs - Duration in seconds to keep pump off, or null to stop
+ * @returns {Object} Result object with success status and message
+ */
+function startStopMashPumpModulation(onSecs, offSecs) {
+  // If no parameters provided, stop modulation
+  if (!onSecs && !offSecs) {
+    if (mashPumpModulationInterval) {
+      clearTimeout(mashPumpModulationInterval);
+      mashPumpModulationInterval = null;
+      pumps.off("Pump Mash");
+      return { success: true, message: "Mash pump modulation stopped" };
+    } else {
+      return { success: true, message: "Mash pump modulation was not active" };
+    }
+  }
+
+  // Validate parameters
+  const onSecsNum = parseFloat(onSecs);
+  const offSecsNum = parseFloat(offSecs);
+  if (isNaN(onSecsNum) || isNaN(offSecsNum) || onSecsNum < 0.1 || onSecsNum > 3600 || offSecsNum < 0.1 || offSecsNum > 3600) {
+    progressPublish.error(`Invalid mash pump modulation parameters: onSecs=${onSecs}, offSecs=${offSecs}`);
+    return { success: false, message: "Invalid parameters: onSecs and offSecs must be numbers between 0.1 and 3600", status: 400 };
+  }
+
+  // Stop any existing modulation
+  if (mashPumpModulationInterval) {
+    clearTimeout(mashPumpModulationInterval);
+    mashPumpModulationInterval = null;
+    pumps.off("Pump Mash");
+  }
+
+  const simSpeed = getSimulationSpeed();
+  const adjustedOnSecs = onSecsNum / simSpeed;
+  const adjustedOffSecs = offSecsNum / simSpeed;
+
+  const cycle = () => {
+    const pumpStatus = pumps.getStatus().find(p => p.name === "Pump Mash")?.value || 0;
+    if (pumpStatus !== 0) {
+      pumps.off("Pump Mash");
+      mashPumpModulationInterval = setTimeout(cycle, adjustedOffSecs * 1000);
+    } else {
+      pumps.on("Pump Mash");
+      mashPumpModulationInterval = setTimeout(cycle, adjustedOnSecs * 1000);
+    }
+  };
+  cycle();
+  return { success: true, message: "Mash pump modulation started" };
+}
+
+/**
  * Get current recirculation status.
  *
  * @param {Object} req - Express request object
@@ -703,10 +727,10 @@ async function getRecirculationStatus(req, res, next) {
  * @param {Object} next - Express next middleware function
  * @param {number} dutyCycle - Kettle pump duty cycle as percentage (1-99)
  */
-async function updateDutyCycle(req, res, next, dutyCycle) {
+async function updateDutyCycle(req, res, next, dutyCycle, mashDutyCycle) {
   try {
     // Check if recirculation is active
-    if (!kettlePumpModulationInterval) {
+    if (kettlePumpModulationTimers.size === 0) {
       res.send(400, "Cannot update duty cycle: recirculation is not active");
       return;
     }
@@ -732,6 +756,26 @@ async function updateDutyCycle(req, res, next, dutyCycle) {
     
     // Update recirculation state
     recirculationState.dutyCycle = pumpDutyCycle;
+
+    // handle mash pump adjustment if provided
+    if (mashDutyCycle) {
+      const mashCycle = parseFloat(mashDutyCycle);
+      if (isNaN(mashCycle) || mashCycle < 1 || mashCycle > 99) {
+        res.send(400, "Invalid mashDutyCycle: must be between 1 and 99 percent");
+        return;
+      }
+      const totalCycleTime = 13;
+      const mashOnSecs = (mashCycle / 100) * totalCycleTime;
+      const mashOffSecs = totalCycleTime - mashOnSecs;
+      const mashResult = startStopMashPumpModulation(mashOnSecs, mashOffSecs);
+      if (!mashResult.success) {
+        res.send(mashResult.status || 500, mashResult.message);
+        return;
+      }
+      recirculationState.mashDutyCycle = mashCycle;
+      recirculationState.mashOnSecs = parseFloat(mashOnSecs.toFixed(2));
+      recirculationState.mashOffSecs = parseFloat(mashOffSecs.toFixed(2));
+    }
     recirculationState.onSecs = parseFloat(kettleOnSecs.toFixed(2));
     recirculationState.offSecs = parseFloat(kettleOffSecs.toFixed(2));
     
@@ -759,9 +803,10 @@ async function updateDutyCycle(req, res, next, dutyCycle) {
  * @param {Object} next - Express next middleware function
  * @param {string} onOff - "On" to start recirculation, "Off" to stop
  * @param {number} tempC - Target mash temperature in Celsius (required when onOff="On")
- * @param {number} dutyCycle - Kettle pump duty cycle as percentage (1-50, default: 50% = 6.5s on / 6.5s off)
+ * @param {number} dutyCycle - Kettle pump duty cycle as percentage (1-99, default: 23% = 3s on / 10s off)
+ * @param {number} mashDutyCycle - Optional mash pump duty cycle (1-99); if provided the mash pump will cycle instead of run continuously.
  */
-async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
+async function recirculate(req, res, next, onOff, tempC, dutyCycle, mashDutyCycle) {
   try {
     if (onOff === "Off") {
       // Stop recirculation
@@ -784,6 +829,9 @@ async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
         dutyCycle: null,
         onSecs: null,
         offSecs: null
+        ,mashDutyCycle: null,
+        mashOnSecs: null,
+        mashOffSecs: null
       };
       
       res.send(200, { message: "Recirculation stopped" });
@@ -811,16 +859,17 @@ async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
     const kettleOffSecs = totalCycleTime - kettleOnSecs;
     
     // Start recirculation
-    // Initialize temperature controller
-    await tempController.init(800, 0.3, 100);
+    // Initialize temperature controller with gentler PID gains suited to the slow
+    // thermal mass of a mash tun (vs. the aggressive gains used for kettle heating).
+    await tempController.init(200, 0.05, 50);
     
-    // Start mash pump modulation with 50% duty cycle (6.5s on / 6.5s off)
-    const mashOnSecs = 6.5;
-    const mashOffSecs = 6.5;
-    const mashModulationResult = startStopMashPumpModulation(mashOnSecs, mashOffSecs);
-    if (!mashModulationResult.success) {
-      res.send(mashModulationResult.status || 500, mashModulationResult.message);
-      return;
+    // Determine mash pump behavior
+    let mashOnSecs = null;
+    let mashOffSecs = null;
+    // Note: mash pump is now synchronised with the kettle pump inside
+    // startStopKettlePumpModulation — both run together to prevent volume imbalance.
+    if (mashDutyCycle) {
+      brewlog.warn("recirculate", "mashDutyCycle parameter ignored — mash pump is synchronised with kettle pump");
     }
     
     // Start kettle pump modulation with calculated on/off times
@@ -840,8 +889,11 @@ async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
       active: true,
       targetTemp: targetTemp,
       dutyCycle: pumpDutyCycle,
+      mashDutyCycle: mashDutyCycle ? parseFloat(mashDutyCycle) : null,
       onSecs: parseFloat(kettleOnSecs.toFixed(2)),
-      offSecs: parseFloat(kettleOffSecs.toFixed(2))
+      offSecs: parseFloat(kettleOffSecs.toFixed(2)),
+      mashOnSecs: mashOnSecs !== null ? parseFloat(mashOnSecs.toFixed(2)) : null,
+      mashOffSecs: mashOffSecs !== null ? parseFloat(mashOffSecs.toFixed(2)) : null
     };
     
     res.send(200, {
@@ -849,7 +901,10 @@ async function recirculate(req, res, next, onOff, tempC, dutyCycle) {
       targetTemp: targetTemp,
       kettlePumpDutyCycle: pumpDutyCycle,
       kettlePumpOnSecs: kettleOnSecs.toFixed(2),
-      kettlePumpOffSecs: kettleOffSecs.toFixed(2)
+      kettlePumpOffSecs: kettleOffSecs.toFixed(2),
+      mashPumpDutyCycle: mashDutyCycle ? parseFloat(mashDutyCycle) : null,
+      mashPumpOnSecs: mashOnSecs !== null ? mashOnSecs.toFixed(2) : null,
+      mashPumpOffSecs: mashOffSecs !== null ? mashOffSecs.toFixed(2) : null
     });
     
   } catch (error) {
@@ -963,63 +1018,137 @@ const getPump = (name) => {
 }
 
 /**
- * Calculates the heat loss in a pipe and returns the temperature difference.
+ * Calculates the temperature drop the wort will experience when transferred
+ * into the mash tun, accounting for two effects:
  *
- * @param {number} tempFluid - The temperature of the fluid inside the pipe.
- * @param {string} tempSensorName - The name of the temperature sensor to get the ambient temperature.
- * @returns {Promise<number>} - The temperature difference due to heat loss.
+ *  1. Pipe conduction loss — heat conducted through the stainless pipe wall
+ *     from the hot wort to the cooler ambient air during transfer.
+ *
+ *  2. Vessel thermal mass — energy absorbed by the cold stainless vessel body
+ *     as it heats up from ambient to the target mash temperature.
+ *     For a 50 L vessel this is the dominant offset (~1-3°C depending on ΔT).
+ *     Only included on the first mash step; subsequent steps find the vessel
+ *     already at temperature so this term is omitted.
+ *
+ * @param {number}  tempFluid        - Target mash temperature (°C).
+ * @param {string}  tempSensorName   - Sensor name used to read ambient temperature.
+ * @param {boolean} [includeVesselMass=true] - Include vessel thermal mass offset (first step only).
+ * @returns {Promise<number>}        - Combined ΔT to add to the kettle set-point.
  */
-async function pipeHeatLoss(tempFluid, tempSensorName) {
-  const tempAmbient = await therm.getTempAmbient()
-  const k = 16;// W/mC the heat transfer coefficient of stainless steel
-  const L = 1.76;//0.35;//1.32;//1.76;//the length of pipe
-  const innerDiameter = 12.5;//0.022;
-  const outerDiameter = 31;//0.027;
-  const flowRate = 0.200;
+async function pipeHeatLoss(tempFluid, tempSensorName, includeVesselMass = true) {
+  // Retry until the sensor returns a valid reading (it may be null on first start).
+  // Give up after 10 attempts (~5 s) and throw so the caller knows something is wrong.
+  let tempAmbient = null;
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const raw = await therm.getTemp(tempSensorName).catch(() => null);
+    if (raw != null && !isNaN(raw)) { tempAmbient = raw; break; }
+    await new Promise(r => setTimeout(r, 500));
+  }
+  if (tempAmbient == null) {
+    throw new Error(`pipeHeatLoss: sensor "${tempSensorName}" did not return a valid reading after 10 attempts`);
+  }
 
-  const C = 4200; //Sepcific heat capacity of water
-  const heatLossJPerSec = 2 * Math.PI * k * L * (tempFluid - tempAmbient) / (Math.log(outerDiameter / innerDiameter));
+  // ── Pipe convective loss ──────────────────────────────────────────────────
+  // Heat lost from the outer pipe surface to ambient air via natural convection.
+  // Q = h · A · ΔT  where A = 2π·r_o·L (outer surface area of the pipe).
+  // Using the stainless steel radial-conduction formula (k_ss / ln(r_o/r_i))
+  // was incorrect here — that formula gives the resistance of the steel wall
+  // itself, not the dominant air-side convective resistance. Because ln(r_o/r_i)
+  // is very small for thin-walled pipe, it produced absurdly large (>40°C) offsets.
+  const h      = 10;     // W/(m²·°C) natural convection coefficient in air
+  const L      = 1.76;   // m         transfer pipe length
+  const r_o    = 0.0155; // m         pipe outer radius (31 mm OD)
+  const C_w    = 4200;   // J/(kg·°C) specific heat of water
+  const flow   = 0.200;  // kg/s      wort flow rate during transfer
 
-  const k2 = 18 / (60 - 18);
-  const empiricalDeltaTemp = k2 * (tempFluid - tempAmbient);
+  const A = 2 * Math.PI * r_o * L;            // m²  outer surface area
+  const heatLossJPerSec = h * A * (tempFluid - tempAmbient);
+  const deltaTpipe = heatLossJPerSec / C_w / flow;
 
-  const deltaTemp = heatLossJPerSec / C / flowRate;
-  
-  return deltaTemp;
+  // ── Vessel thermal mass ───────────────────────────────────────────────────
+  // Only applied on the first mash step when the vessel is cold.  Subsequent
+  // steps find the vessel already at mash temperature so this term is zero.
+  // A 50 L stainless mash tun: ~3 kg of steel (1.5 mm wall, ~0.5 m² surface).
+  const m_vessel = 3.0;  // kg         stainless steel mass of the vessel
+  const c_ss     = 500;  // J/(kg·°C)  specific heat of stainless steel
+  const m_wort   = 50.0; // kg         nominal wort volume (50 L ≈ 50 kg)
+
+  const deltaTvessel = includeVesselMass
+    ? (m_vessel * c_ss * (tempFluid - tempAmbient)) / (m_wort * C_w)
+    : 0;
+
+  return deltaTpipe + deltaTvessel;
 }
 
 /**
- * Executes a mash step in the brewing process.
+ * Executes a recirculating mash step in the brewing process.
  *
- * @param {string} step - A JSON string containing the temperature in Celsius and the duration in minutes for the mash step.
+ * @param {Object} step - Object containing tempC and mins for the mash step.
+ * @param {Object} options - Options object.
+ * @param {number} [options.stepIndex=0] - Step index (0 = first step, affects preheat offset).
  * @returns {Function} An asynchronous function that performs the mash step.
- *
- * The returned function performs the following actions:
- * 1. Parses the input step to extract temperature and duration.
- * 2. Calculates the temperature loss in the pipe.
- * 3. Logs the temperature loss.
- * 4. Sets the kettle temperature.
- * 5. Transfers the liquid from kettle to mash tun.
- * 6. Waits for the specified duration.
- * 7. Transfers the liquid back from mash tun to kettle.
- * 8. Returns an object indicating the completion status and details of the mash step.
  */
-function doMashStep(step){
+function doMashStep(step, options = {}){
   return async function(){
     try {
       const {tempC, mins} = step;
-      const deltaT = await pipeHeatLoss(tempC, "Temp Mash");
-      const temp = tempC + deltaT;
-      await tempController.setTemp(
-        temp, 
-        (getSimulationSpeed() !== 1)
-          ? (mins / getSimulationSpeed()) 
-          : mins,
-        remainingMashMinutes);
+      const { stepIndex = 0 } = options;
 
-      await k2m.transfer({flowTimeoutSecs});
-      await delay(mins * 60);
-      await m2k.transfer({flowTimeoutSecs});
+      // Preheat always uses aggressive kettle gains — need to heat water quickly.
+      await tempController.init(400, 0.3, 100);
+
+      // On the first step the vessel is cold — include vessel thermal mass in the
+      // preheat offset.  On subsequent steps the vessel is already at temperature
+      // so only pipe conduction loss applies.
+      const isFirstStep = stepIndex === 0;
+      const deltaT = await pipeHeatLoss(tempC, "Temp Mash", isFirstStep);
+      const temp = Math.trunc((tempC + deltaT)*10)/10;
+      progressPublish(`Preheating to ${temp}C`);
+      await tempController.setTemp(temp, 0, () => {});
+
+      progressPublish(`Mash step recirc @ ${tempC}C for ${mins} mins`);
+      // Switch to gentler mash gains now that we're controlling via the mash tun probe
+      await tempController.init(200, 0.05, 50);
+
+      // Both pumps are driven in lockstep by the kettle pump modulation cycle
+      startStopKettlePumpModulation(10, 10);
+
+      recirculationState = {
+        active: true,
+        targetTemp: tempC,
+        dutyCycle: 50,
+        mashDutyCycle: null,
+        onSecs: 10,
+        offSecs: 10,
+        mashOnSecs: 10,
+        mashOffSecs: 10
+      };
+
+      // Wait until the mash temperature is first reached before starting the hold timer.
+      // secsAtTemp is incremented by setMashTemp on every tick where temp >= target.
+      await new Promise(resolve => {
+        tempController.setMashTemp(tempC, ({ secsAtTemp }) => {
+          if (secsAtTemp > 0) resolve();
+        });
+      });
+
+      progressPublish(`Mash step ${tempC}C reached — holding for ${mins} mins`);
+      await delay(mins * 60, progressPublish);
+
+      progressPublish(`Mash step ${tempC}C: stopping recirculation`);
+      tempController.pause();
+      startStopKettlePumpModulation(null, null);
+
+      recirculationState = {
+        active: false,
+        targetTemp: null,
+        dutyCycle: null,
+        onSecs: null,
+        offSecs: null,
+        mashDutyCycle: null,
+        mashOnSecs: null,
+        mashOffSecs: null
+      };
 
       return {
         status: 200,
@@ -1046,9 +1175,10 @@ function doMashStep(step){
  * @param {string} steps - A JSON string representing an array of mash steps.
  * @returns {Promise<void>} Sends a response indicating the result of the mash process.
  */
-async function mash (req, res, next, steps) {
-  const stepRequests = JSON.parse(steps).map(doMashStep);
-  
+async function mash (req, res, next, stepsString) {
+  const steps = JSON.parse(stepsString);  
+  const stepRequests = steps.map((step, i) => doMashStep(step, { stepIndex: i }));
+
   const stepResponses = await promiseSerial(stepRequests);
 
   const errs = stepResponses.filter((val) => val.status === 500);

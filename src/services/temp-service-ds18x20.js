@@ -23,7 +23,6 @@ let ds18x20;
 const brewlog = require("../brewstack/common/brewlog.js");
 const broker = require("../broker.js");
 let probes = require('../probes.js');
-let pumps = null; // Lazy loaded to avoid circular dependency
 
 let pollInterval = null;
 
@@ -41,6 +40,7 @@ let activeFermenter = "UNI";
 function getActiveFermenter() {
 	return activeFermenter;
 }
+const POLL_INTERVAL_SECS = 10;
 
 function setPollInterval(secs){
 	brewlog.info("setSampleInterval", `${secs} secs`);
@@ -148,125 +148,78 @@ async function readSingleTemp(probe, retries = 3, delayMs = 200) {
 
 /**
  * Get all temperatures with retry logic to handle electrical interference from pumps.
- * If temperature readings fail, temporarily stops both mash and kettle pumps to get valid readings.
- * Only retries individual sensors that failed, not all sensors.
+ * Retries with a short delay between attempts. Does not stop or restore pumps —
+ * pump state is owned by the modulation cycle in brewnode.js.
  * @param {number} retries - Number of retry attempts (default 3)
- * @param {number} delayMs - Delay between retries in milliseconds (default 200)
+ * @param {number} delayMs - Delay between retries in milliseconds (default 500)
  * @returns {Promise<Array>} Array of temperature sensor objects
  */
-async function getAllTemps(retries = 3, delayMs = 200) {
-	// Lazy load pumps service to avoid circular dependency
-	if (!pumps) {
+async function getAllTemps(retries = 3, delayMs = 500) {
+	for (let attempt = 1; attempt <= retries; attempt++) {
+		const result = [];
+		let allValid = true;
+
 		try {
-			pumps = require('./pump-service.js');
-		} catch (err) {
-			brewlog.warn("Could not load pump service for temperature retry logic", err.message);
-		}
-	}
-	
-	let mashPumpWasOn = false;
-	let kettlePumpWasOn = false;
-	let pumpsStopped = false;
-	
-	// First attempt: read all sensors at once
-	let tempObj = {};
-	try {
-		console.log('getAllTemps: Reading all temperature sensors...');
-		tempObj = await Promise.race([
-			new Promise((resolve, reject) => {
-				ds18x20.getAll((err, temps) => {
-					if (err) {
-						console.log('getAllTemps: ds18x20.getAll() error:', err.message);
-						reject(err);
-					} else {
-						console.log('getAllTemps: ds18x20.getAll() success, sensors:', Object.keys(temps).length);
-						resolve(temps);
+			const tempObj = await Promise.race([
+				new Promise((resolve, reject) => {
+					ds18x20.getAll((err, temps) => {
+						if (err) {
+							reject(err);
+						} else {
+							resolve(temps);
+						}
+					});
+				}),
+				new Promise((_, reject) =>
+					setTimeout(() => reject(new Error('Temperature read timeout after 5s')), 5000)
+				)
+			]);
+
+			probes.forEach(probe => {
+				for (const key in tempObj) {
+					if (key == probe.id) {
+						const value = tempObj[key];
+
+						if (!isValidTemp(value)) {
+							allValid = false;
+							brewlog.warn(`Invalid temperature reading for ${probe.name}: ${value}°C (attempt ${attempt}/${retries})`);
+						} else {
+							probe.value = value;
+						}
+
+						result.push({
+							name: probe.name,
+							value: probe.value,
+							publish: probe.publishTemp
+						});
 					}
-				});
-			}),
-			new Promise((_, reject) => 
-				setTimeout(() => reject(new Error('Temperature read timeout after 5s')), 5000)
-			)
-		]);
-	} catch (err) {
-		console.log('getAllTemps: Temperature read failed:', err.message);
-		brewlog.warn("Initial temperature read failed", err.message);
-	}
-	
-	// Check which probes have invalid readings
-	const failedProbes = [];
-	probes.forEach(probe => {
-		const value = tempObj[probe.id];
-		if (isValidTemp(value)) {
-			probe.value = value;
-		} else {
-			failedProbes.push(probe);
-			brewlog.warn(`Invalid temperature reading for ${probe.name}: ${value}°C, will retry`);
-		}
-	});
-	
-	// If any sensors failed and pumps are running, stop them temporarily
-	if (failedProbes.length > 0 && pumps) {
-		try {
-			const mashPumpStatus = pumps.getStatus().find(p => p.name === "Pump Mash")?.value || 0;
-			const kettlePumpStatus = pumps.getStatus().find(p => p.name === "Pump Kettle")?.value || 0;
-			
-			if (mashPumpStatus !== 0) {
-				brewlog.info("Temporarily stopping mash pump to get clean temperature readings");
-				mashPumpWasOn = true;
-				pumps.off("Pump Mash");
-				pumpsStopped = true;
+				}
+			});
+
+			if (allValid) {
+				if (attempt > 1) {
+					brewlog.info(`All temperature reads succeeded on attempt ${attempt}`);
+				}
+				return result;
 			}
-			
-			if (kettlePumpStatus !== 0) {
-				brewlog.info("Temporarily stopping kettle pump to get clean temperature readings");
-				kettlePumpWasOn = true;
-				pumps.off("Pump Kettle");
-				pumpsStopped = true;
-			}
-			
-			// Give pumps time to stop and electrical noise to settle
-			if (pumpsStopped) {
-				await new Promise(resolve => setTimeout(resolve, 500));
-			}
-		} catch (pumpErr) {
-			brewlog.warn("Error managing pumps for temperature retry", pumpErr.message);
+
+		} catch (err) {
+			brewlog.warn(`Temperature read failed (attempt ${attempt}/${retries})`, err.message);
+			allValid = false;
+		}
+
+		// Wait before retry (except on last attempt)
+		if (attempt < retries) {
+			await new Promise(resolve => setTimeout(resolve, delayMs));
 		}
 	}
-	
-	// Retry only the failed sensors
-	for (const probe of failedProbes) {
-		const value = await readSingleTemp(probe, retries, delayMs);
-		if (value !== null) {
-			probe.value = value;
-		} else {
-			brewlog.warn(`All retries failed for ${probe.name}, keeping previous value`);
-		}
-	}
-	
-	// Restore pumps if we turned them off
-	if (pumps) {
-		if (mashPumpWasOn) {
-			brewlog.info("Restoring mash pump after temperature read");
-			pumps.on("Pump Mash");
-		}
-		if (kettlePumpWasOn) {
-			brewlog.info("Restoring kettle pump after temperature read");
-			pumps.on("Pump Kettle");
-		}
-	}
-	
-	// Build result array with all sensor data
-	let result = [];
+
+	// Return the last result with whatever values we have
+	const result = [];
 	probes.forEach(probe => {
 		result.push(...foo(probe));
-		result.push({ 
-			name: probe.name, 
-			value: probe.value, 
-			publish: probe.publishTemp 
-		});
 	});
-	
+
 	return result;
 }
 
@@ -299,11 +252,15 @@ function updateProbeValue(probe, value) {
 }
 
 async function pollTemperatures(){
+	const minDeltaC = 0.5;
+
 	const sensors = await getAllTemps();
-	// Find sensors with different values
+	
+	// Find sensors with different values (skip sensors with no valid reading yet)
 	const changedSensors = sensors.filter((sensor, index) => {
-		if (prevSensorValues[sensor.name].value){
-			const changed = Math.abs((prevSensorValues[sensor.name].value - sensor.value)) >= 0.5;
+		if (sensor.value == null) return false;
+		if (prevSensorValues[sensor.name].value != null){
+			const changed = Math.abs((prevSensorValues[sensor.name].value - sensor.value)) >= minDeltaC;
 			prevSensorValues[sensor.name].value = changed ? sensor.value : prevSensorValues[sensor.name].value; 
 			return changed;
 		}else{
@@ -312,8 +269,12 @@ async function pollTemperatures(){
 		}
 	});			
 
-	// Publish changes for sensors with different values
-	changedSensors.forEach(async (sensor) => await sensor?.publish(sensor.value));
+	// Publish changes for sensors with different values (skip null/undefined — sensor not yet read)
+	changedSensors.forEach(async (sensor) => {
+		if (sensor?.value != null) {
+			await sensor.publish(sensor.value);
+		}
+	});
 }
 
 module.exports = { 	
@@ -369,16 +330,12 @@ module.exports = {
 						console.log('start: Initial sensor values saved');
 						
 						if (simulationSpeed !== 1){
-							setPollInterval(60 / simulationSpeed);
+							setPollInterval(POLL_INTERVAL_SECS / simulationSpeed);
 							ambientTemp = 9.9;
 							console.log('start: Simulation mode - ambient temp set to 9.9°C');
 						}else{
-							setPollInterval(60);
-							// Get ambient temp from the already-read sensor values instead of calling ds18x20.get()
-							const ambientProbeName = activeFermenter !== "UNI" ? "Temp UniTank" : "Temp SS";
-							const ambientSensor = sensors.find(s => s.name === ambientProbeName);
-							ambientTemp = ambientSensor ? ambientSensor.value : 20; // Default to 20°C if not found
-							console.log('start: Ambient temp set to', ambientTemp, '°C from', ambientProbeName);
+							setPollInterval(POLL_INTERVAL_SECS);
+							ambientTemp = sensors.find(sensor => sensor.name === "Temp Ambient")?.value;
 						}
 						started = true;
 			
@@ -469,12 +426,14 @@ module.exports = {
 					if (err){
 						reject(err);
 					}else{
-						// updateProbeValue(probe, temp);
+						if (isValidTemp(temp)) {
+							updateProbeValue(probe, temp);
+						}
 						resolve(probe.value);
 					}
 				});
 			} catch (err) {
-				console.log(name);
+				brewlog.warn('getTemp', `${name}: ${err.message}`);
 				reject(err);
 			}
 		});

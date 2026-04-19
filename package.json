@@ -1,6 +1,6 @@
 {
   "name": "@brewnode/server",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "description": "Comprehensive Node.js backend server for brewery automation and monitoring with BrewNode hardware integration",
   "publishConfig": {
     "access": "public"
@@ -106,6 +106,7 @@
     "ds18x20": "^0.2.0",
     "mysql": "^2.18.1",
     "nanotimer": "^0.3.15",
+    "nodemailer": "^8.0.3",
     "oas3-tools": "^2.2.3",
     "rollbar": "^2.26.4",
     "socket.io": "^4.8.0"
