@@ -670,7 +670,7 @@ paths:
                   message:
                     type: string
                     example: Too many requests. Please retry after 60 seconds.
-        x-swagger-router-controller: brewfather-fermentables
+      x-swagger-router-controller: brewfather-fermentables
       
 
   /inventory/fermentables/{id}:
@@ -750,7 +750,7 @@ paths:
                   message:
                     type: string
                     example: Too many requests. Please retry after 60 seconds.
-        x-swagger-router-controller: brewfather-fermentables
+      x-swagger-router-controller: brewfather-fermentables
 
   /inventory/hops:
     get:
@@ -852,7 +852,7 @@ paths:
                   message:
                     type: string
                     example: Too many requests. Please retry after 60 seconds.
-        x-swagger-router-controller: brewfather-hops
+      x-swagger-router-controller: brewfather-hops
 
 
   /inventory/hops/{id}:
@@ -894,7 +894,7 @@ paths:
                   message:
                     type: string
                     example: Too many requests. Please retry after 60 seconds.
-        x-swagger-router-controller: brewfather-hops
+      x-swagger-router-controller: brewfather-hops
     patch:
       security:
       - basicAuth: []
@@ -942,7 +942,7 @@ paths:
                   message:
                     type: string
                     example: Too many requests. Please retry after 60 seconds.
-        x-swagger-router-controller: brewfather-hops
+      x-swagger-router-controller: brewfather-hops
 
 
   /inventory/miscs:
@@ -1045,7 +1045,7 @@ paths:
                   message:
                     type: string
                     example: Too many requests. Please retry after 60 seconds.
-        x-swagger-router-controller: brewfather-miscs
+      x-swagger-router-controller: brewfather-miscs
 
   /inventory/miscs/{id}:
     get:
@@ -1122,7 +1122,7 @@ paths:
                   message:
                     type: string
                     example: Too many requests. Please retry after 60 seconds.
-        x-swagger-router-controller: brewfather-miscs
+      x-swagger-router-controller: brewfather-miscs
   
 
   /inventory/yeasts:
@@ -1225,7 +1225,7 @@ paths:
                   message:
                     type: string
                     example: Too many requests. Please retry after 60 seconds.
-        x-swagger-router-controller: brewfather-yeasts
+      x-swagger-router-controller: brewfather-yeasts
       
 
   /inventory/yeasts/{id}:

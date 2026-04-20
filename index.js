@@ -142,6 +142,9 @@ const options = {
   routing: {
     controllers: path.join(__dirname, "./controllers"),
   },
+  openApiValidator: {
+    validateSecurity: false,
+  },
 };
 
 const expressAppConfig = oas3Tools.expressAppConfig(
