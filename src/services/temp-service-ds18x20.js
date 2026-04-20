@@ -65,47 +65,8 @@ function isValidTemp(temp) {
 }
 
 function foo(probe){
-	let result = [];
-	if (!probe.sensorHistory) {
-		probe.sensorHistory = [];
-	}
-					
-	if (getActiveFermenter() === "UNI"){
-		if (probe.name === "Temp UniTank") {
-			result.push({ 
-				name: "Temp Fermenter", 
-				value: probe.value, 
-				publish: probe.publishTemp 
-			});
-		}
-		if (probe.name === "Temp SS") {
-			result.push({ 
-				name: "Temp Ambient", 
-				value: probe.value, 
-				publish: probe.publishTemp 
-			});
-		}
-	} else {
-		if (probe.name === "Temp SS") {
-			result.push({ 
-				name: "Temp Fermenter", 
-				value: probe.value, 
-				publish: probe.publishTemp 
-			});
-		}
-		if (probe.name === "Temp UniTank") {
-			result.push({ 
-				name: "Temp Ambient", 
-				value: probe.value, 
-				publish: probe.publishTemp 
-			});
-		}
-	}
-
-	return result;
-}
-
-/**
+	return [{ name: probe.name, value: probe.value, publish: probe.publishTemp }];
+}/**
  * Read a single temperature sensor with retry logic
  * @param {Object} probe - Probe object with id and name
  * @param {number} retries - Number of retry attempts
@@ -351,8 +312,7 @@ module.exports = {
 	getAmbientTemp: () => {
 		return new Promise((resolve, reject) => {
 			try {
-				const probeName = activeFermenter !== "UNI" ? "Temp UniTank" : "Temp SS";
-				const probe = probes.find(p => p.name === probeName);
+				const probe = probes.find(p => p.name === "Temp Ambient");
 				ds18x20.get(probe.id, (err, temp) => {
 					if (err){
 						reject(err);
@@ -368,8 +328,7 @@ module.exports = {
 	getFermenterTemp: () => {
 		return new Promise((resolve, reject) => {
 			try {
-				const probeName = activeFermenter === "UNI" ? "Temp UniTank" : "Temp SS";
-				const probe = probes.find(p => p.name === probeName);
+				const probe = probes.find(p => p.name === "Temp Fermenter");
 				ds18x20.get(probe.id, (err, temp) => {
 					if (err){
 						reject(err);
