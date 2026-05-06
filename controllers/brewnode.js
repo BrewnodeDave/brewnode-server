@@ -278,13 +278,25 @@ async function restart (req, res, next) {
 };
 
 async function glycolChill(req, res, next, onOff) {
-  const watts = (onOff === 'On') ? glycolChiller.switchOn() : glycolChiller.switchOff(); 
-  res.send(200, watts);
+  if (onOff === 'On') {
+    glycolHeater.switchOff();
+    const watts = glycolChiller.switchOn();
+    res.send(200, watts);
+  } else {
+    const watts = glycolChiller.switchOff();
+    res.send(200, watts);
+  }
 };
 
 async function glycolHeat(req, res, next, onOff) {
-  const watts = (onOff === 'On') ? glycolHeater.switchOn() : glycolHeater.switchOff(); 
-  res.send(200, watts);
+  if (onOff === 'On') {
+    glycolChiller.switchOff();
+    const watts = glycolHeater.switchOn();
+    res.send(200, watts);
+  } else {
+    const watts = glycolHeater.switchOff();
+    res.send(200, watts);
+  }
 };
 
 async function sensorStatus(req, res, next) {

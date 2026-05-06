@@ -107,7 +107,6 @@ function calculatePower(actualTemperature) {
 
 function tempHandler(value) {
 	currentTemp = value;
-	console.log(`🌡️  Temperature reading from ${kettleThermName}: ${currentTemp}C`);
 }
 
 /**

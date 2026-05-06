@@ -170,6 +170,7 @@ module.exports = {
 			clearInterval(glycolInterval);
 			glycolInterval = null;
 			
+			glycolChiller.switchOff();
 			glycolHeater.switchOff();
 			
 			pumps.off(pumps.chillPumpName);
@@ -194,13 +195,13 @@ function doStep(step) {
 		let timeAtTemp, prevTimeAtTemp;
 		const desiredFermentTemp = parseInt(tempC,10);
 
-		const tempAmbient = await therm.getTempAmbient();
+		const tempAmbient = await therm.getAmbientTemp();
 		const glycolTemp = await therm.getTemp(GLYCOL_TEMPNAME);
-		const fermentTemp = await therm.getTempFermenter();
+		const fermentTemp = await therm.getFermenterTemp();
 		const chillStep = (desiredFermentTemp < tempAmbient); 
 
 		pumpInterval = setInterval(() => {
-			therm.getTemp(fermenter)
+			therm.getFermenterTemp()
 			.then(t => {
 				pumpOnOff(chillStep, desiredFermentTemp, t, (x) => {
 					//clearInterval(pumpInterval);
@@ -220,9 +221,10 @@ function doStep(step) {
 
 		//glycolTempListener = broker.subscribe(GLYCOL_TEMPNAME, glycolFermentTempChange);
 		if (chillStep) {
-				glycolChiller.switchOn();
 				clearInterval(glycolInterval);
+				glycolInterval = null;
 				glycolHeater.switchOff();
+				glycolChiller.switchOn();
 		}else{
 			const reached  = fermentTemp >= (desiredFermentTemp - FERMENTER_OVERSHOOT);
 			glycolChiller.switchOff();
@@ -242,7 +244,7 @@ function maintainGlycolTemp(temp) {
 	
 	return setInterval(() => (getGlycolTemp() >= targetTemp) 
 		? glycolHeater.switchOff() 
-		: glycolHeater.switchOn()
+		: (glycolChiller.isOn() ? null : glycolHeater.switchOn())
 	, 60 * 1000 / _simulationSpeed);
 }
 

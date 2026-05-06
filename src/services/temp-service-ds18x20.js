@@ -213,7 +213,7 @@ function updateProbeValue(probe, value) {
 }
 
 async function pollTemperatures(){
-	const minDeltaC = 0.5;
+	const minDeltaC = 0; // Minimum change in temperature to trigger an update (set to 0 to publish all changes)
 
 	const sensors = await getAllTemps();
 	
