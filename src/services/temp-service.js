@@ -6,7 +6,6 @@
  * you can buy me a beer in return.
  */
 
-const ds18b20 = require('./temp-service-ds18b20.js');
 const ds18x20 = require('./temp-service-ds18x20.js');
 
 module.exports = ds18x20;

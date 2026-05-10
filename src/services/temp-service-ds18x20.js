@@ -220,6 +220,9 @@ async function pollTemperatures(){
 	// Find sensors with different values (skip sensors with no valid reading yet)
 	const changedSensors = sensors.filter((sensor, index) => {
 		if (sensor.value == null) return false;
+		if (!prevSensorValues[sensor.name]) {
+			prevSensorValues[sensor.name] = { value: null, timestamp: new Date().getTime() };
+		}
 		if (prevSensorValues[sensor.name].value != null){
 			const changed = Math.abs((prevSensorValues[sensor.name].value - sensor.value)) >= minDeltaC;
 			prevSensorValues[sensor.name].value = changed ? sensor.value : prevSensorValues[sensor.name].value; 

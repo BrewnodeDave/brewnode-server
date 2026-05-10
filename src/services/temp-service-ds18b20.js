@@ -33,6 +33,7 @@ const { doublePublish } = require("./mysql-service.js");
 let probes = require('../probes.js');
 
 let pollInterval = null;
+let currentPollIntervalSecs = POLL_INTERVAL_SECS;
 let prevSensorValues = [];
 let started = false;
 
@@ -43,6 +44,7 @@ function setPollInterval(secs){
 		pollInterval = null;
 	}
 
+	currentPollIntervalSecs = secs;
 	module.exports.getStatus(true);
 	
 	pollInterval = setInterval(pollTemperatures, secs * 1000)								
@@ -104,7 +106,8 @@ async function getAllTemps() {
 	return result;
 }
 
-async function pollTemperatures(deltaSecs){
+async function pollTemperatures(){
+	const deltaSecs = currentPollIntervalSecs;
 	const maxDegPerMin = 0.5;
 	const minDeltaC = 0.25;
 
