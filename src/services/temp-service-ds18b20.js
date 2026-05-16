@@ -8,7 +8,7 @@
 
 const PIN = 4;
 const FAHRENHEIT = false;
-const POLL_INTERVAL_SECS = 10;
+const POLL_INTERVAL_SECS = 30;
 
 /**
  * Temperature Sensor Driver.
