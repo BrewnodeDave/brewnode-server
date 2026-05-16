@@ -35,6 +35,7 @@ let probes = require('../probes.js');
 let pollInterval = null;
 let currentPollIntervalSecs = POLL_INTERVAL_SECS;
 let prevSensorValues = [];
+let cachedSensorValues = {}; // key: sensorId -> latest temperature
 let started = false;
 
 function setPollInterval(secs){
@@ -112,6 +113,11 @@ async function pollTemperatures(){
 	const minDeltaC = 0.25;
 
 	const sensors = await getAllTemps();
+
+	// Update cache with latest readings
+	sensors.forEach(sensor => {
+		cachedSensorValues[sensor.name] = sensor.value;
+	});
 
 	if (sensors.length === 0){
 		brewlog.critical("No sensors found");
@@ -223,6 +229,14 @@ module.exports = {
 	setSampleInterval: setPollInterval,
 	
 	async getStatus() {
+			if (Object.keys(cachedSensorValues).length > 0) {
+				const names = sensorList.map(id2name);
+				return sensorList.map((id, index) => ({
+					name: names[index],
+					id: index,
+					value: cachedSensorValues[id]
+				})).filter(sensor => sensor.value !== undefined && sensor.value !== 85);
+			}
 			const sensorValues = await readAllSensorsAsync();
 			const names = sensorList.map(id2name);
 			return sensorValues.map((sensorValue, id) => ({
@@ -238,7 +252,9 @@ module.exports = {
 	*/
 	async getTemp(name) {
 		try {
-			return await readSensorAsync(probeId(name));
+			const id = probeId(name);
+			if (id in cachedSensorValues) return cachedSensorValues[id];
+			return await readSensorAsync(id);
 		} catch (err) {
 			console.log(name);			
 		}
@@ -247,7 +263,9 @@ module.exports = {
 	getAmbientTemp: async () => {
 		try {
 			const probeName = activeFermenter !== "UNI" ? "Temp UniTank" : "Temp SS";
-			return await readSensorAsync(probeId(probeName));
+			const id = probeId(probeName);
+			if (id in cachedSensorValues) return cachedSensorValues[id];
+			return await readSensorAsync(id);
 		} catch (err) {
 			console.log(name);			
 		}
@@ -255,7 +273,9 @@ module.exports = {
 	getFermenterTemp: async () => {
 		try {
 			const probeName = activeFermenter == "UNI" ? "Temp UniTank" : "Temp SS";
-			return await readSensorAsync(probeId(probeName));
+			const id = probeId(probeName);
+			if (id in cachedSensorValues) return cachedSensorValues[id];
+			return await readSensorAsync(id);
 		} catch (err) {
 			console.log(name);			
 		}

@@ -40,7 +40,7 @@ let activeFermenter = "UNI";
 function getActiveFermenter() {
 	return activeFermenter;
 }
-const POLL_INTERVAL_SECS = 10;
+const POLL_INTERVAL_SECS = 30;
 
 function setPollInterval(secs){
 	brewlog.info("setSampleInterval", `${secs} secs`);
@@ -381,9 +381,14 @@ module.exports = {
 	* @param {string} name - Probe name.
 	*/
 	getTemp(name) {
+		const nameAliases = {
+			'Temp UniTank': 'Temp Fermenter',
+			'Temp SS': 'Temp Ambient',
+		};
+		const resolvedName = nameAliases[name] ?? name;
 		return new Promise((resolve, reject) => {
 			try {
-				const probe = probes.find(p => p.name === name);
+				const probe = probes.find(p => p.name === resolvedName);
 				ds18x20.get(probe.id, (err, temp) => {
 					if (err){
 						reject(err);
