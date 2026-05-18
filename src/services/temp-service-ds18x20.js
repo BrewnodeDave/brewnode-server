@@ -88,14 +88,14 @@ async function readSingleTemp(probe, retries = 3, delayMs = 200) {
 			
 			if (isValidTemp(value)) {
 				if (attempt > 1) {
-					brewlog.info(`Temperature read for ${probe.name} succeeded on attempt ${attempt}`);
+					//brewlog.info(`Temperature read for ${probe.name} succeeded on attempt ${attempt}`);
 				}
 				return value;
 			} else {
-				brewlog.warn(`Invalid temperature reading for ${probe.name}: ${value}°C (attempt ${attempt}/${retries})`);
+				//brewlog.warn(`Invalid temperature reading for ${probe.name}: ${value}°C (attempt ${attempt}/${retries})`);
 			}
 		} catch (err) {
-			brewlog.warn(`Temperature read failed for ${probe.name} (attempt ${attempt}/${retries})`, err.message);
+			//brewlog.warn(`Temperature read failed for ${probe.name} (attempt ${attempt}/${retries})`, err.message);
 		}
 		
 		// Wait before retry (except on last attempt)
@@ -104,6 +104,7 @@ async function readSingleTemp(probe, retries = 3, delayMs = 200) {
 		}
 	}
 	
+	brewlog.error(`All temperature read attempts failed for ${probe.name} after ${retries} attempts`);
 	return null; // All retries failed
 }
 
